@@ -1,0 +1,3061 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/png" sizes="32x32" href="data:image/png;base64,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">
+  <link rel="apple-touch-icon" sizes="180x180" href="data:image/png;base64,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">
+<title>Study Dashboard — Unified</title>
+<style>
+/* ============================================================
+   APPLE HUMAN INTERFACE — DARK THEME — UNIFIED DESIGN SYSTEM
+   ============================================================ */
+:root {
+  --bg: #FFFFFF;
+  --bg-elev: #F5F5F7;
+  --bg-card: #FFFFFF;
+  --bg-card-hover: #F0F0F2;
+  --bg-input: #FFFFFF;
+  --bg-popover: #FFFFFF;
+  --ink: #1D1D1F;
+  --ink-secondary: #6E6E73;
+  --ink-tertiary: #8E8E93;
+  --ink-faint: #D1D1D6;
+  --line: #D2D2D7;
+  --line-light: #E5E5EA;
+  --accent: #1D1D1F;
+  --accent-hover: #333333;
+  --green: #1D1D1F;
+  --red: #555555;
+  --orange: #666666;
+  --yellow: #888888;
+  --purple: #555555;
+  --pink: #555555;
+  --teal: #555555;
+
+  --english: #1D1D1F;
+  --english-tint: rgba(0,0,0,0.04);
+  --chinese: #444444;
+  --chinese-tint: rgba(0,0,0,0.03);
+  --politic: #888888;
+  --politic-tint: rgba(0,0,0,0.03);
+
+  --radius: 12px;
+  --radius-sm: 8px;
+  --radius-lg: 16px;
+  --radius-pill: 999px;
+  --shadow: 0 1px 4px rgba(0,0,0,0.06);
+  --shadow-lg: 0 4px 20px rgba(0,0,0,0.1);
+  --blur: saturate(180%) blur(20px);
+
+  --sidebar-w: 240px;
+  --topbar-h: 56px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; overflow: hidden; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", "PingFang SC", sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+::selection { background: rgba(0,0,0,0.1); }
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-thumb { background: #CCC; border-radius: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+button { font: inherit; cursor: pointer; border: none; background: none; color: inherit; }
+input, textarea, select { font: inherit; color: var(--ink); background: var(--bg-input); border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 8px 12px; outline: none; }
+input:focus, textarea:focus, select:focus { border-color: var(--accent); }
+textarea { resize: vertical; }
+
+/* ========== LAYOUT ========== */
+.app {
+  display: grid;
+  grid-template-columns: var(--sidebar-w) 1fr;
+  grid-template-rows: var(--topbar-h) 1fr;
+  grid-template-areas: "sidebar topbar" "sidebar content";
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* ========== SIDEBAR ========== */
+.sidebar {
+  grid-area: sidebar;
+  background: var(--bg-elev);
+  border-right: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  padding: 16px 12px;
+  gap: 20px;
+  overflow-y: auto;
+}
+.sidebar-brand {
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  padding: 4px 8px;
+  display: flex;
+  align-items: center;
+  gap: 0;
+}
+.sidebar-brand .logo {
+  display: none;
+}
+
+/* Apple Capsule Menu */
+.capsule-menu {
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  padding: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.capsule-item {
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-secondary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  user-select: none;
+}
+.capsule-item:hover { background: var(--bg-card-hover); color: var(--ink); }
+.capsule-item.active { background: var(--accent); color: #FFFFFF; }
+.capsule-item .icon { font-size: 16px; width: 20px; text-align: center; }
+
+/* Sidebar Subject Pills */
+.sidebar-section-title {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ink-tertiary);
+  padding: 0 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.sidebar-subjects {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.subject-pill {
+  padding: 9px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transition: all 0.12s ease;
+}
+.subject-pill:hover { background: var(--bg-card); color: var(--ink); }
+.subject-pill.active { background: var(--bg-card); color: var(--ink); font-weight: 600; }
+.subject-pill .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.subject-pill .badge {
+  margin-left: auto;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: var(--radius-pill);
+  background: var(--bg-card-hover);
+  color: var(--ink-secondary);
+}
+
+/* ========== TOPBAR ========== */
+.topbar {
+  grid-area: topbar;
+  background: rgba(255,255,255,0.85);
+  backdrop-filter: var(--blur);
+  -webkit-backdrop-filter: var(--blur);
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  padding: 0 24px;
+  gap: 16px;
+}
+.topbar-title {
+  font-size: 15px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.topbar-search {
+  flex: 1;
+  max-width: 400px;
+  position: relative;
+}
+.topbar-search input {
+  width: 100%;
+  padding: 8px 12px 8px 36px;
+  border-radius: var(--radius-pill);
+  background: var(--bg-card);
+  border: 1px solid var(--line);
+  font-size: 13px;
+}
+.topbar-search input:focus { border-color: var(--accent); background: var(--bg-input); }
+.topbar-search .search-icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 14px;
+  color: var(--ink-tertiary);
+}
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+/* Apple Capsule Button */
+.apple-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border-radius: var(--radius-pill);
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid var(--line);
+  background: var(--bg-card);
+  color: var(--ink);
+  cursor: pointer;
+  transition: all 0.12s ease;
+  white-space: nowrap;
+}
+.apple-btn:hover { background: var(--bg-card-hover); border-color: var(--ink-faint); }
+.apple-btn:active { transform: scale(0.97); }
+.apple-btn.primary { background: var(--accent); color: #FFFFFF; border-color: var(--accent); }
+.apple-btn.primary:hover { background: var(--accent-hover); color: #FFFFFF; }
+.apple-btn.danger { color: #1D1D1F; border-color: rgba(0,0,0,0.1); }
+.apple-btn.danger:hover { background: rgba(0,0,0,0.03); }
+.apple-btn.small { padding: 5px 10px; font-size: 11px; }
+.apple-btn.active { background: var(--accent); color: #FFFFFF; border-color: var(--accent); }
+
+/* ========== CONTENT AREA ========== */
+.content {
+  grid-area: content;
+  overflow-y: auto;
+  padding: 24px 32px 80px;
+}
+
+/* ========== QUIZ HUB STYLES ========== */
+.quiz-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+.section-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  flex: 1;
+}
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: var(--bg-card);
+  color: var(--ink-secondary);
+  border-radius: var(--radius-pill);
+  font-size: 12px;
+  font-weight: 500;
+  border: 1px solid transparent;
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.12s ease;
+}
+.pill:hover { background: var(--bg-card-hover); color: var(--ink); }
+.pill.active { background: var(--accent); color: #FFFFFF; border-color: var(--accent); }
+.pill .pill-act { opacity: 0.5; font-size: 10px; padding: 0 3px; border-radius: 4px; }
+.pill .pill-act:hover { opacity: 1; }
+.pill.add { background: transparent; border: 1px dashed var(--ink-faint); color: var(--ink-tertiary); }
+.pill.add:hover { border-color: var(--ink-secondary); color: var(--ink); }
+
+.quiz-tabs {
+  display: flex;
+  gap: 2px;
+  background: var(--bg-card);
+  padding: 3px;
+  border-radius: var(--radius);
+  margin-bottom: 16px;
+  max-width: 300px;
+}
+.quiz-tab {
+  padding: 8px 16px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-secondary);
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+.quiz-tab.active { background: var(--accent); color: #FFFFFF; }
+.quiz-tab:hover:not(.active) { color: var(--ink); }
+
+.quizset-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+.quizset-bar label { font-size: 12px; color: var(--ink-tertiary); }
+.quizset-bar select {
+  font-size: 13px;
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-card);
+  border: 1px solid var(--line);
+  color: var(--ink);
+}
+
+/* Question cards */
+.q-card {
+  background: var(--bg-card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 18px 20px;
+  margin-bottom: 14px;
+  transition: border-color 0.15s ease;
+}
+.q-card:hover { border-color: var(--ink-faint); }
+.q-meta { font-size: 10px; color: var(--ink-tertiary); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+.q-tool-btn {
+  padding: 5px 12px;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: var(--radius-pill);
+  background: var(--bg-elev);
+  color: var(--ink-secondary);
+  border: 1px solid var(--line);
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+.q-tool-btn:hover { background: var(--bg-card-hover); color: var(--ink); }
+.q-text { font-size: 14px; line-height: 1.7; margin-bottom: 12px; color: var(--ink); }
+.q-options { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+.q-opt {
+  padding: 12px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  font-size: 13px;
+  cursor: pointer;
+  background: var(--bg-elev);
+  text-align: left;
+  color: var(--ink);
+  transition: all 0.12s ease;
+  user-select: text;
+}
+.q-opt:hover { background: var(--bg-card-hover); border-color: var(--ink-faint); }
+.q-opt.selected { border-color: #1D1D1F; background: rgba(0,0,0,0.03); }
+.q-opt.correct { border-color: #1D1D1F; background: rgba(0,0,0,0.04); color: #1D1D1F; }
+.q-opt.wrong { border-color: #AAA; background: rgba(0,0,0,0.03); color: #999; }
+.q-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.q-actions button {
+  padding: 7px 14px;
+  border-radius: var(--radius-pill);
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid var(--line);
+  background: var(--bg-card);
+  color: var(--ink);
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+.q-actions button:hover { background: var(--bg-card-hover); }
+.q-actions button:active { transform: scale(0.97); }
+.q-actions button.primary { background: var(--accent); color: #FFFFFF; border-color: var(--accent); }
+.q-actions button.primary:hover { background: var(--accent-hover); }
+.q-explain {
+  margin-top: 10px;
+  padding: 12px 14px;
+  background: var(--bg-elev);
+  border-left: 3px solid rgba(0,0,0,0.15);
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--ink-secondary);
+  border-radius: var(--radius-sm);
+  display: none;
+}
+.q-explain.show { display: block; }
+.q-status { margin-top: 8px; font-size: 12px; font-weight: 600; }
+.q-status.ok { color: #1D1D1F; }
+.q-status.err { color: #999; }
+
+/* Reading area */
+.reading-body {
+  font-size: 15px;
+  line-height: 2;
+  color: var(--ink);
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+.reading-body .word { cursor: pointer; border-radius: 2px; padding: 0 1px; }
+.reading-body .word:hover { background: rgba(0,0,0,0.04); }
+.reading-body .hl-yellow { background: rgba(0,0,0,0.08); }
+.reading-body .hl-blue { background: rgba(0,0,0,0.05); }
+.reading-body .hl-pink { background: rgba(0,0,0,0.1); }
+.reading-body .hl { cursor: pointer; border-radius: 2px; padding: 0 1px; }
+.reading-body .hl.has-note { box-shadow: inset 0 -2px 0 rgba(255,255,255,0.4); }
+.reading-body .replaced { color: #666; font-weight: 600; }
+
+.sel-menu {
+  position: fixed;
+  z-index: 5000;
+  background: #1D1D1F;
+  border: 1px solid #333;
+  border-radius: var(--radius-pill);
+  padding: 5px;
+  display: flex;
+  gap: 4px;
+  box-shadow: var(--shadow-lg);
+  font-size: 12px;
+  backdrop-filter: var(--blur);
+}
+.sel-menu button {
+  background: transparent;
+  color: #FFFFFF;
+  border: 1px solid rgba(255,255,255,0.2);
+  padding: 6px 12px;
+  border-radius: var(--radius-pill);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  transition: all 0.12s;
+}
+.sel-menu button:hover { background: rgba(255,255,255,0.1); }
+.sel-menu .swatch { display: inline-block; width: 10px; height: 10px; border-radius: 50%; }
+
+/* ========== STUDY RESOURCES STYLES ========== */
+.res-stats-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 24px;
+}
+.res-stat-card {
+  background: var(--bg-card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.res-stat-card:hover { border-color: var(--ink-faint); transform: translateY(-1px); }
+.res-stat-card .label { font-size: 11px; font-weight: 600; color: var(--ink-tertiary); text-transform: uppercase; letter-spacing: 0.04em; }
+.res-stat-card .value { font-size: 26px; font-weight: 800; letter-spacing: -0.02em; }
+.res-stat-card .sub { font-size: 11px; color: var(--ink-tertiary); }
+.res-stat-card.countdown { background: var(--bg-card); border-color: var(--line); }
+.res-stat-card.countdown .value { color: var(--ink); }
+
+.res-filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+  padding: 12px 14px;
+  background: var(--bg-card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+.res-filter-bar label { font-size: 11px; font-weight: 600; color: var(--ink-tertiary); }
+.res-filter-bar select {
+  font-size: 12px;
+  padding: 5px 10px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-elev);
+  border: 1px solid var(--line);
+  color: var(--ink);
+}
+
+.res-section { margin-bottom: 30px; }
+.res-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+.res-section-head h3 {
+  font-size: 15px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.res-section-head .count-pill {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--ink-tertiary);
+  background: var(--bg-card);
+  padding: 2px 9px;
+  border-radius: var(--radius-pill);
+}
+
+.res-tab-bar {
+  display: flex;
+  gap: 4px;
+  background: var(--bg-card);
+  padding: 3px;
+  border-radius: var(--radius-sm);
+}
+.res-tab-btn {
+  border: none;
+  background: transparent;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--ink-tertiary);
+  padding: 5px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+.res-tab-btn.active { background: var(--accent); color: #FFFFFF; }
+.res-tab-btn:hover:not(.active) { color: var(--ink-secondary); }
+
+.resource-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+.res-card {
+  position: relative;
+  background: var(--bg-card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 16px;
+  transition: all 0.15s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.res-card:hover { border-color: var(--ink-faint); transform: translateY(-1px); }
+.res-card.completed { opacity: 0.7; }
+.res-card.completed .res-title { text-decoration: line-through; color: var(--ink-tertiary); }
+.res-card::before {
+  content: "";
+  position: absolute;
+  left: 16px; top: 0;
+  width: 34px; height: 4px;
+  border-radius: 0 0 4px 4px;
+}
+.res-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+.res-title-wrap { display: flex; align-items: flex-start; gap: 8px; flex: 1; }
+.res-check {
+  width: 18px; height: 18px;
+  border-radius: 5px;
+  border: 2px solid var(--ink-faint);
+  flex-shrink: 0;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  background: transparent;
+  margin-top: 2px;
+  transition: all 0.12s ease;
+}
+.res-check.checked { background: var(--green); border-color: var(--green); }
+.res-check svg { width: 11px; height: 11px; color: #1D1D1F; opacity: 0; }
+.res-check.checked svg { opacity: 1; }
+.res-title { font-size: 13px; font-weight: 600; line-height: 1.4; flex: 1; }
+.res-tool-btn { background: none; border: none; cursor: pointer; color: var(--ink-tertiary); font-size: 12px; padding: 2px 6px; border-radius: 4px; }
+.res-tool-btn:hover { color: var(--ink); background: var(--bg-card-hover); }
+.res-tool-btn.delete:hover { color: #1D1D1F; }
+.res-path {
+  font-size: 11px;
+  color: var(--ink-tertiary);
+  background: var(--bg-elev);
+  padding: 6px 8px;
+  border-radius: 6px;
+  font-family: 'SF Mono', monospace;
+  word-break: break-all;
+  line-height: 1.4;
+}
+.res-tags { display: flex; flex-wrap: wrap; gap: 4px; }
+.pill-tag {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+  background: var(--bg-elev);
+  color: var(--ink-secondary);
+}
+.res-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 4px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+}
+.res-date { font-size: 10px; color: var(--ink-tertiary); }
+
+/* Exercise cards */
+.exercise-list { display: flex; flex-direction: column; gap: 10px; }
+.ex-card {
+  background: var(--bg-card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  overflow: hidden;
+  transition: all 0.15s ease;
+}
+.ex-card:hover { border-color: var(--ink-faint); }
+.ex-card.pinned { border-color: #999; }
+.ex-row { display: flex; align-items: center; gap: 10px; padding: 14px 16px; }
+.ex-check {
+  width: 18px; height: 18px;
+  border-radius: 5px;
+  border: 2px solid var(--ink-faint);
+  flex-shrink: 0;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.12s ease;
+}
+.ex-check.checked { background: var(--accent); border-color: var(--accent); }
+.ex-check svg { width: 11px; height: 11px; color: #1D1D1F; opacity: 0; }
+.ex-check.checked svg { opacity: 1; }
+.ex-body { flex: 1; min-width: 0; }
+.ex-title-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.ex-title { font-size: 13px; font-weight: 600; }
+.ex-card.completed .ex-title { color: var(--ink-tertiary); text-decoration: line-through; }
+.ex-meta { font-size: 11px; color: var(--ink-tertiary); margin-top: 4px; display: flex; gap: 10px; flex-wrap: wrap; }
+.ex-subject-tag {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: var(--radius-pill);
+  flex-shrink: 0;
+}
+.ex-status {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: var(--radius-pill);
+  flex-shrink: 0;
+}
+.ex-status.pending { background: rgba(0,0,0,0.03); color: #BBB; }
+.ex-status.completed { background: rgba(0,0,0,0.05); color: #1D1D1F; }
+.ex-tool-btn { background: none; border: none; cursor: pointer; color: var(--ink-tertiary); font-size: 13px; padding: 4px 6px; border-radius: 4px; flex-shrink: 0; }
+.ex-tool-btn:hover { color: var(--ink); background: var(--bg-card-hover); }
+.ex-tool-btn.pin.active { color: #1D1D1F; }
+.ex-tool-btn.delete:hover { color: #1D1D1F; }
+
+.priority-tag {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+}
+.priority-high { background: rgba(0,0,0,0.06); color: #1D1D1F; }
+.priority-medium { background: rgba(0,0,0,0.04); color: #BBB; }
+.priority-low { background: rgba(0,0,0,0.02); color: #888; }
+
+.subtasks-area {
+  background: var(--bg-elev);
+  border-top: 1px solid var(--line);
+  padding: 10px 16px 12px 46px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.subtask-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 12px;
+  color: var(--ink-secondary);
+}
+.subtask-left { display: flex; align-items: center; gap: 10px; cursor: pointer; flex: 1; }
+.st-check {
+  width: 15px; height: 15px;
+  border-radius: 4px;
+  border: 1.5px solid var(--ink-faint);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.st-check.checked { background: var(--ink-secondary); border-color: var(--ink-secondary); }
+.st-check svg { width: 9px; height: 9px; color: var(--bg); opacity: 0; }
+.st-check.checked svg { opacity: 1; }
+.st-text.checked { text-decoration: line-through; color: var(--ink-tertiary); }
+.st-due { font-size: 10px; color: #BBB; background: rgba(0,0,0,0.03); padding: 1px 6px; border-radius: 4px; font-weight: 600; }
+.st-due.overdue { color: #1D1D1F; background: rgba(0,0,0,0.06); }
+
+.drag-handle {
+  cursor: grab;
+  color: var(--ink-faint);
+  font-size: 15px;
+  padding: 4px 8px;
+  user-select: none;
+  display: inline-flex;
+  align-items: center;
+  border-radius: 4px;
+  transition: all 0.12s ease;
+}
+.drag-handle:hover { color: var(--ink); background: var(--bg-card-hover); }
+
+/* Score breakdown */
+.score-overview-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  margin-bottom: 24px;
+}
+.score-card {
+  background: var(--bg-card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 18px;
+  transition: all 0.15s ease;
+  cursor: pointer;
+}
+.score-card:hover { border-color: var(--ink-faint); transform: translateY(-1px); }
+.score-card-title {
+  font-size: 13px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.score-numbers { display: flex; align-items: baseline; gap: 6px; margin-bottom: 4px; }
+.score-curr { font-size: 28px; font-weight: 800; }
+.score-max { font-size: 13px; color: var(--ink-tertiary); }
+.score-target-pill {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--ink);
+  background: rgba(0,0,0,0.03);
+  padding: 2px 8px;
+  border-radius: 6px;
+}
+.score-note-box {
+  margin-top: 10px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.6;
+  background: var(--bg-elev);
+  border: 1px solid var(--line);
+  color: var(--ink-secondary);
+  user-select: text;
+}
+.inline-highlight {
+  background: rgba(0,0,0,0.08);
+  color: #1D1D1F;
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.score-module-list {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.score-module-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+  color: var(--ink-secondary);
+}
+.score-module-item span:last-child { font-weight: 700; color: var(--ink); }
+
+/* ========== SHARED STATS BAR (in sidebar bottom) ========== */
+.sidebar-stats {
+  margin-top: auto;
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.sidebar-stat {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+  color: var(--ink-tertiary);
+}
+.sidebar-stat .num { font-weight: 700; color: var(--ink); font-size: 13px; }
+
+/* ========== APPLE SHEET MODAL ========== */
+.sheet-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.3);
+  backdrop-filter: blur(4px);
+  z-index: 9000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.sheet-overlay.open { display: flex; }
+.sheet {
+  background: #FFFFFF;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  width: 560px;
+  max-width: 92vw;
+  max-height: 90vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--shadow-lg);
+  animation: sheetIn 0.2s ease-out;
+}
+.sheet.wide { width: 720px; }
+.sheet.full { width: 100%; height: 100%; max-height: 100%; border-radius: 0; }
+@keyframes sheetIn {
+  from { opacity: 0; transform: translateY(10px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.sheet-head {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.sheet-head h3 { font-size: 15px; font-weight: 700; }
+.sheet-head .close-btn {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  background: #F0F0F2;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px;
+  color: #666;
+  cursor: pointer;
+}
+.sheet-head .close-btn:hover { background: var(--bg-card-hover); }
+.sheet-body { padding: 16px 20px; overflow-y: auto; flex: 1; }
+.sheet-foot {
+  padding: 12px 20px;
+  border-top: 1px solid var(--line);
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+/* Form fields in sheets */
+.field { margin-bottom: 12px; }
+.field label { display: block; font-size: 11px; font-weight: 700; color: var(--ink-tertiary); margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.03em; }
+.field input, .field select, .field textarea {
+  width: 100%;
+  padding: 9px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--line);
+  background: var(--bg-card);
+  font-size: 13px;
+  color: var(--ink);
+}
+.field input:focus, .field select:focus, .field textarea:focus { border-color: var(--accent); }
+
+/* Toast */
+.toast {
+  position: fixed;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1D1D1F;
+  color: #FFFFFF;
+  padding: 10px 20px;
+  border-radius: var(--radius-pill);
+  font-size: 13px;
+  font-weight: 500;
+  z-index: 10000;
+  opacity: 0;
+  transition: opacity 0.2s;
+  pointer-events: none;
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow-lg);
+}
+.toast.show { opacity: 1; }
+
+/* Study Suggest Sheet */
+.suggest-tabs {
+  display: flex;
+  gap: 2px;
+  background: var(--bg-card);
+  padding: 3px;
+  border-radius: var(--radius-sm);
+  margin-bottom: 16px;
+}
+.suggest-tab {
+  padding: 7px 14px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-secondary);
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+.suggest-tab.active { background: var(--accent); color: #FFFFFF; }
+
+.notes-editor {
+  min-height: 200px;
+  padding: 14px;
+  background: var(--bg-card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  font-size: 14px;
+  line-height: 1.8;
+  color: var(--ink);
+  outline: none;
+  overflow-y: auto;
+}
+.notes-editor:focus { border-color: var(--accent); }
+.notes-toolbar {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 8px;
+  padding: 4px;
+  background: var(--bg-card);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--line);
+}
+.notes-toolbar button {
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-secondary);
+  cursor: pointer;
+  transition: all 0.1s ease;
+}
+.notes-toolbar button:hover { background: var(--bg-card-hover); color: var(--ink); }
+
+.link-card {
+  background: var(--bg-card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.link-card .link-info { flex: 1; }
+.link-card .link-title { font-size: 13px; font-weight: 600; }
+.link-card .link-url { font-size: 11px; color: #CCC; word-break: break-all; text-decoration: underline; }
+.link-card .link-cat { font-size: 10px; color: var(--ink-tertiary); margin-top: 2px; }
+.link-card .link-fav { font-size: 16px; cursor: pointer; }
+.link-card .link-fav.active { color: #1D1D1F; font-weight: 700; }
+
+/* Progress bars */
+.progress-bar {
+  height: 6px;
+  border-radius: 3px;
+  background: var(--bg-card-hover);
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+/* Subject Banner */
+.subject-banner {
+  background: var(--bg-card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 18px 20px;
+  margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.sb-top-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.sb-left h3 { font-size: 15px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+.sb-left p { font-size: 12px; color: var(--ink-tertiary); margin-top: 4px; }
+.sb-scores { display: flex; align-items: center; gap: 24px; }
+.sb-score-box { text-align: center; }
+.sb-label { font-size: 10px; font-weight: 700; color: var(--ink-tertiary); text-transform: uppercase; }
+.sb-val { font-size: 22px; font-weight: 800; margin-top: 2px; }
+
+/* Word popup */
+.word-pop {
+  position: fixed;
+  z-index: 5000;
+  background: var(--bg-card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  min-width: 220px;
+  max-width: 320px;
+  box-shadow: var(--shadow-lg);
+  font-size: 12px;
+}
+.word-pop h4 { margin: 0 0 6px; font-size: 11px; color: var(--ink-tertiary); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+.word-pop .syn-list { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 8px; }
+.word-pop .syn-chip { background: var(--bg-elev); padding: 4px 10px; border-radius: var(--radius-pill); cursor: pointer; font-size: 11px; color: var(--ink-secondary); }
+.word-pop .syn-chip:hover { background: #FFF; color: #000; }
+.word-pop .pop-actions { display: flex; gap: 6px; margin-top: 6px; }
+.word-pop .pop-actions button {
+  flex: 1;
+  background: var(--bg-elev);
+  border: 1px solid var(--line);
+  padding: 5px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  color: var(--ink-secondary);
+}
+.word-pop .pop-actions button:hover { background: var(--bg-card-hover); color: var(--ink); }
+
+/* Vocab & Wrong book items */
+.list-item {
+  padding: 10px 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  margin-bottom: 8px;
+}
+.list-item h4 { margin: 0 0 4px; font-size: 13px; font-weight: 600; }
+.list-item .meta { color: var(--ink-tertiary); font-size: 11px; }
+.list-item .actions { margin-top: 6px; display: flex; gap: 6px; }
+.list-item .actions button {
+  background: var(--bg-elev);
+  border: 1px solid var(--line);
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--ink-secondary);
+}
+.list-item .actions button:hover { background: var(--bg-card-hover); color: var(--ink); }
+.chips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+.chip { background: var(--bg-elev); color: var(--ink-secondary); padding: 2px 8px; border-radius: var(--radius-pill); font-size: 11px; border: 1px solid var(--line); }
+
+.syn-group-card {
+  background: var(--bg-card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  margin-bottom: 8px;
+}
+.syn-group-card h4 { margin: 0 0 4px; font-size: 13px; font-weight: 600; }
+.syn-group-card .chips .chip { background: var(--bg-elev); color: var(--ink); border: 1px solid var(--line); }
+.syn-group-card .actions { margin-top: 6px; display: flex; gap: 6px; }
+.syn-group-card .actions button {
+  background: var(--bg-elev);
+  border: 1px solid var(--line);
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+  font-size: 11px;
+  color: var(--ink-secondary);
+}
+.syn-group-card .actions button:hover { background: var(--bg-card-hover); }
+
+.empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--ink-tertiary);
+  font-size: 13px;
+  background: var(--bg-card);
+  border: 1px dashed var(--line);
+  border-radius: var(--radius);
+}
+
+/* Module edit rows */
+.module-edit-row { display: grid; grid-template-columns: 2.2fr 1fr 1.2fr auto; gap: 8px; margin-bottom: 8px; align-items: center; }
+.subtask-edit-row { display: grid; grid-template-columns: 2.5fr 1.3fr auto; gap: 8px; margin-bottom: 8px; align-items: center; }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      Study Hub
+    </div>
+
+    <!-- Module Switcher (Capsule Menu) -->
+    <div class="capsule-menu">
+      <div class="capsule-item active" data-module="quiz" onclick="switchModule('quiz')">
+        <span class="icon" style="font-weight:800;font-size:13px;width:20px;text-align:center;">Q</span> Quiz Hub
+      </div>
+      <div class="capsule-item" data-module="resources" onclick="switchModule('resources')">
+        <span class="icon" style="font-weight:800;font-size:13px;width:20px;text-align:center;">R</span> Study Resources
+      </div>
+    </div>
+
+    <!-- Shared Subjects -->
+    <div>
+      <div class="sidebar-section-title">
+        Subjects
+        <button class="apple-btn small" onclick="openAddSubjectModal()">+ Add</button>
+      </div>
+      <div class="sidebar-subjects" id="sidebarSubjects"></div>
+    </div>
+
+    <!-- Progress -->
+    <div>
+      <div class="sidebar-section-title">Progress</div>
+      <div id="sidebarProgress" style="display:flex;flex-direction:column;gap:8px;margin-top:8px;"></div>
+    </div>
+
+    <!-- Stats -->
+    <div class="sidebar-stats" id="sidebarStats"></div>
+  </aside>
+
+  <!-- TOPBAR -->
+  <header class="topbar">
+    <div class="topbar-title" id="topbarTitle">Quiz Hub</div>
+    <div class="topbar-search">
+      <span class="search-icon" style="font-weight:700;">⌕</span>
+      <input id="globalSearch" type="text" placeholder="Search quizzes, vocabulary, resources, notes..." oninput="onGlobalSearch(this.value)" />
+    </div>
+    <div class="topbar-actions">
+      <button class="apple-btn" onclick="openStudySuggest()" id="btnStudySuggest">Study Suggest</button>
+      <button class="apple-btn" onclick="exportAllData()">↓ Export</button>
+      <button class="apple-btn" onclick="document.getElementById('importFileInput').click()">↑ Import</button>
+      <input type="file" id="importFileInput" style="display:none" accept=".json" onchange="importAllData(event)" />
+    </div>
+  </header>
+
+  <!-- CONTENT -->
+  <main class="content" id="mainContent"></main>
+</div>
+
+<!-- Study Suggest Sheet -->
+<div class="sheet-overlay" id="suggestSheet">
+  <div class="sheet wide">
+    <div class="sheet-head">
+      <h3>Study Suggest</h3>
+      <div class="close-btn" onclick="closeSheet('suggestSheet')">x</div>
+    </div>
+    <div class="sheet-body">
+      <div class="suggest-tabs">
+        <div class="suggest-tab active" data-stab="notes" onclick="switchSuggestTab('notes')">Note Notes</div>
+        <div class="suggest-tab" data-stab="links" onclick="switchSuggestTab('links')">Useful Links</div>
+        <div class="suggest-tab" data-stab="highlights" onclick="switchSuggestTab('highlights')">Highlights</div>
+      </div>
+      <div id="suggestContent"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Generic Sheet -->
+<div class="sheet-overlay" id="genericSheet">
+  <div class="sheet" id="genericSheetInner">
+    <div class="sheet-head">
+      <h3 id="genericSheetTitle">Title</h3>
+      <div class="close-btn" onclick="closeSheet('genericSheet')">x</div>
+    </div>
+    <div class="sheet-body" id="genericSheetBody"></div>
+    <div class="sheet-foot" id="genericSheetFoot"></div>
+  </div>
+</div>
+
+<!-- Selection Menu -->
+<div class="sel-menu" id="selMenu" style="display:none">
+  <button data-color="yellow"><span class="swatch" style="background:#FFF"></span>Light</button>
+  <button data-color="blue"><span class="swatch" style="background:#AAA"></span>Medium</button>
+  <button data-color="pink"><span class="swatch" style="background:#666"></span>Dark</button>
+  <button data-act="note">Note</button>
+  <button data-act="vocab">+ Vocab</button>
+</div>
+
+<!-- Word Popup -->
+<div class="word-pop" id="wordPop" style="display:none"></div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+/* ================================================================
+   UNIFIED STATE MANAGEMENT
+   ================================================================ */
+
+// === SHARED APP STATE ===
+const APP_STATE_KEY = 'study_unified_app';
+let appState = {
+  currentModule: 'quiz',       // 'quiz' | 'resources'
+  currentSubject: 'english',   // shared subject
+  searchQuery: '',
+};
+
+// === QUIZ HUB STATE (from index.html) ===
+const QUIZ_STORE_KEY = 'eng_dashboard_v2';
+const QUIZ_BACKUP_KEY = 'eng_dashboard_v2_backup';
+const QUIZ_META_KEY = 'eng_dashboard_meta';
+const QUIZ_SCHEMA = 5;
+
+const SRS_INTERVALS_DAY = [0, 1, 2, 4, 7, 15, 30];
+function srsIntervalMs(box) { return SRS_INTERVALS_DAY[Math.min(Math.max(box,0), SRS_INTERVALS_DAY.length-1)] * 86400000; }
+function ensureSrs(obj) {
+  if (typeof obj.srsBox !== 'number') obj.srsBox = 0;
+  if (typeof obj.srsNext !== 'number') obj.srsNext = Date.now();
+  if (typeof obj.srsReviews !== 'number') obj.srsReviews = 0;
+  if (typeof obj.srsLapses !== 'number') obj.srsLapses = 0;
+}
+function srsGrade(obj, result) {
+  ensureSrs(obj);
+  if (result === 'again') { obj.srsBox = 0; obj.srsLapses = (obj.srsLapses||0)+1; }
+  else if (result === 'hard') { obj.srsBox = Math.max(0, obj.srsBox); }
+  else if (result === 'good') { obj.srsBox = Math.min(SRS_INTERVALS_DAY.length-1, obj.srsBox+1); }
+  else if (result === 'easy') { obj.srsBox = Math.min(SRS_INTERVALS_DAY.length-1, obj.srsBox+2); }
+  obj.srsReviews = (obj.srsReviews||0)+1;
+  obj.srsNext = Date.now() + Math.max(srsIntervalMs(obj.srsBox), result==='hard'?86400000:0);
+}
+function srsDueList(items) { const now = Date.now(); return items.filter(x => { ensureSrs(x); return x.srsNext <= now; }); }
+
+let quizState = {
+  version: '2.0', schemaVersion: QUIZ_SCHEMA,
+  passages: [], quizSets: [],
+  grammarQuestions: [], vocabularyQuestions: [],
+  vocabularyBook: [], synonymLibrary: [],
+  highlights: [], wrongBook: [],
+  answerLog: {},
+  currentPassageId: null,
+  currentQuizSetId: {}, activeQuizSetIds: {},
+  activeTab: 'grammar',
+  activeQIndex: { grammar: {}, vocab: {} },
+};
+let quizMeta = { lastExportTs:0, lastBackupTs:0, gist:{token:'',gistId:'',filename:'dashboard.json',lastSyncTs:0} };
+
+// === STUDY RESOURCES STATE (from dashboard.html) ===
+let customSubjects = JSON.parse(localStorage.getItem('study_subjects_pro')) || {
+  english: { label:'English', color:'#FFFFFF', tint:'rgba(0,0,0,0.04)', text:'#FFFFFF', tagline:'Academic Vocab · Grammar · Reading & Writing' },
+  chinese: { label:'Chinese', color:'#AAAAAA', tint:'rgba(0,0,0,0.03)', text:'#AAAAAA', tagline:'文言文120实词 · 议论文高分结构 · 诗词鉴赏' },
+  politic: { label:'Politics', color:'#777777', tint:'rgba(0,0,0,0.02)', text:'#777777', tagline:'马哲核心 · 政经公式 · 2026时政热点' }
+};
+
+const sampleResources = [
+  {id:'r1',subject:'english',title:'IELTS Core Academic Vocabulary 5000',path:'D:/Study/English/IELTS_Vocab.pdf',status:'pending',startDate:'2026-06-25',tags:['Vocabulary','High-Freq'],createdAt:'2026-06-25'},
+  {id:'r2',subject:'english',title:'Advanced Grammar & Passive Voice',path:'D:/Study/English/Grammar.docx',status:'completed',startDate:'2026-06-20',tags:['Grammar','Writing'],createdAt:'2026-06-28'},
+  {id:'r3',subject:'english',title:'Essay Structure & Templates',path:'D:/Study/English/Essays.pdf',status:'not_started',startDate:'2026-07-15',tags:['Writing'],createdAt:'2026-06-30'},
+  {id:'r5',subject:'chinese',title:'文言文120个实词虚词全解',path:'D:/Study/Chinese/文言文实词.pdf',status:'pending',startDate:'2026-06-20',tags:['文言文','考点'],createdAt:'2026-06-20'},
+  {id:'r6',subject:'chinese',title:'议论文8大核心架构与论据素材库',path:'D:/Study/Chinese/议论文素材.docx',status:'not_started',startDate:'2026-07-20',tags:['作文','素材'],createdAt:'2026-06-26'},
+  {id:'r9',subject:'politic',title:'2026上半年时政要闻精编',path:'D:/Study/Politic/时政精编.pdf',status:'pending',startDate:'2026-06-30',tags:['时政','热点'],createdAt:'2026-06-30'},
+  {id:'r10',subject:'politic',title:'马哲唯物论与辩证法思维框架',path:'D:/Study/Politic/马哲导图.pdf',status:'completed',startDate:'2026-06-10',tags:['哲学','原理'],createdAt:'2026-06-18'},
+];
+
+const sampleExercises = [
+  {id:'e1',subject:'english',title:'Grammar & Cloze Test Simulation',priority:'high',pinned:true,chapter:'Unit 6',dueDate:'2026-07-02',status:'pending',
+    subtasks:[{id:'st1',title:'Review Non-finite Verbs',completed:true,dueDate:'2026-07-01'},{id:'st2',title:'Complete timed Cloze (20min)',completed:false,dueDate:'2026-07-02'}]},
+  {id:'e2',subject:'english',title:'IELTS Reading Passages Set 3',priority:'medium',pinned:false,chapter:'Reading',dueDate:'2026-07-05',status:'pending',
+    subtasks:[{id:'st4',title:'Passage 1: Climate Change',completed:true,dueDate:'2026-07-04'},{id:'st5',title:'Passage 2: AI in Medicine',completed:false,dueDate:'2026-07-05'}]},
+  {id:'e4',subject:'chinese',title:'文言文《苏轼传》精译',priority:'high',pinned:true,chapter:'文言文强化',dueDate:'2026-07-03',status:'pending',
+    subtasks:[{id:'st11',title:'标注虚词语法用法',completed:true,dueDate:'2026-07-02'},{id:'st12',title:'笔译第三段',completed:false,dueDate:'2026-07-03'}]},
+  {id:'e6',subject:'politic',title:'唯物辩证法四大规律真题强化',priority:'high',pinned:true,chapter:'哲学必考',dueDate:'2026-07-02',status:'pending',
+    subtasks:[{id:'st19',title:'熟记对立统一规律模板',completed:true,dueDate:'2026-07-01'},{id:'st20',title:'全真模拟第38题',completed:false,dueDate:'2026-07-02'}]},
+];
+
+const sampleSubjectScores = {
+  english:{maxScore:150,currentScore:138,targetScore:145,note:'听力重点抓 ==Section 3 选项陷阱==，写作务必 ==逻辑分层==！',
+    modules:[{name:'Listening',score:30,duration:'45min'},{name:'Reading',score:45,duration:'60min'},{name:'Cloze',score:25,duration:'25min'},{name:'Writing',score:50,duration:'50min'}]},
+  chinese:{maxScore:150,currentScore:132,targetScore:140,note:'大作文 ==首尾呼应==，文言文 ==实词踩点给分==！',
+    modules:[{name:'语言基础与诗词',score:35,duration:'30min'},{name:'文言文阅读',score:25,duration:'30min'},{name:'现代文阅读',score:30,duration:'35min'},{name:'大作文',score:60,duration:'55min'}]},
+  politic:{maxScore:100,currentScore:88,targetScore:94,note:'选择题保持 ==2道以内== 错误，大题 ==哲学原理结合材料==！',
+    modules:[{name:'选择题',score:50,duration:'35min'},{name:'材料分析大题',score:30,duration:'60min'},{name:'时政',score:20,duration:'25min'}]}
+};
+
+const sampleCountdown = { title:'2026 National Exam Target', targetDate:'2026-12-25' };
+
+let resources = JSON.parse(localStorage.getItem('study_resources_pro')) || sampleResources;
+let exercises = JSON.parse(localStorage.getItem('study_exercises_pro')) || sampleExercises;
+let subjectScores = JSON.parse(localStorage.getItem('study_scores_pro')) || sampleSubjectScores;
+let countdownConfig = JSON.parse(localStorage.getItem('study_countdown_pro')) || sampleCountdown;
+
+// === STUDY SUGGEST STATE ===
+const SUGGEST_KEY = 'study_suggest_unified';
+let studySuggest = JSON.parse(localStorage.getItem(SUGGEST_KEY)) || {
+  notes: '',
+  links: []
+};
+
+// === RESOURCE VIEW STATE ===
+let resViewState = { filterSubject:'all', filterType:'all', filterStatus:'all', filterPriority:'all', resTab:'all' };
+
+// ================================================================
+//  SAVE / LOAD
+// ================================================================
+function saveAppState() { localStorage.setItem(APP_STATE_KEY, JSON.stringify(appState)); }
+function loadAppState() {
+  try { const s = localStorage.getItem(APP_STATE_KEY); if(s) appState = Object.assign(appState, JSON.parse(s)); } catch(e){}
+}
+
+function saveQuiz() {
+  try {
+    const json = JSON.stringify(quizState);
+    localStorage.setItem(QUIZ_STORE_KEY, json);
+    try { localStorage.setItem(QUIZ_BACKUP_KEY, json); } catch(_){}
+  } catch(e) { toast('Quiz save failed: '+e.message); }
+}
+function loadQuiz() {
+  try {
+    let raw = localStorage.getItem(QUIZ_STORE_KEY);
+    if (!raw) { const bak = localStorage.getItem(QUIZ_BACKUP_KEY); if(bak) raw = bak; }
+    if (raw) {
+      let parsed = JSON.parse(raw);
+      parsed = migrateQuiz(parsed);
+      quizState = Object.assign(quizState, parsed);
+      quizState.activeQIndex = quizState.activeQIndex || {grammar:{},vocab:{}};
+      quizState.answerLog = quizState.answerLog || {};
+      quizState.wrongBook = quizState.wrongBook || [];
+      quizState.highlights = quizState.highlights || [];
+      quizState.vocabularyBook = quizState.vocabularyBook || [];
+      quizState.synonymLibrary = quizState.synonymLibrary || [];
+      quizState.quizSets = quizState.quizSets || [];
+      quizState.currentQuizSetId = quizState.currentQuizSetId || {};
+      quizState.activeQuizSetIds = quizState.activeQuizSetIds || {};
+    }
+  } catch(e) { console.error('Quiz load failed', e); }
+}
+
+function migrateQuiz(parsed) {
+  const v = parsed.schemaVersion || 1;
+  if (v < 5) {
+    (parsed.vocabularyBook||[]).forEach(w => { ensureSrs(w); });
+    (parsed.synonymLibrary||[]).forEach(g => { ensureSrs(g); });
+  }
+  if (v < 4) {
+    parsed.quizSets = Array.isArray(parsed.quizSets) ? parsed.quizSets : [];
+    parsed.currentQuizSetId = parsed.currentQuizSetId || {};
+    (parsed.passages||[]).forEach(p => {
+      if (!p.id) return;
+      if (!parsed.quizSets.find(qs => qs.passageId === p.id)) {
+        parsed.quizSets.push({ id:'qs_'+p.id+'_default', passageId:p.id, name:'1', createdAt:Date.now() });
+      }
+    });
+    ['grammarQuestions','vocabularyQuestions'].forEach(k => {
+      (parsed[k]||[]).forEach(q => {
+        if (!q.quizSetId) {
+          const def = parsed.quizSets.find(qs => qs.passageId === q.passageId);
+          if (def) q.quizSetId = def.id;
+        }
+      });
+    });
+  }
+  parsed.schemaVersion = QUIZ_SCHEMA;
+  return parsed;
+}
+
+function saveResState() {
+  localStorage.setItem('study_subjects_pro', JSON.stringify(customSubjects));
+  localStorage.setItem('study_resources_pro', JSON.stringify(resources));
+  localStorage.setItem('study_exercises_pro', JSON.stringify(exercises));
+  localStorage.setItem('study_scores_pro', JSON.stringify(subjectScores));
+  localStorage.setItem('study_countdown_pro', JSON.stringify(countdownConfig));
+}
+function saveSuggest() { localStorage.setItem(SUGGEST_KEY, JSON.stringify(studySuggest)); }
+
+function saveAll() { saveAppState(); saveQuiz(); saveResState(); saveSuggest(); }
+
+// ================================================================
+//  HELPERS
+// ================================================================
+function uid(prefix='id') { return prefix+'_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,7); }
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function toast(msg, ms=1800) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(toast._t); toast._t = setTimeout(()=>t.classList.remove('show'), ms);
+}
+function todayISO() { return new Date().toISOString().slice(0,10); }
+function parseInlineHighlight(subj, str) {
+  const escaped = esc(str);
+  return escaped.replace(/==([^=]+)==/g, (m,p1) => `<span class="inline-highlight" onclick="removeInlineHighlight('${subj}','${esc(p1).replace(/'/g,"\\'")}')">${p1}</span>`);
+}
+function removeInlineHighlight(subj, word) {
+  const sc = subjectScores[subj]; if(!sc||!sc.note) return;
+  sc.note = sc.note.replace(`==${word}==`, word);
+  saveResState(); render();
+}
+function matchesSearch(text, q) { if(!q) return true; return text.toLowerCase().includes(q.toLowerCase()); }
+
+// ================================================================
+//  MODULE SWITCHING
+// ================================================================
+function switchModule(mod) {
+  appState.currentModule = mod;
+  document.querySelectorAll('.capsule-item').forEach(el => el.classList.toggle('active', el.dataset.module === mod));
+  document.getElementById('topbarTitle').textContent = mod === 'quiz' ? 'Quiz Hub' : 'Study Resources';
+  saveAppState();
+  render();
+}
+
+function switchSubject(subj) {
+  appState.currentSubject = subj;
+  saveAppState();
+  render();
+}
+
+// ================================================================
+//  GLOBAL SEARCH
+// ================================================================
+function onGlobalSearch(val) {
+  appState.searchQuery = val.trim();
+  saveAppState();
+  render();
+}
+
+// ================================================================
+//  RENDER DISPATCHER
+// ================================================================
+function render() {
+  renderSidebar();
+  renderSharedStats();
+  const main = document.getElementById('mainContent');
+
+  if (appState.searchQuery) {
+    main.innerHTML = renderGlobalSearch();
+    return;
+  }
+
+  if (appState.currentModule === 'quiz') {
+    renderQuizHub(main);
+  } else {
+    renderStudyResources(main);
+  }
+}
+
+// ================================================================
+//  SIDEBAR
+// ================================================================
+function renderSidebar() {
+  // Subjects
+  const el = document.getElementById('sidebarSubjects');
+  el.innerHTML = Object.keys(customSubjects).map(key => {
+    const s = customSubjects[key];
+    const isActive = appState.currentSubject === key;
+    const sc = subjectScores[key] || {currentScore:0, maxScore:100};
+    return `<div class="subject-pill ${isActive?'active':''}" onclick="switchSubject('${key}')">
+      <span class="dot" style="background:${s.color}"></span>
+      ${esc(s.label)}
+      <span class="badge">${sc.currentScore}</span>
+    </div>`;
+  }).join('');
+
+  // Progress
+  const progEl = document.getElementById('sidebarProgress');
+  progEl.innerHTML = Object.keys(customSubjects).map(key => {
+    const s = customSubjects[key];
+    const prog = getSubjectProgress(key);
+    return `<div style="cursor:pointer" onclick="switchSubject('${key}')">
+      <div style="display:flex;justify-content:space-between;font-size:11px;font-weight:600;margin-bottom:3px;">
+        <span>${esc(s.label)}</span><span style="color:${s.color}">${prog.percent}%</span>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" style="width:${prog.percent}%;background:${s.color}"></div></div>
+    </div>`;
+  }).join('');
+}
+
+function renderSharedStats() {
+  const el = document.getElementById('sidebarStats');
+  const quizCompleted = Object.keys(quizState.answerLog).length;
+  const quizWrong = quizState.wrongBook.length;
+  const quizVocab = quizState.vocabularyBook.length;
+  const resPending = exercises.filter(e=>e.status==='pending').length;
+  const resDone = exercises.filter(e=>e.status==='completed').length;
+
+  el.innerHTML = `
+    <div class="sidebar-stat"><span>Quiz Done</span><span class="num">${quizCompleted}</span></div>
+    <div class="sidebar-stat"><span>Wrong</span><span class="num">${quizWrong}</span></div>
+    <div class="sidebar-stat"><span>Vocabulary</span><span class="num">${quizVocab}</span></div>
+    <div class="sidebar-stat"><span>Tasks Pending</span><span class="num">${resPending}</span></div>
+    <div class="sidebar-stat"><span>Tasks Done</span><span class="num">${resDone}</span></div>
+  `;
+}
+
+// ================================================================
+//  PROGRESS
+// ================================================================
+function getSubjectProgress(subject) {
+  const subEx = exercises.filter(e => !subject || e.subject === subject);
+  let total = 0, done = 0;
+  subEx.forEach(ex => {
+    const sts = ex.subtasks || [];
+    if (sts.length > 0) { total += sts.length; done += sts.filter(s=>s.completed).length; }
+    else { total += 1; if(ex.status==='completed') done += 1; }
+  });
+  return { total, done, percent: total===0?0:Math.round(done/total*100) };
+}
+
+// ================================================================
+//  GLOBAL SEARCH RENDER
+// ================================================================
+function renderGlobalSearch() {
+  const q = appState.searchQuery;
+  // Search across: quizzes, vocabulary, resources, notes, links, exercises
+  const matchedPassages = quizState.passages.filter(p => matchesSearch(p.customName||'',q) || matchesSearch(p.title||'',q) || matchesSearch(p.content||'',q));
+  const matchedGQ = quizState.grammarQuestions.filter(x => matchesSearch(x.question,q) || (x.options||[]).some(o=>matchesSearch(o,q)));
+  const matchedVQ = quizState.vocabularyQuestions.filter(x => matchesSearch(x.question,q) || matchesSearch(x.synonymGroup||'',q));
+  const matchedVocab = quizState.vocabularyBook.filter(v => matchesSearch(v.word,q) || matchesSearch(v.meaning||'',q));
+  const matchedResources = resources.filter(r => matchesSearch(r.title,q) || matchesSearch(r.path||'',q) || (r.tags||[]).some(t=>matchesSearch(t,q)));
+  const matchedExercises = exercises.filter(e => matchesSearch(e.title,q) || (e.subtasks||[]).some(s=>matchesSearch(s.title,q)));
+  const matchedLinks = (studySuggest.links||[]).filter(l => matchesSearch(l.title,q) || matchesSearch(l.url||'',q) || matchesSearch(l.description||'',q));
+
+  let html = `<h2 style="font-size:18px;font-weight:700;margin-bottom:16px;">Search: "${esc(q)}"</h2>`;
+
+  if (matchedPassages.length) html += `<div class="res-section"><div class="res-section-head"><h3>Passages <span class="count-pill">${matchedPassages.length}</span></h3></div><div>${matchedPassages.map(p=>`<div class="list-item"><h4>${esc(p.customName)}</h4><div class="meta">${esc((p.content||'').slice(0,120))}...</div></div>`).join('')}</div></div>`;
+  if (matchedGQ.length) html += `<div class="res-section"><div class="res-section-head"><h3>Grammar Questions <span class="count-pill">${matchedGQ.length}</span></h3></div><div>${matchedGQ.slice(0,10).map(q=>`<div class="list-item"><h4>${esc(q.question.slice(0,100))}</h4><div class="meta">Answer: ${esc(q.answer)}</div></div>`).join('')}</div></div>`;
+  if (matchedVQ.length) html += `<div class="res-section"><div class="res-section-head"><h3>Vocab Questions <span class="count-pill">${matchedVQ.length}</span></h3></div><div>${matchedVQ.slice(0,10).map(q=>`<div class="list-item"><h4>${esc(q.question.slice(0,100))}</h4><div class="meta">${esc(q.synonymGroup||'')}</div></div>`).join('')}</div></div>`;
+  if (matchedVocab.length) html += `<div class="res-section"><div class="res-section-head"><h3>Vocabulary <span class="count-pill">${matchedVocab.length}</span></h3></div><div>${matchedVocab.map(v=>`<div class="list-item"><h4>${esc(v.word)}</h4><div class="meta">${esc(v.meaning||'')}</div></div>`).join('')}</div></div>`;
+  if (matchedResources.length) html += `<div class="res-section"><div class="res-section-head"><h3>Resources <span class="count-pill">${matchedResources.length}</span></h3></div><div class="resource-grid">${matchedResources.map(r=>resourceCard(r)).join('')}</div></div>`;
+  if (matchedExercises.length) html += `<div class="res-section"><div class="res-section-head"><h3>Exercises <span class="count-pill">${matchedExercises.length}</span></h3></div><div class="exercise-list">${matchedExercises.map(e=>exerciseCard(e)).join('')}</div></div>`;
+  if (matchedLinks.length) html += `<div class="res-section"><div class="res-section-head"><h3>Links <span class="count-pill">${matchedLinks.length}</span></h3></div><div>${matchedLinks.map(l=>`<div class="link-card"><div class="link-info"><div class="link-title">${esc(l.title)}</div><div class="link-url">${esc(l.url)}</div></div></div>`).join('')}</div></div>`;
+
+  const total = matchedPassages.length+matchedGQ.length+matchedVQ.length+matchedVocab.length+matchedResources.length+matchedExercises.length+matchedLinks.length;
+  if (!total) html += `<div class="empty-state">No results found for "${esc(q)}"</div>`;
+  return html;
+}
+
+// ================================================================
+//  QUIZ HUB RENDER
+// ================================================================
+function renderQuizHub(container) {
+  normalizePassages();
+  if (quizState.passages.length && !quizState.passages.find(p=>p.id===quizState.currentPassageId)) {
+    quizState.currentPassageId = quizState.passages[0].id;
+  }
+
+  let html = '';
+
+  // Section Pills
+  html += `<div class="quiz-toolbar">
+    <div class="section-pills" id="sectionPills">${renderSectionPillsHTML()}</div>
+    <button class="apple-btn" onclick="openQuizVocab()">R Vocab (${quizState.vocabularyBook.length})</button>
+    <button class="apple-btn" onclick="openQuizSynonyms()">Syn Synonyms (${quizState.synonymLibrary.length})</button>
+    <button class="apple-btn" onclick="openQuizWrongBook()">X Wrong Book (${quizState.wrongBook.length})</button>
+    <button class="apple-btn" onclick="openQuizSettings()">Set Settings</button>
+  </div>`;
+
+  // Reading area (collapsed by default - user can expand)
+  const p = currentPassage();
+  if (p && p.content) {
+    html += `<div style="margin-bottom:16px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;cursor:pointer" onclick="toggleReading()">
+        <h3 style="font-size:14px;font-weight:700;display:flex;align-items:center;gap:8px;">Reading Reading Passage <span style="font-size:11px;color:var(--ink-tertiary)">click to toggle</span></h3>
+      </div>
+      <div id="readingArea" style="display:none;background:var(--bg-card);border:1px solid var(--line);border-radius:var(--radius);padding:20px;max-height:400px;overflow-y:auto;">
+        <div style="font-size:16px;font-weight:700;margin-bottom:6px;">${esc(p.title||p.customName)}</div>
+        <div class="reading-body" id="readingBody">${buildReadingHTML(p.content, quizState.highlights.filter(h=>h.passageId===p.id))}</div>
+      </div>
+    </div>`;
+  }
+
+  // Section Title + QuizSet bar
+  html += renderSectionTitleBarHTML();
+
+  // Quiz Tabs
+  html += `<div class="quiz-tabs">
+    <div class="quiz-tab ${quizState.activeTab==='grammar'?'active':''}" onclick="switchQuizTab('grammar')">Grammar</div>
+    <div class="quiz-tab ${quizState.activeTab==='vocab'?'active':''}" onclick="switchQuizTab('vocab')">Vocabulary</div>
+  </div>`;
+
+  // Questions
+  html += renderQuestionsHTML();
+
+  // Quiz Status bar
+  html += `<div style="display:flex;gap:10px;align-items:center;margin-top:20px;padding:12px 16px;background:var(--bg-card);border:1px solid var(--line);border-radius:var(--radius);flex-wrap:wrap;">
+    <div style="font-size:11px;color:var(--ink-tertiary);">Completed: <b style="color:var(--ink)">${Object.keys(quizState.answerLog).length}</b></div>
+    <div style="font-size:11px;color:var(--ink-tertiary);">Wrong: <b style="color:var(--red)">${quizState.wrongBook.length}</b></div>
+    <div style="font-size:11px;color:var(--ink-tertiary);">Vocab: <b style="color:var(--ink)">${quizState.vocabularyBook.length}</b></div>
+    <div style="margin-left:auto;display:flex;gap:6px;">
+      <button class="apple-btn small" onclick="loadSeedData()">Load Sample</button>
+      <button class="apple-btn small danger" onclick="clearAllQuiz()">Clear All</button>
+    </div>
+  </div>`;
+
+  container.innerHTML = html;
+
+  // Bind reading events
+  bindReadingEvents();
+}
+
+function toggleReading() {
+  const el = document.getElementById('readingArea');
+  if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+
+function switchQuizTab(tab) { quizState.activeTab = tab; saveQuiz(); render(); }
+
+// ================================================================
+//  QUIZ HUB - SECTIONS / PASSAGES
+// ================================================================
+function normalizePassages() { quizState.passages.forEach((p,i) => { if(!p.id) p.id=uid('sec'); if(!p.customName) p.customName = p.title || ('Section '+(i+1)); }); }
+function currentPassage() { return quizState.passages.find(p=>p.id===quizState.currentPassageId) || null; }
+
+function renderSectionPillsHTML() {
+  return quizState.passages.map(p => {
+    const active = p.id === quizState.currentPassageId;
+    return `<div class="pill ${active?'active':''}" title="${esc(p.customName)}">
+      <span onclick="switchSection('${p.id}')" style="cursor:pointer">${esc(p.customName)}</span>
+      <span class="pill-act" onclick="event.stopPropagation();renamePassage('${p.id}')">/</span>
+      <span class="pill-act" onclick="event.stopPropagation();deletePassage('${p.id}')">×</span>
+    </div>`;
+  }).join('') + `<div class="pill add" onclick="addPassage()">+ New Section</div>`;
+}
+
+function switchSection(id) { quizState.currentPassageId = id; saveQuiz(); render(); }
+function addPassage() {
+  const name = prompt('Section name:');
+  if (!name || !name.trim()) return;
+  const p = { id:uid('sec'), customName:name.trim(), title:'', content:'' };
+  quizState.passages.push(p);
+  quizState.currentPassageId = p.id;
+  saveQuiz(); render();
+}
+function renamePassage(id) {
+  const p = quizState.passages.find(x=>x.id===id); if(!p) return;
+  const name = prompt('Rename section:', p.customName);
+  if (name===null) return;
+  if (!name.trim()) { toast('Name cannot be empty'); return; }
+  p.customName = name.trim(); saveQuiz(); render();
+}
+function deletePassage(id) {
+  const p = quizState.passages.find(x=>x.id===id); if(!p) return;
+  if (!confirm('Delete section "'+p.customName+'"? This removes all associated questions, highlights, and records.')) return;
+  const gIds = quizState.grammarQuestions.filter(q=>q.passageId===id).map(q=>q.id);
+  const vIds = quizState.vocabularyQuestions.filter(q=>q.passageId===id).map(q=>q.id);
+  const removed = new Set([...gIds,...vIds]);
+  quizState.grammarQuestions = quizState.grammarQuestions.filter(q=>q.passageId!==id);
+  quizState.vocabularyQuestions = quizState.vocabularyQuestions.filter(q=>q.passageId!==id);
+  quizState.highlights = quizState.highlights.filter(h=>h.passageId!==id);
+  quizState.wrongBook = quizState.wrongBook.filter(w=>w.passageId!==id && !removed.has(w.qId));
+  quizState.quizSets = quizState.quizSets.filter(qs=>qs.passageId!==id);
+  Object.keys(quizState.answerLog).forEach(k=>{ if(removed.has(k)) delete quizState.answerLog[k]; });
+  const idx = quizState.passages.findIndex(x=>x.id===id);
+  quizState.passages.splice(idx,1);
+  quizState.currentPassageId = quizState.passages.length ? quizState.passages[Math.max(0,Math.min(idx,quizState.passages.length-1))].id : null;
+  saveQuiz(); render();
+}
+
+// QuizSets
+function getQuizSets(pid) { return quizState.quizSets.filter(qs=>qs.passageId===pid); }
+function ensureDefaultQuizSet(pid) {
+  const list = getQuizSets(pid);
+  if (!list.length) { const qs = {id:uid('qs'),passageId:pid,name:'1',createdAt:Date.now()}; quizState.quizSets.push(qs); return qs; }
+  return list[0];
+}
+function currentQuizSet() {
+  const p = currentPassage(); if(!p) return null;
+  const list = getQuizSets(p.id); if(!list.length) return ensureDefaultQuizSet(p.id);
+  return list.find(x=>x.id===quizState.currentQuizSetId[p.id]) || list[0];
+}
+function getActiveQuizSetIds() {
+  const p = currentPassage(); if(!p) return [];
+  const list = getQuizSets(p.id); if(!list.length) return [];
+  const stored = quizState.activeQuizSetIds[p.id];
+  if (Array.isArray(stored) && stored.length) { const v = stored.filter(id=>list.some(x=>x.id===id)); if(v.length) return v; }
+  const single = list.find(x=>x.id===quizState.currentQuizSetId[p.id]);
+  return [single?.id || list[0].id];
+}
+function setActiveQuizSetIds(ids) {
+  const p = currentPassage(); if(!p) return;
+  quizState.activeQuizSetIds[p.id] = ids.slice();
+  if (ids.length===1) quizState.currentQuizSetId[p.id] = ids[0];
+  saveQuiz(); render();
+}
+
+function renderSectionTitleBarHTML() {
+  const p = currentPassage();
+  if (!p) return `<div style="font-size:14px;color:var(--ink-tertiary);margin-bottom:16px;">No sections. Click "+ New Section" or import JSON.</div>`;
+  const sets = getQuizSets(p.id);
+  if (!sets.length) ensureDefaultQuizSet(p.id);
+  const allSets = getQuizSets(p.id);
+  const activeIds = getActiveQuizSetIds();
+  const curVal = activeIds.length===allSets.length && allSets.length>1 ? '__all__' : (activeIds[0]||'');
+  const opts = [`<option value="__all__" ${curVal==='__all__'?'selected':''}>All Sets (${allSets.length})</option>`,
+    ...allSets.map(qs => {
+      const gc = quizState.grammarQuestions.filter(q=>q.quizSetId===qs.id).length;
+      const vc = quizState.vocabularyQuestions.filter(q=>q.quizSetId===qs.id).length;
+      return `<option value="${esc(qs.id)}" ${curVal===qs.id?'selected':''}>${esc(qs.name)} (${gc+vc})</option>`;
+    })].join('');
+
+  return `<div style="margin-bottom:12px;">
+    <h2 style="font-size:18px;font-weight:700;margin-bottom:4px;" contenteditable="true" id="passageTitleEditable" onblur="savePassageTitle()">${esc(p.title||p.customName)}</h2>
+    <div style="font-size:11px;color:var(--ink-tertiary);margin-bottom:8px;">Section: ${esc(p.customName)}</div>
+    <div class="quizset-bar">
+      <label>Quiz Set:</label>
+      <select onchange="onQuizSetChange(this.value)">${opts}</select>
+      <button class="apple-btn small" onclick="addQuizSet()">+ New</button>
+      <button class="apple-btn small" onclick="renameCurrentQS()" ${curVal==='__all__'||!curVal?'disabled':''}>Rename</button>
+      <button class="apple-btn small danger" onclick="deleteCurrentQS()" ${curVal==='__all__'||!curVal?'disabled':''}>Delete</button>
+    </div>
+  </div>`;
+}
+
+function savePassageTitle() {
+  const el = document.getElementById('passageTitleEditable');
+  if (!el) return;
+  const p = currentPassage(); if(!p) return;
+  const newTitle = (el.textContent||'').trim();
+  if (newTitle) { p.title = newTitle; saveQuiz(); }
+}
+function onQuizSetChange(val) {
+  const allSets = getQuizSets(currentPassage()?.id);
+  if (val==='__all__') setActiveQuizSetIds(allSets.map(qs=>qs.id));
+  else if (val) setActiveQuizSetIds([val]);
+}
+function addQuizSet() {
+  const p = currentPassage(); if(!p) { toast('Create a section first'); return; }
+  const list = getQuizSets(p.id);
+  const name = prompt('Quiz set name:', String(list.length+1));
+  if (name===null) return;
+  const qs = {id:uid('qs'),passageId:p.id,name:(name||'').trim()||String(list.length+1),createdAt:Date.now()};
+  quizState.quizSets.push(qs); quizState.currentQuizSetId[p.id]=qs.id;
+  saveQuiz(); render();
+}
+function renameCurrentQS() {
+  const ids = getActiveQuizSetIds(); if(!ids.length) return;
+  const qs = quizState.quizSets.find(x=>x.id===ids[0]); if(!qs) return;
+  const name = prompt('Rename:', qs.name); if(name===null) return;
+  if(!name.trim()){toast('Empty');return;} qs.name=name.trim(); saveQuiz(); render();
+}
+function deleteCurrentQS() {
+  const ids = getActiveQuizSetIds(); if(!ids.length) return;
+  const qs = quizState.quizSets.find(x=>x.id===ids[0]); if(!qs) return;
+  const gc = quizState.grammarQuestions.filter(q=>q.quizSetId===qs.id).length;
+  const vc = quizState.vocabularyQuestions.filter(q=>q.quizSetId===qs.id).length;
+  if(!confirm(`Delete "${qs.name}"? Removes ${gc+vc} questions.`)) return;
+  const removed = new Set([...quizState.grammarQuestions.filter(q=>q.quizSetId===qs.id).map(q=>q.id),...quizState.vocabularyQuestions.filter(q=>q.quizSetId===qs.id).map(q=>q.id)]);
+  quizState.grammarQuestions = quizState.grammarQuestions.filter(q=>q.quizSetId!==qs.id);
+  quizState.vocabularyQuestions = quizState.vocabularyQuestions.filter(q=>q.quizSetId!==qs.id);
+  quizState.wrongBook = quizState.wrongBook.filter(w=>w.quizSetId!==qs.id && !removed.has(w.qId));
+  Object.keys(quizState.answerLog).forEach(k=>{if(removed.has(k))delete quizState.answerLog[k];});
+  quizState.quizSets = quizState.quizSets.filter(x=>x.id!==qs.id);
+  const p = currentPassage();
+  if(p){const list=getQuizSets(p.id); quizState.currentQuizSetId[p.id]=list[0]?.id||null;}
+  saveQuiz(); render();
+}
+
+// ================================================================
+//  QUESTIONS RENDER
+// ================================================================
+function renderQuestionsHTML() {
+  const p = currentPassage();
+  if (!p) return `<div class="empty-state">No section selected</div>`;
+  const activeIds = getActiveQuizSetIds();
+  const activeSet = new Set(activeIds);
+  const isGrammar = quizState.activeTab === 'grammar';
+  const pool = isGrammar
+    ? quizState.grammarQuestions.filter(q=>q.passageId===p.id && activeSet.has(q.quizSetId))
+    : quizState.vocabularyQuestions.filter(q=>q.passageId===p.id && activeSet.has(q.quizSetId));
+
+  let html = `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+    <div style="font-size:12px;color:var(--ink-tertiary)">${pool.length} questions</div>
+    <button class="apple-btn" onclick="openQuestionEditor(null,'${isGrammar?'grammar':'vocab'}')">+ Add Question</button>
+  </div>`;
+
+  if (!pool.length) {
+    html += `<div class="empty-state">No questions in this set. Click "+ Add Question" or import JSON.</div>`;
+    return html;
+  }
+
+  pool.forEach((q,i) => { html += renderQuestionCard(q, i+1, isGrammar?'grammar':'vocab'); });
+  return html;
+}
+
+function renderQuestionCard(q, num, qType) {
+  const log = quizState.answerLog[q.id];
+  let html = `<div class="q-card" data-qid="${q.id}">
+    <div class="q-meta">Q${num} · ${qType.toUpperCase()}${q.synonymGroup?' · '+esc(q.synonymGroup):''}</div>
+    <div style="display:flex;gap:6px;margin-bottom:8px;">
+      <button class="q-tool-btn" onclick="openAddVocabDialog('${esc(q.question).replace(/'/g,"\\'")}')">+ Vocab</button>
+      <button class="q-tool-btn" onclick="openAddSynonymDialog('${q.id}')">Syn Synonyms</button>
+    </div>
+    <div class="q-text">${esc(q.question)}</div>
+    <div class="q-options">`;
+
+  q.options.forEach(opt => {
+    const letter = (opt.match(/^([A-Z])[.\s、)]/) || [])[1] || opt[0];
+    let cls = 'q-opt';
+    if (log) { if(letter===q.answer) cls+=' correct'; else if(letter===log.chosen) cls+=' wrong'; }
+    html += `<button class="${cls}" onclick="selectOption(this,'${letter}','${q.id}')">${esc(opt)}</button>`;
+  });
+  html += `</div>`;
+
+  if (log) {
+    html += `<div class="q-status ${log.correct?'ok':'err'}">${log.correct?'OK Correct':'X Wrong · Answer: '+esc(q.answer)}</div>`;
+    html += `<div class="q-explain show">${esc(q.explanation||'')}</div>`;
+  }
+
+  html += `<div class="q-actions">
+    <button class="primary" onclick="submitAnswer('${q.id}','${qType}')">Submit</button>
+    <button onclick="showAnswer('${q.id}')">Show Answer</button>
+    <button onclick="openQuestionEditor('${q.id}','${qType}')">Edit</button>
+    <button onclick="deleteQuestion('${q.id}','${qType}')">Delete</button>
+  </div></div>`;
+  return html;
+}
+
+function selectOption(btn, letter, qId) {
+  const card = btn.closest('.q-card');
+  card.querySelectorAll('.q-opt').forEach(o => o.classList.remove('selected'));
+  btn.classList.add('selected');
+  card._chosen = letter;
+}
+
+function submitAnswer(qId, qType) {
+  const card = document.querySelector(`.q-card[data-qid="${qId}"]`);
+  const chosen = card?._chosen;
+  if (!chosen) { toast('Select an option first'); return; }
+  const pool = qType==='grammar' ? quizState.grammarQuestions : quizState.vocabularyQuestions;
+  const q = pool.find(x=>x.id===qId); if(!q) return;
+  const correct = chosen === q.answer;
+  quizState.answerLog[qId] = { correct, chosen, ts: Date.now() };
+  if (!correct) {
+    quizState.wrongBook = quizState.wrongBook.filter(w=>w.qId!==qId);
+    quizState.wrongBook.push({id:uid('wb'),qType,qId,passageId:q.passageId,quizSetId:q.quizSetId||null,question:q.question,options:q.options,correctAnswer:q.answer,yourAnswer:chosen,explanation:q.explanation||'',ts:Date.now()});
+  } else {
+    quizState.wrongBook = quizState.wrongBook.filter(w=>w.qId!==qId);
+  }
+  saveQuiz(); render();
+}
+
+function showAnswer(qId) {
+  const card = document.querySelector(`.q-card[data-qid="${qId}"]`);
+  if (!card) return;
+  const q = [...quizState.grammarQuestions,...quizState.vocabularyQuestions].find(x=>x.id===qId);
+  if (!q) return;
+  card.querySelectorAll('.q-opt').forEach(o => {
+    const letter = (o.textContent.match(/^([A-Z])/) || [])[1];
+    if (letter===q.answer) o.classList.add('correct');
+  });
+  const expEl = card.querySelector('.q-explain');
+  if (expEl) { expEl.textContent = q.explanation||''; expEl.classList.add('show'); }
+}
+
+function deleteQuestion(qId, qType) {
+  if (!confirm('Delete this question?')) return;
+  if (qType==='grammar') quizState.grammarQuestions = quizState.grammarQuestions.filter(x=>x.id!==qId);
+  else quizState.vocabularyQuestions = quizState.vocabularyQuestions.filter(x=>x.id!==qId);
+  delete quizState.answerLog[qId];
+  quizState.wrongBook = quizState.wrongBook.filter(w=>w.qId!==qId);
+  saveQuiz(); render();
+}
+
+// Question Editor
+function openQuestionEditor(qId, qType) {
+  const isNew = !qId;
+  const p = currentPassage();
+  const cur = currentQuizSet();
+  let q;
+  if (qId) {
+    const pool = qType==='grammar' ? quizState.grammarQuestions : quizState.vocabularyQuestions;
+    q = pool.find(x=>x.id===qId);
+    if (!q) return;
+    q = {...q, options:[...q.options]};
+  } else {
+    q = {id:uid(qType==='grammar'?'g':'v'),passageId:p?.id,quizSetId:cur?.id,question:'',options:['A. ','B. ','C. ','D. '],answer:'A',explanation:'',synonymGroup:''};
+  }
+
+  const optsHTML = q.options.map((o,i) => `<div class="field"><label>Option ${String.fromCharCode(65+i)}</label><input class="qopt" value="${esc(o)}" /></div>`).join('');
+  const synHTML = qType==='vocab' ? `<div class="field"><label>Synonym Group</label><input id="qSyn" value="${esc(q.synonymGroup||'')}" /></div>` : '';
+
+  openGenericSheet((isNew?'Add':'Edit')+' '+(qType==='grammar'?'Grammar':'Vocab')+' Question', `
+    <div class="field"><label>Question</label><textarea id="qText">${esc(q.question)}</textarea></div>
+    ${synHTML}${optsHTML}
+    <div class="field"><label>Answer (A/B/C/D)</label><input id="qAns" value="${esc(q.answer)}" /></div>
+    <div class="field"><label>Explanation</label><textarea id="qExp">${esc(q.explanation||'')}</textarea></div>
+  `, [
+    {text:'Cancel', onclick:()=>closeSheet('genericSheet')},
+    {text:'Save', cls:'primary', onclick:()=>{
+      q.question = document.getElementById('qText').value.trim();
+      q.options = Array.from(document.querySelectorAll('.qopt')).map(i=>i.value.trim()).filter(Boolean);
+      q.answer = document.getElementById('qAns').value.trim().toUpperCase();
+      q.explanation = document.getElementById('qExp').value.trim();
+      if(qType==='vocab') q.synonymGroup = (document.getElementById('qSyn')?.value||'').trim();
+      if(!q.question || q.options.length<2) { toast('Incomplete'); return; }
+      if(isNew) {
+        if(qType==='grammar') quizState.grammarQuestions.push(q);
+        else quizState.vocabularyQuestions.push(q);
+      } else {
+        const pool = qType==='grammar'?quizState.grammarQuestions:quizState.vocabularyQuestions;
+        const idx = pool.findIndex(x=>x.id===q.id);
+        if(idx>=0) pool[idx] = q;
+      }
+      saveQuiz(); closeSheet('genericSheet'); render();
+    }}
+  ]);
+}
+
+// ================================================================
+//  READING
+// ================================================================
+let replacementMap = {};
+function buildReadingHTML(content, hls) {
+  const re = /[A-Za-z]+(?:[''][A-Za-z]+)?|\s+|[^A-Za-z\s]+/g;
+  const tokens = [];
+  let m;
+  while((m=re.exec(content))!==null) tokens.push({text:m[0],start:m.index,end:m.index+m[0].length});
+  const parts = tokens.map(t => {
+    const isWord = /^[A-Za-z]/.test(t.text);
+    if(isWord){const key=t.text.toLowerCase();const rep=replacementMap[key];const dt=rep||t.text;return{html:`<span class="word${rep?' replaced':''}" data-word="${esc(t.text)}" data-start="${t.start}" data-end="${t.end}">${esc(dt)}</span>`,start:t.start,end:t.end};}
+    return{html:esc(t.text),start:t.start,end:t.end};
+  });
+  let html='';
+  for(const part of parts){
+    const activeH = hls.find(h=>{const s=h.charStart??-1;const e=h.charEnd??-1;return s>=0&&e>=0&&part.start>=s&&part.end<=e;});
+    if(activeH){const cls="hl hl-"+(activeH.highlightColor||"yellow")+(activeH.note?" has-note":"");html+=`<span class="${cls}" data-hid="${esc(activeH.id)}">${part.html}</span>`;}
+    else html+=part.html;
+  }
+  return html;
+}
+
+function bindReadingEvents() {
+  const body = document.getElementById('readingBody');
+  if (!body) return;
+  body.querySelectorAll('.word').forEach(w => {
+    w.addEventListener('click', e => {
+      const sel = window.getSelection();
+      if(sel && sel.toString().trim().length>1) return;
+      showWordPopup(w, e);
+    });
+  });
+  body.querySelectorAll('.hl').forEach(h => {
+    h.addEventListener('click', e => { e.stopPropagation(); openHighlightEditor(h.dataset.hid); });
+  });
+
+  // Selection menu
+  body.addEventListener('mouseup', handleReadingSelection);
+}
+
+function handleReadingSelection() {
+  const sel = window.getSelection();
+  const menu = document.getElementById('selMenu');
+  if(!sel||sel.rangeCount===0||sel.isCollapsed){menu.style.display='none';return;}
+  const text = sel.toString().trim();
+  if(!text){menu.style.display='none';return;}
+  const range = sel.getRangeAt(0);
+  const rect = range.getBoundingClientRect();
+  if(rect.width===0){menu.style.display='none';return;}
+  menu.style.display='flex';
+  const w = menu.offsetWidth||300;
+  let left = rect.left+rect.width/2-w/2;
+  let top = rect.top-menu.offsetHeight-8;
+  if(top<8) top=rect.bottom+8;
+  left = Math.max(8,Math.min(left,window.innerWidth-w-8));
+  menu.style.left=left+'px'; menu.style.top=top+'px';
+  menu._selInfo = getSelectionOffsetInReading(range);
+  menu._selText = text;
+}
+
+function getSelectionOffsetInReading(range) {
+  const body = document.getElementById('readingBody');
+  if(!body) return null;
+  function findOff(node, isStart, offInNode) {
+    let el = node.nodeType===1?node:node.parentElement;
+    while(el&&el!==body&&!el.dataset?.start) el=el.parentElement;
+    if(el?.dataset?.start!=null){const s=+el.dataset.start;const e=+el.dataset.end;return isStart?s:e;}
+    return null;
+  }
+  const s=findOff(range.startContainer,true,range.startOffset);
+  const e=findOff(range.endContainer,false,range.endOffset);
+  if(s==null||e==null) return null;
+  return{start:Math.min(s,e),end:Math.max(s,e)};
+}
+
+document.getElementById('selMenu').addEventListener('click', e => {
+  const btn = e.target.closest('button'); if(!btn) return;
+  const menu = document.getElementById('selMenu');
+  const info = menu._selInfo; const text = menu._selText;
+  if(!info||!text){menu.style.display='none';return;}
+  const p = currentPassage(); if(!p){menu.style.display='none';return;}
+  if(btn.dataset.color) addHighlight(p.id,info.start,info.end,text,btn.dataset.color,'');
+  else if(btn.dataset.act==='note'){const note=prompt('Note:','');if(note!==null)addHighlight(p.id,info.start,info.end,text,'yellow',note.trim());}
+  else if(btn.dataset.act==='vocab') addToVocabBook(text.trim());
+  menu.style.display='none'; window.getSelection().removeAllRanges();
+});
+
+function addHighlight(pid,start,end,text,color,note){
+  quizState.highlights.push({id:uid('hl'),passageId:pid,charStart:start,charEnd:end,selectedText:text,highlightColor:color,note:note||'',timestamp:Date.now()});
+  saveQuiz(); render();
+}
+
+function openHighlightEditor(hid) {
+  const h = quizState.highlights.find(x=>x.id===hid); if(!h) return;
+  openGenericSheet('Edit Highlight', `
+    <div class="field"><label>Text</label><div style="padding:8px 12px;background:var(--bg-card);border-radius:8px;font-size:13px;">${esc(h.selectedText)}</div></div>
+    <div class="field"><label>Color</label><select id="hlColor"><option value="yellow"${h.highlightColor==='yellow'?' selected':''}>Yellow</option><option value="blue"${h.highlightColor==='blue'?' selected':''}>Blue</option><option value="pink"${h.highlightColor==='pink'?' selected':''}>Pink</option></select></div>
+    <div class="field"><label>Note</label><textarea id="hlNote">${esc(h.note||'')}</textarea></div>
+  `, [
+    {text:'Delete',cls:'danger',onclick:()=>{quizState.highlights=quizState.highlights.filter(x=>x.id!==hid);saveQuiz();closeSheet('genericSheet');render();}},
+    {text:'Cancel',onclick:()=>closeSheet('genericSheet')},
+    {text:'Save',cls:'primary',onclick:()=>{h.highlightColor=document.getElementById('hlColor').value;h.note=document.getElementById('hlNote').value.trim();saveQuiz();closeSheet('genericSheet');render();}}
+  ]);
+}
+
+function showWordPopup(wordEl) {
+  const word = wordEl.dataset.word; const wl = word.toLowerCase();
+  const pop = document.getElementById('wordPop');
+  const groups = quizState.synonymLibrary.filter(g=>(g.words||[]).some(w=>w.toLowerCase()===wl));
+  const inVocab = quizState.vocabularyBook.find(v=>v.word.toLowerCase()===wl);
+  let html = `<h4>${esc(word)}</h4>`;
+  if(groups.length){groups.forEach(g=>{const others=g.words.filter(w=>w.toLowerCase()!==wl);html+=`<div style="margin-bottom:6px"><div style="font-size:10px;color:var(--ink-tertiary);margin-bottom:4px">${esc(g.groupName||'Synonyms')}</div><div class="syn-list">${others.map(s=>`<span class="syn-chip" onclick="replaceWord('${wl}','${esc(s)}')">${esc(s)}</span>`).join('')}</div></div>`;});}
+  else html+=`<div style="font-size:11px;color:var(--ink-tertiary);margin-bottom:6px">No synonym groups found.</div>`;
+  html+=`<div class="pop-actions"><button onclick="delete replacementMap['${wl}'];document.getElementById('wordPop').style.display='none';render();">Reset</button><button onclick="addToVocabBook('${esc(word)}');document.getElementById('wordPop').style.display='none';">${inVocab?'In Vocab':'+ Vocab'}</button></div>`;
+  pop.innerHTML=html; pop.style.display='block';
+  const rect=wordEl.getBoundingClientRect();
+  pop.style.left=rect.left+'px'; pop.style.top=(rect.bottom+6)+'px';
+}
+function replaceWord(wl, rep) { replacementMap[wl]=rep; document.getElementById('wordPop').style.display='none'; render(); toast('Replaced with '+rep); }
+
+document.addEventListener('mousedown', e => {
+  const sel = document.getElementById('selMenu');
+  if(sel.style.display!=='none'&&!sel.contains(e.target)&&!e.target.closest('#readingBody')) sel.style.display='none';
+  const wp = document.getElementById('wordPop');
+  if(wp.style.display!=='none'&&!wp.contains(e.target)&&!e.target.classList.contains('word')) wp.style.display='none';
+});
+
+// ================================================================
+//  VOCABULARY BOOK
+// ================================================================
+function addToVocabBook(word, extra={}) {
+  word = (word||'').trim(); if(!word) return false;
+  const exists = quizState.vocabularyBook.find(v=>v.word.toLowerCase()===word.toLowerCase());
+  if(exists){toast('Already in vocab: '+word);return false;}
+  quizState.vocabularyBook.push({word,meaning:extra.meaning||'',example:extra.example||'',synonyms:extra.synonyms||[],notes:extra.notes||'',addedAt:Date.now(),srsBox:0,srsNext:Date.now(),srsReviews:0,srsLapses:0});
+  saveQuiz(); render(); toast('Added to vocab: '+word); return true;
+}
+
+function openQuizVocab() {
+  quizState.vocabularyBook.forEach(ensureSrs);
+  const items = [...quizState.vocabularyBook].sort((a,b)=>(b.addedAt||0)-(a.addedAt||0));
+  const dueCount = srsDueList(quizState.vocabularyBook).length;
+  const list = items.length ? items.map(v => {
+    const isDue = (v.srsNext||0)<=Date.now();
+    return `<div class="list-item" data-w="${esc(v.word)}">
+      <h4>${esc(v.word)} <span style="color:var(--ink-tertiary);font-weight:400;font-size:12px">— ${esc(v.meaning||'')}</span></h4>
+      <div class="meta">${esc(v.example||'')}</div>
+      <div class="chips"><span class="chip">Box ${v.srsBox||0}</span>${isDue?'<span class="chip" style="color:var(--orange)">Due</span>':'<span class="chip" style="color:var(--green)">Next: '+new Date(v.srsNext).toLocaleDateString()+'</span>'}${v.synonyms?.length?v.synonyms.map(s=>`<span class="chip">${esc(s)}</span>`).join(''):''}</div>
+      <div class="actions">
+        <button onclick="closeSheet('genericSheet');startSrsReview('vocab',[quizState.vocabularyBook.find(x=>x.word==='${esc(v.word)}')])">Review</button>
+        <button onclick="editVocabItem('${esc(v.word)}')">Edit</button>
+        <button onclick="quizState.vocabularyBook=quizState.vocabularyBook.filter(x=>x.word!=='${esc(v.word)}');saveQuiz();closeSheet('genericSheet');render();">Delete</button>
+      </div>
+    </div>`;
+  }).join('') : `<div class="empty-state">Vocabulary book is empty</div>`;
+
+  openGenericSheet(`R Vocabulary (${items.length})${dueCount?' · ! '+dueCount+' due':''}`,
+    `<div class="field"><input id="vSearch" placeholder="Search..." oninput="filterVocabSearch(this.value)"/></div><div id="vList">${list}</div>`,
+    [{text:`Rev Review (${dueCount})`,cls:dueCount?'primary':'',onclick:()=>{closeSheet('genericSheet');startSrsReview('vocab');}},{text:'+ Add',onclick:()=>editVocabItem(null)},{text:'Close',onclick:()=>closeSheet('genericSheet')}]
+  );
+}
+
+function filterVocabSearch(q) {
+  document.querySelectorAll('#vList .list-item').forEach(el => {
+    el.style.display = el.dataset.w.toLowerCase().includes(q.toLowerCase()) ? '' : 'none';
+  });
+}
+
+function editVocabItem(word) {
+  const v = word ? quizState.vocabularyBook.find(x=>x.word===word) : {word:'',meaning:'',example:'',synonyms:[],notes:''};
+  if(!v) return;
+  openGenericSheet(word?'Edit Vocab':'Add Vocab',`
+    <div class="field"><label>Word</label><input id="vw" value="${esc(v.word)}" ${word?'disabled':''}/></div>
+    <div class="field"><label>Meaning</label><input id="vm" value="${esc(v.meaning||'')}"/></div>
+    <div class="field"><label>Example</label><textarea id="ve">${esc(v.example||'')}</textarea></div>
+    <div class="field"><label>Synonyms</label><input id="vs" value="${esc((v.synonyms||[]).join(', '))}"/></div>
+    <div class="field"><label>Notes</label><textarea id="vn">${esc(v.notes||'')}</textarea></div>
+  `,[
+    {text:'Cancel',onclick:()=>closeSheet('genericSheet')},
+    {text:'Save',cls:'primary',onclick:()=>{
+      const wVal=(document.getElementById('vw').value||v.word||'').trim();if(!wVal){toast('Word required');return;}
+      v.word=wVal;v.meaning=document.getElementById('vm').value.trim();v.example=document.getElementById('ve').value.trim();
+      v.synonyms=document.getElementById('vs').value.split(',').map(s=>s.trim()).filter(Boolean);v.notes=document.getElementById('vn').value.trim();
+      if(!word){if(quizState.vocabularyBook.find(x=>x.word.toLowerCase()===wVal.toLowerCase())){toast('Exists');return;}v.addedAt=Date.now();ensureSrs(v);quizState.vocabularyBook.push(v);}
+      saveQuiz();closeSheet('genericSheet');render();
+    }}
+  ]);
+}
+
+// ================================================================
+//  SYNONYM LIBRARY
+// ================================================================
+function openQuizSynonyms() {
+  quizState.synonymLibrary.forEach(ensureSrs);
+  const groups = quizState.synonymLibrary;
+  const dueCount = srsDueList(quizState.synonymLibrary).length;
+  const html = groups.length ? groups.map((g,idx) => {
+    const isDue = (g.srsNext||0)<=Date.now();
+    return `<div class="syn-group-card" data-idx="${idx}">
+      <h4>${esc(g.groupName||'Group')} <span class="chip">Box ${g.srsBox||0}</span>${isDue?'<span class="chip" style="color:var(--orange)">Due</span>':''}</h4>
+      <div class="chips">${(g.words||[]).map(w=>`<span class="chip">${esc(w)}</span>`).join('')}</div>
+      ${g.notes?`<div class="meta" style="margin-top:6px">${esc(g.notes)}</div>`:''}
+      <div class="actions">
+        <button onclick="closeSheet('genericSheet');startSrsReview('syn',[quizState.synonymLibrary[${idx}]])">Review</button>
+        <button onclick="editSynGroup(${idx})">Edit</button>
+        <button onclick="quizState.synonymLibrary.splice(${idx},1);saveQuiz();closeSheet('genericSheet');render();">Delete</button>
+      </div>
+    </div>`;
+  }).join('') : `<div class="empty-state">Synonym library is empty</div>`;
+
+  openGenericSheet(`Syn Synonyms (${groups.length})${dueCount?' · ! '+dueCount+' due':''}`,html,
+    [{text:`Rev Review (${dueCount})`,cls:dueCount?'primary':'',onclick:()=>{closeSheet('genericSheet');startSrsReview('syn');}},{text:'+ Add Group',onclick:()=>editSynGroup(null)},{text:'Close',onclick:()=>closeSheet('genericSheet')}]
+  );
+}
+
+function editSynGroup(idx) {
+  const isNew = idx===null||idx===undefined;
+  const g = isNew ? {groupName:'',words:[],notes:''} : quizState.synonymLibrary[idx];
+  openGenericSheet(isNew?'Add Synonym Group':'Edit Synonym Group',`
+    <div class="field"><label>Group Name</label><input id="sgn" value="${esc(g.groupName||'')}"/></div>
+    <div class="field"><label>Words (comma or newline)</label><textarea id="sgw">${esc((g.words||[]).join(', '))}</textarea></div>
+    <div class="field"><label>Notes</label><textarea id="sgnn">${esc(g.notes||'')}</textarea></div>
+  `,[
+    {text:'Cancel',onclick:()=>closeSheet('genericSheet')},
+    {text:'Save',cls:'primary',onclick:()=>{
+      const name=document.getElementById('sgn').value.trim();
+      const words=document.getElementById('sgw').value.split(/[,\n]/).map(s=>s.trim()).filter(Boolean);
+      const notes=document.getElementById('sgnn').value.trim();
+      if(!name||words.length<2){toast('Name + 2 words min');return;}
+      if(isNew){quizState.synonymLibrary.push({groupName:name,words,notes,srsBox:0,srsNext:Date.now(),srsReviews:0,srsLapses:0});}
+      else{g.groupName=name;g.words=words;g.notes=notes;}
+      saveQuiz();closeSheet('genericSheet');render();
+    }}
+  ]);
+}
+
+function openAddVocabDialog(prefill) {
+  openGenericSheet('+ Add to Vocabulary',`
+    <div class="field"><label>Word</label><input id="vwIn" value="${esc(prefill||'')}"/></div>
+    <div class="field"><label>Meaning</label><input id="vmIn"/></div>
+    <div class="field"><label>Example</label><textarea id="veIn"></textarea></div>
+    <div class="field"><label>Synonyms</label><input id="vsIn"/></div>
+  `,[
+    {text:'Cancel',onclick:()=>closeSheet('genericSheet')},
+    {text:'Save',cls:'primary',onclick:()=>{
+      const word=document.getElementById('vwIn').value.trim();if(!word){toast('Word required');return;}
+      addToVocabBook(word,{meaning:document.getElementById('vmIn').value.trim(),example:document.getElementById('veIn').value.trim(),synonyms:document.getElementById('vsIn').value.split(',').map(s=>s.trim()).filter(Boolean)});
+      closeSheet('genericSheet');
+    }}
+  ]);
+}
+
+function openAddSynonymDialog(qId) {
+  const q = [...quizState.grammarQuestions,...quizState.vocabularyQuestions].find(x=>x.id===qId);
+  if(!q) return;
+  const cleanOpts = (q.options||[]).map(o=>o.replace(/^[A-Z][.\s、)]\s*/,'').trim()).filter(Boolean);
+  openGenericSheet('Syn Add Synonym Group',`
+    <div class="field"><label>Group Name</label><input id="sgnIn" value="${esc(q.synonymGroup||'')}"/></div>
+    <div class="field"><label>Words</label><textarea id="sgwIn">${esc(cleanOpts.join(', '))}</textarea></div>
+    <div class="field"><label>Notes</label><textarea id="sgnnIn">${esc(q.explanation||'')}</textarea></div>
+  `,[
+    {text:'Cancel',onclick:()=>closeSheet('genericSheet')},
+    {text:'Save',cls:'primary',onclick:()=>{
+      const name=document.getElementById('sgnIn').value.trim();
+      const words=document.getElementById('sgwIn').value.split(/[,\n]/).map(s=>s.trim()).filter(Boolean);
+      const notes=document.getElementById('sgnnIn').value.trim();
+      if(!name||words.length<2){toast('Need name + 2 words');return;}
+      const exists=quizState.synonymLibrary.find(g=>g.groupName===name);
+      if(exists){const set=new Set((exists.words||[]).map(w=>w.toLowerCase()));words.forEach(w=>{if(!set.has(w.toLowerCase())){exists.words.push(w);set.add(w.toLowerCase());}});if(notes&&!exists.notes)exists.notes=notes;}
+      else quizState.synonymLibrary.push({groupName:name,words,notes,srsBox:0,srsNext:Date.now(),srsReviews:0,srsLapses:0});
+      words.forEach(w=>addToVocabBook(w,{example:q.question||'',synonyms:words.filter(x=>x.toLowerCase()!==w.toLowerCase())}));
+      saveQuiz();closeSheet('genericSheet');render();toast('Saved to synonyms + vocab');
+    }}
+  ]);
+}
+
+// ================================================================
+//  WRONG BOOK
+// ================================================================
+function openQuizWrongBook() {
+  const p = currentPassage();
+  const all = [...quizState.wrongBook].sort((a,b)=>b.ts-a.ts);
+  const filtered = p ? all.filter(w=>w.passageId===p.id) : all;
+
+  const html = filtered.length ? filtered.map(w => `<div class="list-item">
+    <div class="chips"><span class="chip" style="color:var(--red)">${w.qType==='grammar'?'Grammar':'Vocab'}</span></div>
+    <h4>${esc(w.question)}</h4>
+    <div class="meta">Your: ${esc(w.yourAnswer)} · Correct: ${esc(w.correctAnswer)}</div>
+    ${w.explanation?`<div class="meta" style="margin-top:4px">${esc(w.explanation)}</div>`:''}
+    <div class="actions">
+      <button onclick="retryWrong('${w.id}')">Retry</button>
+      <button onclick="quizState.wrongBook=quizState.wrongBook.filter(x=>x.id!=='${w.id}');saveQuiz();closeSheet('genericSheet');render();">Delete</button>
+    </div>
+  </div>`).join('') : `<div class="empty-state">No wrong answers${p?' in current section':''}</div>`;
+
+  openGenericSheet('X Wrong Book ('+filtered.length+')',
+    `<div style="display:flex;gap:6px;margin-bottom:12px"><button class="apple-btn small ${!p?'active':''}" onclick="quizState.currentPassageId=null;saveQuiz();closeSheet('genericSheet');openQuizWrongBook();">All</button>${quizState.passages.map(pp=>`<button class="apple-btn small ${pp.id===p?.id?'active':''}" onclick="quizState.currentPassageId='${pp.id}';saveQuiz();closeSheet('genericSheet');openQuizWrongBook();">${esc(pp.customName)}</button>`).join('')}</div>`+html,
+    [{text:'Close',cls:'primary',onclick:()=>closeSheet('genericSheet')}]
+  );
+}
+
+function retryWrong(wId) {
+  const w = quizState.wrongBook.find(x=>x.id===wId); if(!w) return;
+  quizState.currentPassageId = w.passageId;
+  if(w.quizSetId) quizState.currentQuizSetId[w.passageId] = w.quizSetId;
+  quizState.activeTab = w.qType==='grammar'?'grammar':'vocab';
+  delete quizState.answerLog[w.qId];
+  quizState.wrongBook = quizState.wrongBook.filter(x=>x.id!==wId);
+  saveQuiz(); closeSheet('genericSheet'); render();
+}
+
+// ================================================================
+//  SRS REVIEW
+// ================================================================
+let srsSession = null;
+function startSrsReview(mode, customList) {
+  const source = mode==='vocab' ? quizState.vocabularyBook : quizState.synonymLibrary;
+  source.forEach(ensureSrs);
+  let queue;
+  if(Array.isArray(customList)&&customList.length){customList.forEach(ensureSrs);queue=customList.slice();}
+  else{const due=srsDueList(source);if(!due.length){toast('Nothing due! !');return;}queue=due.slice().sort(()=>Math.random()-0.5);}
+  srsSession = {mode,queue,total:queue.length,done:0,showAnswer:false};
+  renderSrsCard();
+}
+
+function renderSrsCard() {
+  if(!srsSession||!srsSession.queue.length){
+    openGenericSheet('! Review Complete',`<div style="text-align:center;padding:20px;font-size:14px;">Reviewed <b>${srsSession?.total||0}</b> items</div>`,
+      [{text:'Close',cls:'primary',onclick:()=>{srsSession=null;closeSheet('genericSheet');}}]);
+    return;
+  }
+  const cur=srsSession.queue[0];const isVocab=srsSession.mode==='vocab';
+  const frontHTML=isVocab?`<div style="font-size:28px;font-weight:700">${esc(cur.word)}</div>`:`<div style="font-size:22px;font-weight:700">${esc(cur.groupName||'Group')}</div><div style="color:var(--ink-tertiary);font-size:11px;margin-top:4px">${(cur.words||[]).length} words</div>`;
+  const backHTML=isVocab?`<div style="font-size:15px;color:var(--ink)">${esc(cur.meaning||'')}</div>${cur.example?`<div style="margin-top:10px;padding:8px 12px;background:var(--bg-card);border-radius:8px;font-size:12px;color:var(--ink-secondary)">${esc(cur.example)}</div>`:''}`:`<div class="chips">${(cur.words||[]).map(w=>`<span class="chip" style="font-size:14px;padding:6px 14px">${esc(w)}</span>`).join('')}</div>`;
+
+  const btnHTML = !srsSession.showAnswer
+    ? `<button class="apple-btn primary" style="padding:10px 40px" onclick="srsSession.showAnswer=true;renderSrsCard();">Show Answer</button>`
+    : `<div style="display:flex;gap:8px;justify-content:center">
+        <button class="apple-btn" style="background:rgba(255,69,58,0.1);color:var(--red)" onclick="srsGradeCurrent('again')">Again</button>
+        <button class="apple-btn" style="background:rgba(255,159,10,0.1);color:var(--orange)" onclick="srsGradeCurrent('hard')">Hard</button>
+        <button class="apple-btn" style="background:rgba(48,209,88,0.1);color:var(--green)" onclick="srsGradeCurrent('good')">Good</button>
+        <button class="apple-btn" style="background:rgba(10,132,255,0.1);color:var(--accent)" onclick="srsGradeCurrent('easy')">Easy</button>
+      </div>`;
+
+  openGenericSheet(`Rev Review · ${isVocab?'Vocabulary':'Synonyms'}`,`
+    <div style="max-width:500px;margin:0 auto">
+      <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--ink-tertiary);margin-bottom:16px"><span>${srsSession.done+1}/${srsSession.total}</span><span>Box ${cur.srsBox||0}</span></div>
+      <div style="background:var(--bg-card);border:1px solid var(--line);border-radius:var(--radius);padding:40px 24px;text-align:center;min-height:200px;display:flex;flex-direction:column;justify-content:center;align-items:center">
+        ${frontHTML}
+        <div style="width:100%;margin-top:20px;padding-top:20px;border-top:1px dashed var(--line);${srsSession.showAnswer?'':'display:none'}">${backHTML}</div>
+      </div>
+      <div style="margin-top:20px;text-align:center">${btnHTML}</div>
+    </div>
+  `,[{text:'End Review',cls:'primary',onclick:()=>{srsSession=null;closeSheet('genericSheet');}}]);
+}
+
+function srsGradeCurrent(grade) {
+  if(!srsSession) return;
+  const cur=srsSession.queue.shift();
+  srsGrade(cur,grade);
+  srsSession.done++;srsSession.showAnswer=false;
+  saveQuiz();renderSrsCard();
+}
+
+// Keyboard shortcuts for SRS
+document.addEventListener('keydown', e => {
+  if(!srsSession) return;
+  if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA') return;
+  if(!srsSession.showAnswer&&(e.code==='Space'||e.key==='Enter')){e.preventDefault();srsSession.showAnswer=true;renderSrsCard();}
+  else if(srsSession.showAnswer){const map={1:'again',2:'hard',3:'good',4:'easy'};if(map[e.key]){e.preventDefault();srsGradeCurrent(map[e.key]);}}
+});
+
+// ================================================================
+//  QUIZ SETTINGS / IMPORT / EXPORT
+// ================================================================
+function openQuizSettings() {
+  openGenericSheet('Set Quiz Hub Settings',`
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      <div style="padding:14px;background:var(--bg-card);border:1px solid var(--line);border-radius:var(--radius);">
+        <div style="font-weight:600;font-size:13px;margin-bottom:8px">Data Data Management</div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px">
+          <button class="apple-btn" onclick="closeSheet('genericSheet');exportQuizJSON()">↓ Export JSON</button>
+          <button class="apple-btn" onclick="closeSheet('genericSheet');importQuizJSON()">> Import JSON (overwrite)</button>
+          <button class="apple-btn" onclick="closeSheet('genericSheet');copyAIPrompt()">Tasks Copy AI Prompt</button>
+        </div>
+      </div>
+      <div style="padding:14px;background:var(--bg-card);border:1px solid var(--line);border-radius:var(--radius);">
+        <div style="font-weight:600;font-size:13px;margin-bottom:8px">Cloud Cloud Sync (GitHub Gist)</div>
+        <div style="display:flex;gap:8px">
+          <button class="apple-btn" onclick="closeSheet('genericSheet');openCloudSync()">Cloud Open Cloud Sync</button>
+        </div>
+      </div>
+    </div>
+  `,[{text:'Close',cls:'primary',onclick:()=>closeSheet('genericSheet')}]);
+}
+
+function exportQuizJSON() {
+  const obj = {version:'2.0',schemaVersion:QUIZ_SCHEMA,exportedAt:Date.now(),passages:quizState.passages,quizSets:quizState.quizSets,grammarQuestions:quizState.grammarQuestions,vocabularyQuestions:quizState.vocabularyQuestions,vocabularyBook:quizState.vocabularyBook,synonymLibrary:quizState.synonymLibrary,highlights:quizState.highlights,wrongBook:quizState.wrongBook,answerLog:quizState.answerLog,currentPassageId:quizState.currentPassageId,currentQuizSetId:quizState.currentQuizSetId};
+  downloadJSON(obj,'quiz_export_'+todayISO()+'.json');
+  toast('Exported OK');
+}
+
+function importQuizJSON() {
+  if(quizState.passages.length&&!confirm('This will OVERWRITE all quiz data. Continue?')) return;
+  const inp = document.createElement('input'); inp.type='file'; inp.accept='.json';
+  inp.onchange = e => {
+    const f = e.target.files[0]; if(!f) return;
+    const r = new FileReader();
+    r.onload = () => { try { importQuizData(JSON.parse(r.result)); toast('Imported OK'); } catch(err) { alert('Import failed: '+err.message); } };
+    r.readAsText(f);
+  };
+  inp.click();
+}
+
+function importQuizData(data) {
+  if(!data||typeof data!=='object') throw new Error('Invalid JSON');
+  const passages = Array.isArray(data.passages)?data.passages:[];
+  passages.forEach((p,i)=>{if(!p.id)p.id=uid('sec');if(!p.customName)p.customName=p.title||('Section '+(i+1));if(typeof p.content!=='string')p.content='';});
+  quizState.passages=passages;
+  quizState.quizSets=Array.isArray(data.quizSets)?data.quizSets:[];
+  quizState.grammarQuestions=Array.isArray(data.grammarQuestions)?data.grammarQuestions:[];
+  quizState.vocabularyQuestions=Array.isArray(data.vocabularyQuestions)?data.vocabularyQuestions:[];
+  quizState.vocabularyBook=Array.isArray(data.vocabularyBook)?data.vocabularyBook:[];
+  quizState.synonymLibrary=Array.isArray(data.synonymLibrary)?data.synonymLibrary:[];
+  quizState.highlights=Array.isArray(data.highlights)?data.highlights:[];
+  quizState.wrongBook=Array.isArray(data.wrongBook)?data.wrongBook:[];
+  quizState.answerLog=data.answerLog||{};
+  quizState.currentQuizSetId=data.currentQuizSetId||{};
+  quizState.currentPassageId=data.currentPassageId||(passages[0]&&passages[0].id)||null;
+  quizState.highlights.forEach(h=>{if(!h.id)h.id=uid('hl');});
+  quizState.quizSets.forEach(qs=>{if(!qs.id)qs.id=uid('qs');});
+  passages.forEach(p=>{if(!quizState.quizSets.some(qs=>qs.passageId===p.id)){quizState.quizSets.push({id:uid('qs'),passageId:p.id,name:'1',createdAt:Date.now()});}});
+  saveQuiz(); render();
+}
+
+function clearAllQuiz() {
+  if(!confirm('Clear ALL quiz data? This cannot be undone.')) return;
+  quizState = {version:'2.0',schemaVersion:QUIZ_SCHEMA,passages:[],quizSets:[],grammarQuestions:[],vocabularyQuestions:[],vocabularyBook:[],synonymLibrary:[],highlights:[],wrongBook:[],answerLog:{},currentPassageId:null,currentQuizSetId:{},activeQuizSetIds:{},activeTab:'grammar',activeQIndex:{grammar:{},vocab:{}}};
+  saveQuiz(); render();
+}
+
+function loadSeedData() {
+  if(quizState.passages.length&&!confirm('Merge sample data?')) return;
+  const seed = getSeedData();
+  seed.passages.forEach(p=>{if(!quizState.passages.find(x=>x.id===p.id))quizState.passages.push(p);});
+  seed.grammarQuestions.forEach(q=>{if(!quizState.grammarQuestions.find(x=>x.id===q.id))quizState.grammarQuestions.push(q);});
+  seed.vocabularyQuestions.forEach(q=>{if(!quizState.vocabularyQuestions.find(x=>x.id===q.id))quizState.vocabularyQuestions.push(q);});
+  seed.vocabularyBook.forEach(v=>{if(!quizState.vocabularyBook.find(x=>x.word===v.word))quizState.vocabularyBook.push(v);});
+  seed.synonymLibrary.forEach(g=>{if(!quizState.synonymLibrary.find(x=>x.groupName===g.groupName))quizState.synonymLibrary.push(g);});
+  if(!quizState.currentPassageId&&quizState.passages.length) quizState.currentPassageId=quizState.passages[0].id;
+  saveQuiz(); render(); toast('Sample data loaded');
+}
+
+function getSeedData() {
+  return {
+    passages:[
+      {id:'sec_seed_001',customName:'Subjunctive Mood',title:'Subjunctive Mood in Context',content:'If I were you, I would reconsider the decision. Were it not for his timely help, we might have failed the project. The teacher insisted that every student be present at the meeting.'},
+      {id:'sec_seed_002',customName:'Prepositions',title:'Prepositions in Academic Writing',content:'The success of the project depends on careful planning and effective communication. Researchers have long been concerned about the impact of climate change on coastal cities.'}
+    ],
+    grammarQuestions:[
+      {id:'g_seed_001',passageId:'sec_seed_001',quizSetId:null,question:'Which sentence uses subjunctive mood correctly?',options:['A. If I was you, I will go.','B. If I were you, I would go.','C. If I am you, I would go.','D. If I be you, I go.'],answer:'B',explanation:'虚拟语气中，与现在事实相反时，be 动词用 were。'},
+      {id:'g_seed_002',passageId:'sec_seed_002',quizSetId:null,question:'The result depends ____ several factors.',options:['A. of','B. on','C. from','D. at'],answer:'B',explanation:'depend on = 取决于'}
+    ],
+    vocabularyQuestions:[
+      {id:'v_seed_001',passageId:'sec_seed_002',quizSetId:null,synonymGroup:'depend on',question:'Closest synonym of "depend on"?',options:['A. rely on','B. look after','C. turn off','D. give away'],answer:'A',explanation:'depend on 与 rely on 都表示依赖。'}
+    ],
+    vocabularyBook:[{word:'reconsider',meaning:'重新考虑',example:'You should reconsider.',synonyms:['review','rethink'],notes:'',addedAt:Date.now(),srsBox:0,srsNext:Date.now(),srsReviews:0,srsLapses:0}],
+    synonymLibrary:[{groupName:'Depend Group',words:['depend on','rely on','count on','hinge on'],notes:'表示依赖',srsBox:0,srsNext:Date.now(),srsReviews:0,srsLapses:0}]
+  };
+}
+
+function copyAIPrompt() {
+  const prompt = `You are a JSON conversion assistant. Convert the following questions into this JSON format:
+{"version":"2.0","passages":[{"id":"sec_001","customName":"Section Name","title":"","content":""}],"quizSets":[{"id":"qs_001","passageId":"sec_001","name":"1"}],"grammarQuestions":[{"id":"g_001","passageId":"sec_001","quizSetId":"qs_001","question":"...","options":["A. ...","B. ...","C. ...","D. ..."],"answer":"A","explanation":"..."}],"vocabularyQuestions":[],"vocabularyBook":[],"synonymLibrary":[],"highlights":[]}
+Rules: Output ONLY valid JSON. Each question needs passageId and quizSetId. Options start with A./B./C./D. Answer is single uppercase letter. Explanation in Chinese.
+Paste your questions below:`;
+  navigator.clipboard.writeText(prompt).then(()=>toast('Prompt copied OK')).catch(()=>toast('Copy failed'));
+}
+
+function openCloudSync() {
+  const g = quizMeta.gist;
+  openGenericSheet('Cloud Cloud Sync (GitHub Gist)',`
+    <div style="font-size:12px;color:var(--ink-secondary);margin-bottom:12px">Use your GitHub token to sync data to a private Gist.</div>
+    <div class="field"><label>GitHub Token</label><input id="gistToken" type="password" value="${esc(g.token||'')}"/></div>
+    <div class="field"><label>Gist ID</label><input id="gistId" value="${esc(g.gistId||'')}"/></div>
+    <div class="field"><label>Filename</label><input id="gistFn" value="${esc(g.filename||'dashboard.json')}"/></div>
+  `,[
+    {text:'↑ Upload',onclick:()=>cloudUpload()},
+    {text:'↓ Download',onclick:()=>cloudDownload()},
+    {text:'Save Config',cls:'primary',onclick:()=>{quizMeta.gist={token:document.getElementById('gistToken').value.trim(),gistId:document.getElementById('gistId').value.trim(),filename:document.getElementById('gistFn').value.trim()||'dashboard.json',lastSyncTs:g.lastSyncTs};try{localStorage.setItem(QUIZ_META_KEY,JSON.stringify(quizMeta));}catch(_){}toast('Config saved');closeSheet('genericSheet');}}
+  ]);
+}
+
+async function cloudUpload() {
+  const token=(document.getElementById('gistToken')?.value||'').trim();
+  const gistId=(document.getElementById('gistId')?.value||'').trim();
+  const filename=(document.getElementById('gistFn')?.value||'dashboard.json').trim();
+  if(!token){alert('Token required');return;}
+  try{
+    toast('Uploading...');
+    const body={description:'Quiz Backup',public:false,files:{[filename]:{content:JSON.stringify({version:'2.0',schemaVersion:QUIZ_SCHEMA,exportedAt:Date.now(),passages:quizState.passages,quizSets:quizState.quizSets,grammarQuestions:quizState.grammarQuestions,vocabularyQuestions:quizState.vocabularyQuestions,vocabularyBook:quizState.vocabularyBook,synonymLibrary:quizState.synonymLibrary,highlights:quizState.highlights,wrongBook:quizState.wrongBook,answerLog:quizState.answerLog,currentPassageId:quizState.currentPassageId,currentQuizSetId:quizState.currentQuizSetId},null,2)}}};
+    let url='https://api.github.com/gists';let method='POST';
+    if(gistId){url+='/'+gistId;method='PATCH';}
+    const res=await fetch(url,{method,headers:{'Accept':'application/vnd.github+json','Authorization':'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify(body)});
+    if(!res.ok) throw new Error(res.status);
+    const data=await res.json();
+    quizMeta.gist={token,gistId:data.id||gistId,filename,lastSyncTs:Date.now()};
+    try{localStorage.setItem(QUIZ_META_KEY,JSON.stringify(quizMeta));}catch(_){}
+    toast('OK Uploaded');
+  }catch(e){alert('Upload failed: '+e.message);}
+}
+
+async function cloudDownload() {
+  const token=(document.getElementById('gistToken')?.value||'').trim();
+  const gistId=(document.getElementById('gistId')?.value||'').trim();
+  const filename=(document.getElementById('gistFn')?.value||'dashboard.json').trim();
+  if(!token||!gistId){alert('Token and Gist ID required');return;}
+  if(!confirm('Overwrite local data with cloud?')) return;
+  try{
+    toast('Downloading...');
+    const res=await fetch('https://api.github.com/gists/'+gistId,{headers:{'Accept':'application/vnd.github+json','Authorization':'Bearer '+token}});
+    if(!res.ok) throw new Error(res.status);
+    const data=await res.json();
+    const file=data.files?.[filename]||Object.values(data.files||{})[0];
+    if(!file?.content) throw new Error('No data file');
+    importQuizData(JSON.parse(file.content));
+    toast('OK Downloaded');closeSheet('genericSheet');
+  }catch(e){alert('Download failed: '+e.message);}
+}
+
+// ================================================================
+//  STUDY RESOURCES RENDER
+// ================================================================
+function renderStudyResources(container) {
+  const subj = appState.currentSubject;
+  const meta = customSubjects[subj];
+  const sc = subjectScores[subj] || {maxScore:100,currentScore:0,targetScore:90,modules:[],note:''};
+  const prog = getSubjectProgress(subj);
+
+  let html = '';
+
+  // Stats Row
+  html += `<div class="res-stats-row">
+    <div class="res-stat-card" onclick="resViewState.filterType='resources';render()">
+      <div class="label">Total Resources</div>
+      <div class="value">${resources.length}</div>
+      <div class="sub">all subjects</div>
+    </div>
+    <div class="res-stat-card" onclick="resViewState.filterType='exercises';resViewState.filterStatus='pending';render()">
+      <div class="label">Pending Tasks</div>
+      <div class="value" style="color:var(--pink)">${exercises.filter(e=>e.status==='pending').length}</div>
+      <div class="sub">exercises in progress</div>
+    </div>
+    <div class="res-stat-card" onclick="resViewState.filterType='exercises';resViewState.filterStatus='completed';render()">
+      <div class="label">Completed</div>
+      <div class="value" style="color:var(--green)">${exercises.filter(e=>e.status==='completed').length}</div>
+      <div class="sub">exercises done</div>
+    </div>
+    <div class="res-stat-card countdown">
+      <div class="label" style="display:flex;justify-content:space-between;align-items:center">Countdown <button class="apple-btn small" style="font-size:10px;padding:2px 6px" onclick="openCountdownEdit()">Edit</button></div>
+      <div class="value" id="cdDays">${getCountdownDays()}</div>
+      <div class="sub" id="cdTitle">${esc(countdownConfig.title)}</div>
+    </div>
+  </div>`;
+
+  // Subject Score Banner
+  if (meta) {
+    html += `<div class="subject-banner">
+      <div class="sb-top-row">
+        <div class="sb-left">
+          <h3><span style="width:10px;height:10px;border-radius:3px;background:${meta.color}"></span>${esc(meta.label)} Score & Progress</h3>
+          <p>${esc(meta.tagline)}</p>
+          <div style="margin-top:8px;width:260px">
+            <div style="display:flex;justify-content:space-between;font-size:11px;font-weight:600;margin-bottom:4px"><span>Progress</span><span style="color:${meta.color}">${prog.percent}%</span></div>
+            <div class="progress-bar"><div class="progress-fill" style="width:${prog.percent}%;background:${meta.color}"></div></div>
+          </div>
+        </div>
+        <div class="sb-scores">
+          <div class="sb-score-box"><div class="sb-label">Current</div><div class="sb-val" style="color:${meta.color}">${sc.currentScore} <span style="font-size:12px;color:var(--ink-tertiary)">/ ${sc.maxScore}</span></div></div>
+          <div class="sb-score-box"><div class="sb-label">Target</div><div class="sb-val" style="color:var(--green)">${sc.targetScore}</div></div>
+          <div class="sb-score-box"><div class="sb-label">Tasks</div><div class="sb-val">${prog.done}<span style="font-size:12px;color:var(--ink-tertiary)">/${prog.total}</span></div></div>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="apple-btn small" onclick="openScoreModal('${subj}')">Set Configure Score</button>
+      </div>
+      ${sc.note?`<div class="score-note-box" onmouseup="handleNoteSelection('${subj}')">${parseInlineHighlight(subj,sc.note)}</div>`:''}
+    </div>`;
+  }
+
+  // Score Breakdown Grid
+  html += `<div class="score-overview-grid">
+    ${Object.keys(customSubjects).map(key => {
+      const s = customSubjects[key]; const ssc = subjectScores[key]||{maxScore:100,currentScore:0,targetScore:90,modules:[],note:''};
+      return `<div class="score-card" onclick="openScoreModal('${key}')">
+        <div class="score-card-title"><span style="width:8px;height:8px;border-radius:3px;background:${s.color}"></span>${esc(s.label)}</div>
+        <div class="score-numbers"><span class="score-curr" style="color:${s.color}">${ssc.currentScore}</span><span class="score-max">/ ${ssc.maxScore}</span></div>
+        <div class="score-target-pill">Target: ${ssc.targetScore}</div>
+        <div class="score-module-list">${(ssc.modules||[]).map(m=>`<div class="score-module-item"><span>${esc(m.name)} ${m.duration?`<span style="color:var(--orange);background:rgba(255,159,10,0.1);padding:1px 5px;border-radius:4px;font-size:10px;margin-left:4px">${esc(m.duration)}</span>`:''}</span><span>${m.score}pts</span></div>`).join('')}</div>
+      </div>`;
+    }).join('')}
+  </div>`;
+
+  // Filter Bar
+  html += renderResFilterBar();
+
+  // Exercises Section
+  let ex = exercises.filter(e => !subj || e.subject===subj);
+  if(resViewState.filterSubject!=='all') ex = ex.filter(e=>e.subject===resViewState.filterSubject);
+  if(resViewState.filterPriority!=='all') ex = ex.filter(e=>e.priority===resViewState.filterPriority);
+  if(resViewState.filterStatus!=='all') ex = ex.filter(e=>e.status===resViewState.filterStatus);
+  if(resViewState.filterType==='all'||resViewState.filterType==='exercises') {
+    const overdueCount = getOverdueCount();
+    html += `<div class="res-section" id="exercisesSection">
+      <div class="res-section-head">
+        <div style="display:flex;align-items:center;gap:10px">
+          <h3>Tasks Exercise Bank <span class="count-pill">${ex.length}</span></h3>
+          ${overdueCount>0?`<button class="apple-btn small danger" onclick="openOverdueModal()">! Overdue (${overdueCount})</button>`:`<span style="font-size:11px;color:var(--green);font-weight:600">OK All on track</span>`}
+        </div>
+        <button class="apple-btn primary" onclick="openExerciseModal('${subj}')">+ Add Exercise</button>
+      </div>
+      ${ex.length?`<div class="exercise-list">${ex.map(e=>exerciseCard(e)).join('')}</div>`:`<div class="empty-state">No exercises</div>`}
+    </div>`;
+  }
+
+  // Resources Section
+  if(resViewState.filterType==='all'||resViewState.filterType==='resources') {
+    let res = resources.filter(r=>!subj||r.subject===subj);
+    if(resViewState.filterSubject!=='all') res = res.filter(r=>r.subject===resViewState.filterSubject);
+    const notStarted = res.filter(r=>r.status==='not_started'||(r.startDate&&r.startDate>todayISO()));
+    const pending = res.filter(r=>r.status==='pending'&&(!r.startDate||r.startDate<=todayISO()));
+    const completed = res.filter(r=>r.status==='completed');
+    let displayed = [...res];
+    if(resViewState.resTab==='not_started') displayed=notStarted;
+    if(resViewState.resTab==='pending') displayed=pending;
+    if(resViewState.resTab==='completed') displayed=completed;
+
+    html += `<div class="res-section" id="resourcesSection">
+      <div class="res-section-head">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+          <h3> Resources <span class="count-pill">${displayed.length}</span></h3>
+          <div class="res-tab-bar">
+            <button class="res-tab-btn ${resViewState.resTab==='all'?'active':''}" onclick="resViewState.resTab='all';render()">All (${res.length})</button>
+            <button class="res-tab-btn ${resViewState.resTab==='not_started'?'active':''}" onclick="resViewState.resTab='not_started';render()">Not Started (${notStarted.length})</button>
+            <button class="res-tab-btn ${resViewState.resTab==='pending'?'active':''}" onclick="resViewState.resTab='pending';render()">In Progress (${pending.length})</button>
+            <button class="res-tab-btn ${resViewState.resTab==='completed'?'active':''}" onclick="resViewState.resTab='completed';render()">Done (${completed.length})</button>
+          </div>
+        </div>
+        <button class="apple-btn primary" onclick="openResourceModal('${subj}')">+ Add Resource</button>
+      </div>
+      ${displayed.length?`<div class="resource-grid">${displayed.map(r=>resourceCard(r)).join('')}</div>`:`<div class="empty-state">No resources</div>`}
+    </div>`;
+  }
+
+  container.innerHTML = html;
+}
+
+function renderResFilterBar() {
+  return `<div class="res-filter-bar">
+    <div style="display:flex;align-items:center;gap:8px"><label>Subject</label>
+      <select onchange="resViewState.filterSubject=this.value;render()">
+        <option value="all" ${resViewState.filterSubject==='all'?'selected':''}>Current Subject</option>
+        ${Object.keys(customSubjects).map(k=>`<option value="${k}" ${resViewState.filterSubject===k?'selected':''}>${esc(customSubjects[k].label)}</option>`).join('')}
+      </select>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px"><label>Priority</label>
+      <select onchange="resViewState.filterPriority=this.value;render()">
+        <option value="all">All</option><option value="high" ${resViewState.filterPriority==='high'?'selected':''}>High</option><option value="medium" ${resViewState.filterPriority==='medium'?'selected':''}>Medium</option><option value="low" ${resViewState.filterPriority==='low'?'selected':''}>Low</option>
+      </select>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px"><label>Type</label>
+      <select onchange="resViewState.filterType=this.value;render()">
+        <option value="all" ${resViewState.filterType==='all'?'selected':''}>All</option><option value="resources" ${resViewState.filterType==='resources'?'selected':''}>Resources</option><option value="exercises" ${resViewState.filterType==='exercises'?'selected':''}>Exercises</option>
+      </select>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px"><label>Status</label>
+      <select onchange="resViewState.filterStatus=this.value;render()">
+        <option value="all">All</option><option value="pending" ${resViewState.filterStatus==='pending'?'selected':''}>Pending</option><option value="completed" ${resViewState.filterStatus==='completed'?'selected':''}>Completed</option>
+      </select>
+    </div>
+    <button class="apple-btn small" onclick="resViewState={filterSubject:'all',filterType:'all',filterStatus:'all',filterPriority:'all',resTab:'all'};render()">Reset</button>
+  </div>`;
+}
+
+// Resource Card
+function resourceCard(r) {
+  const isDone = r.status==='completed';
+  const isNotStarted = r.status==='not_started'||(r.startDate&&r.startDate>todayISO());
+  const statusText = isDone?'Completed':isNotStarted?`Plan: ${r.startDate||'Not set'}`:'In Progress';
+  const statusColor = isDone?'var(--green)':isNotStarted?'var(--orange)':'var(--ink-secondary)';
+  const statusBg = isDone?'rgba(48,209,88,0.1)':isNotStarted?'rgba(255,159,10,0.1)':'var(--bg-elev)';
+
+  return `<div class="res-card ${isDone?'completed':''}" data-id="${r.id}">
+    <div class="res-top">
+      <div class="res-title-wrap">
+        <span class="drag-handle">::</span>
+        <div class="res-check ${isDone?'checked':''}" onclick="toggleResourceStatus('${r.id}')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5L19 7"/></svg>
+        </div>
+        <div class="res-title">${esc(r.title)}</div>
+      </div>
+      <div style="display:flex;gap:4px">
+        <button class="apple-btn small" onclick="openEditResourceModal('${r.id}')">Edit</button>
+        <button class="res-tool-btn delete" onclick="deleteResource('${r.id}')">Del</button>
+      </div>
+    </div>
+    <div class="res-path">${esc(r.path||'—')}</div>
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <span style="font-size:10px;font-weight:700;color:${statusColor};background:${statusBg};padding:2px 7px;border-radius:6px">${statusText}</span>
+      <div class="res-tags">${(r.tags||[]).map(t=>`<span class="pill-tag">${esc(t)}</span>`).join('')}</div>
+    </div>
+    <div class="res-bottom">
+      <span class="res-date">Added ${r.createdAt}</span>
+      <button class="apple-btn small" onclick="alert('Open: ${esc(r.path||'')}')">Open</button>
+    </div>
+  </div>`;
+}
+
+// Exercise Card
+function exerciseCard(e) {
+  const subtasks = e.subtasks||[];
+  const totalSt = subtasks.length;
+  const doneSt = subtasks.filter(st=>st.completed).length;
+  const checked = e.status==='completed';
+  const isOverdue = checkIsOverdue(e.dueDate, checked);
+
+  return `<div class="ex-card ${checked?'completed':''} ${e.pinned?'pinned':''}" data-id="${e.id}">
+    <div class="ex-row">
+      <span class="drag-handle">::</span>
+      <div class="ex-check ${checked?'checked':''}" onclick="toggleExerciseMain('${e.id}')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5L19 7"/></svg>
+      </div>
+      <span class="ex-subject-tag" style="background:${customSubjects[e.subject]?.tint||'var(--bg-elev)'};color:${customSubjects[e.subject]?.color||'var(--ink)'}">${customSubjects[e.subject]?.label||e.subject}</span>
+      <div class="ex-body">
+        <div class="ex-title-row">
+          ${e.pinned?'<span style="font-size:10px;font-weight:700;color:var(--yellow);background:rgba(255,214,10,0.12);padding:2px 6px;border-radius:4px">Pinned</span>':''}
+          <span class="priority-tag priority-${e.priority||'medium'}">${(e.priority||'medium').charAt(0).toUpperCase()+(e.priority||'medium').slice(1)}</span>
+          <div class="ex-title">${esc(e.title)}</div>
+        </div>
+        <div class="ex-meta">
+          ${e.chapter?`<span>${esc(e.chapter)}</span>`:''}
+          ${e.dueDate?`<span style="${isOverdue?'color:var(--red);font-weight:700':''}">Due ${e.dueDate} ${isOverdue?'(Overdue!)':''}</span>`:''}
+          ${totalSt?`<span style="background:var(--bg-elev);padding:1px 6px;border-radius:4px;font-weight:600">${doneSt}/${totalSt} done</span>`:''}
+        </div>
+      </div>
+      <span class="ex-status ${e.status}">${e.status==='pending'?'Pending':'Done'}</span>
+      <div style="display:flex;align-items:center;gap:4px;flex-shrink:0">
+        <button class="ex-tool-btn pin ${e.pinned?'active':''}" onclick="togglePinExercise('${e.id}')">Pin</button>
+        <button class="apple-btn small" onclick="openEditExerciseModal('${e.id}')">Edit</button>
+        <button class="ex-tool-btn delete" onclick="deleteExercise('${e.id}')">Del</button>
+      </div>
+    </div>
+    <div class="subtasks-area">
+      ${subtasks.map(st=>{const stOverdue=checkIsOverdue(st.dueDate,st.completed);return `<div class="subtask-item"><div class="subtask-left" onclick="toggleSubtask('${e.id}','${st.id}')"><div class="st-check ${st.completed?'checked':''}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5L19 7"/></svg></div><span class="st-text ${st.completed?'checked':''}">${esc(st.title)}</span>${st.dueDate?`<span class="st-due ${stOverdue?'overdue':''}">Due ${st.dueDate}${stOverdue?' (Overdue)':''}</span>`:''}</div></div>`;}).join('')}
+    </div>
+  </div>`;
+}
+
+// Resource Actions
+function toggleResourceStatus(id) { const r=resources.find(x=>x.id===id);if(r)r.status=r.status==='completed'?'pending':'completed';saveResState();render(); }
+function deleteResource(id) { resources=resources.filter(x=>x.id!==id);saveResState();render(); }
+function togglePinExercise(id) { const e=exercises.find(x=>x.id===id);if(e)e.pinned=!e.pinned;saveResState();render(); }
+function toggleExerciseMain(id) { const e=exercises.find(x=>x.id===id);if(e){e.status=e.status==='pending'?'completed':'pending';if(e.subtasks?.length)e.subtasks.forEach(st=>{st.completed=e.status==='completed';});}saveResState();render(); }
+function toggleSubtask(exId,stId) { const e=exercises.find(x=>x.id===exId);if(!e?.subtasks)return;const st=e.subtasks.find(s=>s.id===stId);if(st){st.completed=!st.completed;e.status=e.subtasks.every(s=>s.completed)?'completed':'pending';}saveResState();render(); }
+function deleteExercise(id) { exercises=exercises.filter(x=>x.id!==id);saveResState();render(); }
+
+function checkIsOverdue(due,completed) { if(completed||!due)return false; return due<todayISO(); }
+function getOverdueCount() { let c=0;exercises.forEach(ex=>{if(ex.status!=='completed'&&checkIsOverdue(ex.dueDate,false))c++;(ex.subtasks||[]).forEach(st=>{if(!st.completed&&checkIsOverdue(st.dueDate,false))c++;});});return c; }
+function getCountdownDays() {
+  if(!countdownConfig.targetDate) return '-- Days';
+  const t=new Date(countdownConfig.targetDate);const n=new Date();n.setHours(0,0,0,0);t.setHours(0,0,0,0);
+  const d=Math.ceil((t-n)/(86400000));
+  if(d>0) return d+' Days';if(d===0) return 'Today!';return 'Passed';
+}
+
+// Note selection highlight for Study Resources
+function handleNoteSelection(subj) {
+  const sel=window.getSelection();if(!sel||sel.isCollapsed)return;
+  const text=sel.toString().trim();if(!text)return;
+  const sc=subjectScores[subj];if(!sc||!sc.note)return;
+  if(sc.note.includes(text)&&!sc.note.includes('=='+text+'==')){sc.note=sc.note.replace(text,'=='+text+'==');sel.removeAllRanges();saveResState();render();}
+}
+
+// ================================================================
+//  RESOURCE / EXERCISE MODALS
+// ================================================================
+function openResourceModal(subject) {
+  const subjOpts = Object.keys(customSubjects).map(k=>`<option value="${k}" ${k===subject?'selected':''}>${esc(customSubjects[k].label)}</option>`).join('');
+  openGenericSheet('Add Resource',`
+    <div class="field"><label>Subject</label><select id="resSubject">${subjOpts}</select></div>
+    <div class="field"><label>Title</label><input id="resTitle" placeholder="e.g. Grammar Guide"/></div>
+    <div class="field"><label>File Path / Link</label><input id="resPath" placeholder="D:/Study/file.pdf"/></div>
+    <div class="field"><label>Status</label><select id="resStatus"><option value="not_started">Not Started</option><option value="pending" selected>In Progress</option><option value="completed">Completed</option></select></div>
+    <div class="field"><label>Start Date</label><input id="resStartDate" type="date" value="${todayISO()}"/></div>
+    <div class="field"><label>Tags (comma separated)</label><input id="resTags" placeholder="Grammar, Reading"/></div>
+  `,[
+    {text:'Cancel',onclick:()=>closeSheet('genericSheet')},
+    {text:'Add',cls:'primary',onclick:()=>{
+      const title=document.getElementById('resTitle').value.trim();if(!title){toast('Title required');return;}
+      resources.push({id:'r'+Date.now(),subject:document.getElementById('resSubject').value,title,path:document.getElementById('resPath').value.trim(),status:document.getElementById('resStatus').value,startDate:document.getElementById('resStartDate').value,tags:document.getElementById('resTags').value.split(',').map(t=>t.trim()).filter(Boolean),createdAt:todayISO()});
+      saveResState();closeSheet('genericSheet');render();
+    }}
+  ]);
+}
+
+function openEditResourceModal(id) {
+  const r = resources.find(x=>x.id===id); if(!r) return;
+  const subjOpts = Object.keys(customSubjects).map(k=>`<option value="${k}" ${k===r.subject?'selected':''}>${esc(customSubjects[k].label)}</option>`).join('');
+  openGenericSheet('Edit Resource',`
+    <div class="field"><label>Subject</label><select id="resSubject">${subjOpts}</select></div>
+    <div class="field"><label>Title</label><input id="resTitle" value="${esc(r.title)}"/></div>
+    <div class="field"><label>File Path</label><input id="resPath" value="${esc(r.path||'')}"/></div>
+    <div class="field"><label>Status</label><select id="resStatus"><option value="not_started" ${r.status==='not_started'?'selected':''}>Not Started</option><option value="pending" ${r.status==='pending'?'selected':''}>In Progress</option><option value="completed" ${r.status==='completed'?'selected':''}>Completed</option></select></div>
+    <div class="field"><label>Start Date</label><input id="resStartDate" type="date" value="${r.startDate||r.createdAt}"/></div>
+    <div class="field"><label>Tags</label><input id="resTags" value="${esc((r.tags||[]).join(', '))}"/></div>
+  `,[
+    {text:'Cancel',onclick:()=>closeSheet('genericSheet')},
+    {text:'Save',cls:'primary',onclick:()=>{
+      r.subject=document.getElementById('resSubject').value;r.title=document.getElementById('resTitle').value.trim();r.path=document.getElementById('resPath').value.trim();r.status=document.getElementById('resStatus').value;r.startDate=document.getElementById('resStartDate').value;r.tags=document.getElementById('resTags').value.split(',').map(t=>t.trim()).filter(Boolean);
+      saveResState();closeSheet('genericSheet');render();
+    }}
+  ]);
+}
+
+function openExerciseModal(subject) {
+  const subjOpts = Object.keys(customSubjects).map(k=>`<option value="${k}" ${k===subject?'selected':''}>${esc(customSubjects[k].label)}</option>`).join('');
+  openGenericSheet('Add Exercise',`
+    <div style="display:grid;grid-template-columns:1.5fr 1fr;gap:12px">
+      <div class="field"><label>Subject</label><select id="exSubject">${subjOpts}</select></div>
+      <div class="field"><label>Priority</label><select id="exPriority"><option value="high">High</option><option value="medium" selected>Medium</option><option value="low">Low</option></select></div>
+    </div>
+    <div class="field"><label>Title</label><input id="exTitle" placeholder="e.g. Unit 4 Quiz"/></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="field"><label>Chapter</label><input id="exChapter" placeholder="Chapter 4"/></div>
+      <div class="field"><label>Due Date</label><input id="exDue" type="date"/></div>
+    </div>
+    <div class="field"><label>Subtasks</label><div id="modalSubtasks"></div><button class="apple-btn small" style="margin-top:6px" onclick="addSubtaskRow('','')">+ Subtask</button></div>
+  `,[
+    {text:'Cancel',onclick:()=>closeSheet('genericSheet')},
+    {text:'Create',cls:'primary',onclick:()=>submitNewExercise()}
+  ]);
+}
+
+function openEditExerciseModal(id) {
+  const e = exercises.find(x=>x.id===id); if(!e) return;
+  const subjOpts = Object.keys(customSubjects).map(k=>`<option value="${k}" ${k===e.subject?'selected':''}>${esc(customSubjects[k].label)}</option>`).join('');
+  openGenericSheet('Edit Exercise',`
+    <div style="display:grid;grid-template-columns:1.5fr 1fr;gap:12px">
+      <div class="field"><label>Subject</label><select id="exSubject">${subjOpts}</select></div>
+      <div class="field"><label>Priority</label><select id="exPriority"><option value="high" ${e.priority==='high'?'selected':''}>High</option><option value="medium" ${e.priority==='medium'?'selected':''}>Medium</option><option value="low" ${e.priority==='low'?'selected':''}>Low</option></select></div>
+    </div>
+    <div class="field"><label>Title</label><input id="exTitle" value="${esc(e.title)}"/></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="field"><label>Chapter</label><input id="exChapter" value="${esc(e.chapter||'')}"/></div>
+      <div class="field"><label>Due Date</label><input id="exDue" type="date" value="${e.dueDate||''}"/></div>
+    </div>
+    <div class="field"><label>Subtasks</label><div id="modalSubtasks">${(e.subtasks||[]).map(st=>`<div class="subtask-edit-row"><input type="text" class="modal-st-title" value="${esc(st.title)}"/><input type="date" class="modal-st-due" value="${st.dueDate||''}"/><button class="apple-btn small danger" onclick="this.parentElement.remove()">x</button></div>`).join('')}</div><button class="apple-btn small" style="margin-top:6px" onclick="addSubtaskRow('','')">+ Subtask</button></div>
+  `,[
+    {text:'Cancel',onclick:()=>closeSheet('genericSheet')},
+    {text:'Save',cls:'primary',onclick:()=>{
+      e.subject=document.getElementById('exSubject').value;e.title=document.getElementById('exTitle').value.trim();e.priority=document.getElementById('exPriority').value;e.chapter=document.getElementById('exChapter').value.trim();e.dueDate=document.getElementById('exDue').value;
+      e.subtasks=Array.from(document.querySelectorAll('.subtask-edit-row')).map(row=>({id:uid('st'),title:row.querySelector('.modal-st-title').value.trim(),completed:false,dueDate:row.querySelector('.modal-st-due').value})).filter(s=>s.title);
+      saveResState();closeSheet('genericSheet');render();
+    }}
+  ]);
+}
+
+function addSubtaskRow(title,due) {
+  const container = document.getElementById('modalSubtasks');
+  const div = document.createElement('div'); div.className='subtask-edit-row';
+  div.innerHTML=`<input type="text" class="modal-st-title" placeholder="Subtask..." value="${esc(title)}"/><input type="date" class="modal-st-due" value="${due}"/><button class="apple-btn small danger" onclick="this.parentElement.remove()">x</button>`;
+  container.appendChild(div);
+}
+
+function submitNewExercise() {
+  const title=document.getElementById('exTitle').value.trim();if(!title){toast('Title required');return;}
+  const subtasks=Array.from(document.querySelectorAll('.subtask-edit-row')).map(row=>({id:uid('st'),title:row.querySelector('.modal-st-title').value.trim(),completed:false,dueDate:row.querySelector('.modal-st-due').value})).filter(s=>s.title);
+  exercises.push({id:'e'+Date.now(),subject:document.getElementById('exSubject').value,title,priority:document.getElementById('exPriority').value,pinned:false,chapter:document.getElementById('exChapter').value.trim(),dueDate:document.getElementById('exDue').value,status:'pending',subtasks});
+  saveResState();closeSheet('genericSheet');render();
+}
+
+// Score Modal
+function openScoreModal(subj) {
+  const sc = subjectScores[subj]||{maxScore:100,currentScore:0,targetScore:90,note:'',modules:[]};
+  openGenericSheet(`${customSubjects[subj]?.label||subj} Score Config`,`
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
+      <div class="field"><label>Current</label><input id="scCurrent" type="number" value="${sc.currentScore}"/></div>
+      <div class="field"><label>Target</label><input id="scTarget" type="number" value="${sc.targetScore}"/></div>
+      <div class="field"><label>Max</label><input id="scMax" type="number" value="${sc.maxScore}"/></div>
+    </div>
+    <div class="field"><label>Note (use ==text== for highlight)</label><textarea id="scNote" rows="3">${esc(sc.note||'')}</textarea></div>
+    <div class="field"><label>Modules</label><div id="scoreModules">${(sc.modules||[]).map(m=>`<div class="module-edit-row"><input type="text" class="mod-name" value="${esc(m.name)}"/><input type="number" class="mod-score" value="${m.score}"/><input type="text" class="mod-dur" value="${esc(m.duration||'')}"/><button class="apple-btn small danger" onclick="this.parentElement.remove()">x</button></div>`).join('')}</div><button class="apple-btn small" style="margin-top:6px" onclick="addModuleRow()">+ Module</button></div>
+  `,[
+    {text:'Cancel',onclick:()=>closeSheet('genericSheet')},
+    {text:'Save',cls:'primary',onclick:()=>{
+      subjectScores[subj]={currentScore:+document.getElementById('scCurrent').value||0,targetScore:+document.getElementById('scTarget').value||0,maxScore:+document.getElementById('scMax').value||100,note:document.getElementById('scNote').value.trim(),modules:Array.from(document.querySelectorAll('.module-edit-row')).map(row=>({name:row.querySelector('.mod-name').value.trim(),score:+row.querySelector('.mod-score').value||0,duration:row.querySelector('.mod-dur').value.trim()})).filter(m=>m.name)};
+      saveResState();closeSheet('genericSheet');render();
+    }}
+  ]);
+}
+
+function addModuleRow(name,score,dur) {
+  const container = document.getElementById('scoreModules');
+  const div = document.createElement('div'); div.className='module-edit-row';
+  div.innerHTML=`<input type="text" class="mod-name" placeholder="Module" value="${esc(name||'')}"/><input type="number" class="mod-score" value="${score||0}"/><input type="text" class="mod-dur" placeholder="Time" value="${esc(dur||'')}"/><button class="apple-btn small danger" onclick="this.parentElement.remove()">x</button>`;
+  container.appendChild(div);
+}
+
+// Countdown
+function openCountdownEdit() {
+  openGenericSheet('Edit Countdown',`
+    <div class="field"><label>Event Name</label><input id="cdTitleInput" value="${esc(countdownConfig.title||'')}"/></div>
+    <div class="field"><label>Target Date</label><input id="cdDateInput" type="date" value="${countdownConfig.targetDate||''}"/></div>
+  `,[
+    {text:'Cancel',onclick:()=>closeSheet('genericSheet')},
+    {text:'Save',cls:'primary',onclick:()=>{countdownConfig.title=document.getElementById('cdTitleInput').value.trim();countdownConfig.targetDate=document.getElementById('cdDateInput').value;saveResState();closeSheet('genericSheet');render();}}
+  ]);
+}
+
+// Overdue
+function openOverdueModal() {
+  const items=[];
+  exercises.forEach(ex=>{if(ex.status!=='completed'&&checkIsOverdue(ex.dueDate,false))items.push({type:'Exercise',title:ex.title,due:ex.dueDate,id:ex.id});(ex.subtasks||[]).forEach(st=>{if(!st.completed&&checkIsOverdue(st.dueDate,false))items.push({type:'Subtask of '+ex.title,title:st.title,due:st.dueDate,id:ex.id});});});
+  const html = items.length ? items.map(it=>`<div style="padding:10px;background:rgba(255,69,58,0.08);border:1px solid rgba(255,69,58,0.2);border-radius:var(--radius-sm);margin-bottom:6px;display:flex;justify-content:space-between;align-items:center"><div><span style="font-size:10px;font-weight:700;color:var(--red)">[${esc(it.type)}]</span><div style="font-size:13px;font-weight:600;margin-top:2px">${esc(it.title)}</div></div><span style="font-size:12px;font-weight:700;color:var(--red)">Due ${it.due}</span></div>`).join('') : `<div class="empty-state">No overdue items! !</div>`;
+  openGenericSheet('! Overdue ('+items.length+')',html,[{text:'Close',cls:'primary',onclick:()=>closeSheet('genericSheet')}]);
+}
+
+// Add Subject
+function openAddSubjectModal() {
+  openGenericSheet('Add Subject',`
+    <div class="field"><label>ID (letters only)</label><input id="newSubjId" placeholder="e.g. physics"/></div>
+    <div class="field"><label>Display Name</label><input id="newSubjLabel" placeholder="e.g. Physics"/></div>
+    <div class="field"><label>Tagline</label><input id="newSubjTagline" placeholder="e.g. Mechanics · Electromagnetism"/></div>
+    <div class="field"><label>Color</label><input id="newSubjColor" type="color" value="#BF5AF2" style="height:40px;padding:2px;cursor:pointer"/></div>
+  `,[
+    {text:'Cancel',onclick:()=>closeSheet('genericSheet')},
+    {text:'Create',cls:'primary',onclick:()=>{
+      let id=document.getElementById('newSubjId').value.trim().toLowerCase().replace(/[^a-z0-9]/g,'');
+      const label=document.getElementById('newSubjLabel').value.trim();if(!label){toast('Name required');return;}
+      if(!id) id='subj_'+Date.now();
+      const color=document.getElementById('newSubjColor').value;
+      customSubjects[id]={label,color,tint:color+'18',text:color,tagline:document.getElementById('newSubjTagline').value.trim()||label+' study'};
+      subjectScores[id]={maxScore:100,currentScore:0,targetScore:90,note:'',modules:[]};
+      saveResState();closeSheet('genericSheet');switchSubject(id);
+    }}
+  ]);
+}
+
+// ================================================================
+//  STUDY SUGGEST
+// ================================================================
+let currentSuggestTab = 'notes';
+
+function openStudySuggest() {
+  openSheet('suggestSheet');
+  switchSuggestTab('notes');
+}
+
+function switchSuggestTab(tab) {
+  currentSuggestTab = tab;
+  document.querySelectorAll('.suggest-tab').forEach(el => el.classList.toggle('active', el.dataset.stab===tab));
+  renderSuggestContent();
+}
+
+function renderSuggestContent() {
+  const el = document.getElementById('suggestContent');
+  if (currentSuggestTab === 'notes') {
+    el.innerHTML = `
+      <div class="notes-toolbar">
+        <button onclick="document.execCommand('bold')"><b>B</b></button>
+        <button onclick="document.execCommand('italic')"><i>I</i></button>
+        <button onclick="document.execCommand('underline')"><u>U</u></button>
+        <button onclick="document.execCommand('hiliteColor',false,'rgba(0,0,0,0.08)')">Highlight</button>
+        <button onclick="document.execCommand('strikethrough')"><s>S</s></button>
+      </div>
+      <div class="notes-editor" contenteditable="true" id="notesEditor" oninput="autoSaveNotes()">${studySuggest.notes||''}</div>
+      <div style="font-size:11px;color:var(--ink-tertiary);margin-top:8px">Auto-saved · Supports bold, italic, underline, highlight</div>
+    `;
+  } else if (currentSuggestTab === 'links') {
+    const links = studySuggest.links || [];
+    el.innerHTML = `
+      <div style="display:flex;gap:8px;margin-bottom:12px">
+        <input id="linkSearch" placeholder="Search links..." style="flex:1" oninput="filterLinks(this.value)"/>
+        <button class="apple-btn primary" onclick="addLink()">+ Add Link</button>
+      </div>
+      <div id="linksList">${links.map((l,i)=>`
+        <div class="link-card" data-title="${esc(l.title).toLowerCase()}" data-url="${esc(l.url).toLowerCase()}" data-desc="${esc(l.description||'').toLowerCase()}">
+          <span class="link-fav ${l.favorite?'active':''}" onclick="toggleLinkFav(${i})" style="font-size:14px;font-weight:700">*</span>
+          <div class="link-info">
+            <div class="link-title">${esc(l.title)}</div>
+            <div class="link-url">${esc(l.url)}</div>
+            ${l.category?`<div class="link-cat">${esc(l.category)}</div>`:''}
+            ${l.description?`<div style="font-size:11px;color:var(--ink-tertiary);margin-top:2px">${esc(l.description)}</div>`:''}
+          </div>
+          <div style="display:flex;gap:4px">
+            <button class="apple-btn small" onclick="editLink(${i})">Edit</button>
+            <button class="apple-btn small danger" onclick="deleteLink(${i})">Del</button>
+          </div>
+        </div>
+      `).join('')}</div>
+      ${!links.length?'<div class="empty-state">No links yet. Click "+ Add Link"</div>':''}
+    `;
+  } else if (currentSuggestTab === 'highlights') {
+    const hls = quizState.highlights;
+    el.innerHTML = `<div style="font-size:12px;color:var(--ink-tertiary);margin-bottom:12px">${hls.length} highlights from Quiz Hub reading passages</div>
+      ${hls.length ? hls.map(h=>`<div class="list-item"><h4 style="font-size:12px">${esc(h.selectedText)}</h4><div class="meta" style="display:flex;gap:6px;align-items:center"><span class="chip" style="background:${h.highlightColor==='yellow'?'rgba(255,214,10,0.2)':h.highlightColor==='blue'?'rgba(100,210,255,0.2)':'rgba(255,55,95,0.2)'}">${h.highlightColor}</span>${h.note?`<span>${esc(h.note)}</span>`:''}</div></div>`).join('') : '<div class="empty-state">No highlights yet. Select text in reading passages to highlight.</div>'}
+    `;
+  }
+}
+
+function autoSaveNotes() {
+  const el = document.getElementById('notesEditor');
+  if (el) { studySuggest.notes = el.innerHTML; saveSuggest(); }
+}
+
+function addLink() {
+  openGenericSheet('Add Link',`
+    <div class="field"><label>Title</label><input id="linkTitle"/></div>
+    <div class="field"><label>URL</label><input id="linkUrl" placeholder="https://..."/></div>
+    <div class="field"><label>Category</label><input id="linkCat" placeholder="e.g. Reference, Video"/></div>
+    <div class="field"><label>Description</label><textarea id="linkDesc" rows="2"></textarea></div>
+  `,[
+    {text:'Cancel',onclick:()=>closeSheet('genericSheet')},
+    {text:'Add',cls:'primary',onclick:()=>{
+      const title=document.getElementById('linkTitle').value.trim();if(!title){toast('Title required');return;}
+      if(!studySuggest.links) studySuggest.links=[];
+      studySuggest.links.push({title,url:document.getElementById('linkUrl').value.trim(),category:document.getElementById('linkCat').value.trim(),description:document.getElementById('linkDesc').value.trim(),favorite:false});
+      saveSuggest();closeSheet('genericSheet');renderSuggestContent();
+    }}
+  ]);
+}
+
+function editLink(idx) {
+  const l = studySuggest.links[idx]; if(!l) return;
+  openGenericSheet('Edit Link',`
+    <div class="field"><label>Title</label><input id="linkTitle" value="${esc(l.title)}"/></div>
+    <div class="field"><label>URL</label><input id="linkUrl" value="${esc(l.url||'')}"/></div>
+    <div class="field"><label>Category</label><input id="linkCat" value="${esc(l.category||'')}"/></div>
+    <div class="field"><label>Description</label><textarea id="linkDesc" rows="2">${esc(l.description||'')}</textarea></div>
+  `,[
+    {text:'Cancel',onclick:()=>closeSheet('genericSheet')},
+    {text:'Save',cls:'primary',onclick:()=>{
+      l.title=document.getElementById('linkTitle').value.trim();l.url=document.getElementById('linkUrl').value.trim();l.category=document.getElementById('linkCat').value.trim();l.description=document.getElementById('linkDesc').value.trim();
+      saveSuggest();closeSheet('genericSheet');renderSuggestContent();
+    }}
+  ]);
+}
+
+function deleteLink(idx) { if(!confirm('Delete this link?'))return; studySuggest.links.splice(idx,1); saveSuggest(); renderSuggestContent(); }
+function toggleLinkFav(idx) { studySuggest.links[idx].favorite=!studySuggest.links[idx].favorite; saveSuggest(); renderSuggestContent(); }
+function filterLinks(q) {
+  const ql=q.toLowerCase();
+  document.querySelectorAll('#linksList .link-card').forEach(el=>{
+    const match = el.dataset.title.includes(ql)||el.dataset.url.includes(ql)||el.dataset.desc.includes(ql);
+    el.style.display = match?'':'none';
+  });
+}
+
+// ================================================================
+//  UNIFIED IMPORT / EXPORT
+// ================================================================
+function exportAllData() {
+  const backup = {
+    version:'unified-2026',
+    exportDate:new Date().toISOString(),
+    appState,
+    quizData:{...quizState},
+    resources:{customSubjects,resources,exercises,subjectScores,countdownConfig},
+    studySuggest
+  };
+  downloadJSON(backup,'study_dashboard_full_backup_'+todayISO()+'.json');
+  toast('Full backup exported OK');
+}
+
+function importAllData(event) {
+  const file = event.target.files[0]; if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if(data.appState) appState = Object.assign(appState, data.appState);
+      if(data.quizData) { importQuizData(data.quizData); }
+      if(data.resources) {
+        if(data.resources.customSubjects) customSubjects = data.resources.customSubjects;
+        if(data.resources.resources) resources = data.resources.resources;
+        if(data.resources.exercises) exercises = data.resources.exercises;
+        if(data.resources.subjectScores) subjectScores = data.resources.subjectScores;
+        if(data.resources.countdownConfig) countdownConfig = data.resources.countdownConfig;
+      }
+      if(data.studySuggest) studySuggest = data.studySuggest;
+      saveAll(); render();
+      toast('Backup imported OK');
+    } catch(err) { alert('Import failed: '+err.message); }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+function downloadJSON(obj, filename) {
+  const blob = new Blob([JSON.stringify(obj,null,2)],{type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+// ================================================================
+//  SHEET MANAGEMENT
+// ================================================================
+function openSheet(id) { document.getElementById(id).classList.add('open'); }
+function closeSheet(id) { document.getElementById(id).classList.remove('open'); }
+
+function openGenericSheet(title, bodyHTML, buttons) {
+  document.getElementById('genericSheetTitle').textContent = title;
+  document.getElementById('genericSheetBody').innerHTML = bodyHTML;
+  const foot = document.getElementById('genericSheetFoot');
+  foot.innerHTML = '';
+  (buttons||[]).forEach(b => {
+    const btn = document.createElement('button');
+    btn.className = 'apple-btn' + (b.cls?' '+b.cls:'');
+    btn.textContent = b.text;
+    btn.onclick = b.onclick;
+    foot.appendChild(btn);
+  });
+  openSheet('genericSheet');
+}
+
+// Close sheets on overlay click
+document.querySelectorAll('.sheet-overlay').forEach(ov => {
+  ov.addEventListener('click', e => { if(e.target===ov) ov.classList.remove('open'); });
+});
+
+// ================================================================
+//  INIT
+// ================================================================
+loadAppState();
+loadQuiz();
+if(!quizState.passages.length) loadSeedData();
+exercises.forEach(ex => { if(!ex.priority) ex.priority='medium'; if(typeof ex.pinned!=='boolean') ex.pinned=false; (ex.subtasks||[]).forEach(st=>{if(!st.dueDate)st.dueDate='';}); });
+resources.forEach(r => { if(!r.status) r.status='pending'; if(!r.startDate) r.startDate=r.createdAt||'2026-07-01'; });
+
+// Set initial module
+document.querySelectorAll('.capsule-item').forEach(el => el.classList.toggle('active', el.dataset.module===appState.currentModule));
+document.getElementById('topbarTitle').textContent = appState.currentModule==='quiz'?'Quiz Hub':'Study Resources';
+
+render();
+</script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a15549cc8f2f490f',t:'MTc4MzA3NTM5Ng=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
