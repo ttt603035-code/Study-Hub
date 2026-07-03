@@ -1497,9 +1497,8 @@ body.body-dragging-mod, body.body-dragging-mod * {
 <div class="app">
   <!-- SIDEBAR -->
   <aside class="sidebar">
-    <div class="sidebar-brand" style="display:flex;justify-content:space-between;align-items:center;">
-      <span>Study Hub</span>
-      <button class="apple-btn small" onclick="toggleSidebar()" title="折叠导航栏 (Collapse Sidebar)" style="padding:4px 6px;color:var(--ink-secondary);"><svg style="width:16px;height:16px;vertical-align:-2px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2z"></path><path d="M9 3v18"></path><path d="m14 9-3 3 3 3"></path></svg></button>
+    <div class="sidebar-brand">
+      Study Hub
     </div>
 
     <!-- Module Switcher (Capsule Menu) -->
@@ -1534,7 +1533,6 @@ body.body-dragging-mod, body.body-dragging-mod * {
 
   <!-- TOPBAR -->
   <header class="topbar">
-    <button class="apple-btn small" id="topbarSidebarToggle" onclick="toggleSidebar()" title="展开/折叠导航栏 (Toggle Sidebar)" style="margin-right:8px;padding:6px 8px;color:var(--ink);"><svg style="width:16px;height:16px;vertical-align:-2px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2z"></path><path d="M9 3v18"></path><path d="m10 15 3-3-3-3"></path></svg></button>
     <div class="topbar-title" id="topbarTitle">Quiz Hub</div>
     <div class="topbar-search">
       <span class="search-icon" style="font-weight:700;">⌕</span>
@@ -1574,7 +1572,7 @@ body.body-dragging-mod, body.body-dragging-mod * {
 <div class="sheet-overlay" id="genericSheet">
   <div class="sheet" id="genericSheetInner">
     <div class="sheet-head">
-      <h3 id="genericSheetTitle">Title</h3>
+      <h3 id="genericSheetTitle"></h3>
       <div class="close-btn" onclick="closeSheet('genericSheet')">x</div>
     </div>
     <div class="sheet-body" id="genericSheetBody"></div>
@@ -3320,12 +3318,24 @@ function exportQuizJSON() {
 }
 
 function importQuizJSON() {
-  if(quizState.passages.length&&!confirm('This will OVERWRITE all quiz data. Continue?')) return;
+  if(quizState.passages.length&&!confirm('这将会覆盖现有的习题与生词本数据，确定继续导入吗？')) return;
   const inp = document.createElement('input'); inp.type='file'; inp.accept='.json';
   inp.onchange = e => {
     const f = e.target.files[0]; if(!f) return;
     const r = new FileReader();
-    r.onload = () => { try { importQuizData(JSON.parse(r.result)); toast('Imported OK'); } catch(err) { alert('Import failed: '+err.message); } };
+    r.onload = () => {
+      try {
+        const txt = r.result.trim();
+        if (txt.startsWith('<')) {
+          alert('请选择 JSON 格式 (.json) 的数据文件进行导入！\n您当前选择的是 HTML 网页文件 (index.html)。');
+          return;
+        }
+        const data = JSON.parse(txt);
+        if (data.quizData) importQuizData(data.quizData);
+        else importQuizData(data);
+        toast('✓ 题库与生词数据导入成功！');
+      } catch(err) { alert('导入失败 (Invalid JSON): '+err.message); }
+    };
     r.readAsText(f);
   };
   inp.click();
@@ -3339,7 +3349,31 @@ function importQuizData(data) {
   quizState.quizSets=Array.isArray(data.quizSets)?data.quizSets:[];
   quizState.grammarQuestions=Array.isArray(data.grammarQuestions)?data.grammarQuestions:[];
   quizState.vocabularyQuestions=Array.isArray(data.vocabularyQuestions)?data.vocabularyQuestions:[];
-  quizState.wordBook=Array.isArray(data.wordBook)?data.wordBook:(Array.isArray(data.vocabularyBook)?data.vocabularyBook:[]);
+  
+  let wbkList = Array.isArray(data.wordBook) ? data.wordBook : [];
+  const vocabList = Array.isArray(data.vocabularyBook) ? data.vocabularyBook : [];
+  const phraseList = Array.isArray(data.phraseLibrary) ? data.phraseLibrary : [];
+  vocabList.forEach(v => {
+    if (!wbkList.some(x => (x.text||x.word||'').toLowerCase() === (v.word||v.text||'').toLowerCase())) {
+      wbkList.push({
+        id: v.id || uid('wbk'), text: v.word || v.text || '', meaning: v.meaning || '', example: v.example || '',
+        source: v.source || 'Vocabulary', subject: v.subject || 'english', dateAdded: v.dateAdded || todayISO(),
+        addedAt: v.addedAt || Date.now(), highlight: !!v.highlight, starred: !!v.starred,
+        srsBox: v.srsBox || 0, srsNext: v.srsNext || Date.now(), srsReviews: v.srsReviews || 0, srsLapses: v.srsLapses || 0
+      });
+    }
+  });
+  phraseList.forEach(p => {
+    if (!wbkList.some(x => (x.text||x.phrase||'').toLowerCase() === (p.phrase||p.text||'').toLowerCase())) {
+      wbkList.push({
+        id: p.id || uid('wbk'), text: p.phrase || p.text || '', meaning: p.meaning || '', example: p.example || '',
+        source: p.source || 'Phrase', subject: p.subject || 'english', dateAdded: p.dateAdded || todayISO(),
+        addedAt: p.addedAt || Date.now(), highlight: !!p.highlight, starred: !!p.starred,
+        srsBox: p.srsBox || 0, srsNext: p.srsNext || Date.now(), srsReviews: p.srsReviews || 0, srsLapses: p.srsLapses || 0
+      });
+    }
+  });
+  quizState.wordBook = wbkList;
   quizState.synonymLibrary=Array.isArray(data.synonymLibrary)?data.synonymLibrary:[];
   quizState.highlights=Array.isArray(data.highlights)?data.highlights:[];
   quizState.wrongBook=Array.isArray(data.wrongBook)?data.wrongBook:[];
@@ -4562,9 +4596,17 @@ function importAllData(event) {
   const reader = new FileReader();
   reader.onload = e => {
     try {
-      const data = JSON.parse(e.target.result);
+      const txt = e.target.result.trim();
+      if (txt.startsWith('<')) {
+        alert('请选择 JSON 格式 (.json) 的数据备份文件进行导入！\n您当前选择的是 HTML 网页文件 (index.html)。');
+        return;
+      }
+      const data = JSON.parse(txt);
       if(data.appState) appState = Object.assign(appState, data.appState);
       if(data.quizData) { importQuizData(data.quizData); }
+      else if (data.passages || data.grammarQuestions || data.wordBook || data.vocabularyBook) {
+        importQuizData(data); // Smart fallback for Quiz JSON export files
+      }
       if(data.resources) {
         if(data.resources.customSubjects) customSubjects = data.resources.customSubjects;
         if(data.resources.resources) resources = data.resources.resources;
@@ -4576,8 +4618,8 @@ function importAllData(event) {
       }
       if(data.studySuggest) studySuggest = data.studySuggest;
       saveAll(); render();
-      toast('Backup imported OK');
-    } catch(err) { alert('Import failed: '+err.message); }
+      toast('✓ 备份数据导入成功！');
+    } catch(err) { alert('导入失败 (Invalid Backup JSON): '+err.message); }
   };
   reader.readAsText(file);
   event.target.value = '';
@@ -4611,7 +4653,8 @@ function refreshDashboard() {
 function openSheet(id) { document.getElementById(id).classList.add('open'); }
 function closeSheet(id) { document.getElementById(id).classList.remove('open'); }
 
-function openGenericSheet(title, bodyHTML, buttons) {
+function openGenericSheet(title = '', bodyHTML = '', buttons = []) {
+  if (!title && !bodyHTML) return; // Guard: Never open an empty sheet!
   document.getElementById('genericSheetTitle').textContent = title;
   document.getElementById('genericSheetBody').innerHTML = bodyHTML;
   const foot = document.getElementById('genericSheetFoot');
@@ -4640,15 +4683,8 @@ function initSidebarState() {
   const appEl = document.querySelector('.app');
   const bd = document.querySelector('.sidebar-mobile-backdrop');
   if (appEl) {
-    const isMobile = window.innerWidth < 768;
-    if (isMobile) {
-      if (bd) bd.style.display = '';
-      appEl.classList.add('sidebar-collapsed');
-    } else {
-      if (bd) bd.style.display = 'none';
-      if (sidebarCollapsed) appEl.classList.add('sidebar-collapsed');
-      else appEl.classList.remove('sidebar-collapsed');
-    }
+    if (bd) bd.style.display = 'none';
+    appEl.classList.remove('sidebar-collapsed');
   }
 }
 
@@ -4783,5 +4819,5 @@ document.getElementById('topbarTitle').textContent = appState.currentModule==='q
 
 render();
 </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a156c2e24c42aa18',t:'MTc4MzA5MDg0MQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a156d67b0a0caa18',t:'MTc4MzA5MTY0NA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
