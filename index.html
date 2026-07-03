@@ -1093,6 +1093,82 @@ textarea { resize: vertical; }
 /* Module edit rows */
 .module-edit-row { display: grid; grid-template-columns: 2.2fr 1fr 1.2fr auto; gap: 8px; margin-bottom: 8px; align-items: center; }
 .subtask-edit-row { display: grid; grid-template-columns: 2.5fr 1.3fr auto; gap: 8px; margin-bottom: 8px; align-items: center; }
+
+/* ============================================================
+   APPLE HUMAN INTERFACE STYLE — DRAG & DROP AND ENHANCEMENTS
+   ============================================================ */
+.mod-section {
+  transition: transform 0.28s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.28s ease, box-shadow 0.28s ease, border-color 0.28s ease;
+  position: relative;
+  margin-bottom: 24px;
+}
+.mod-section.dragging {
+  opacity: 0.7;
+  transform: scale(0.982);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+  border-radius: var(--radius);
+  z-index: 1000;
+  background: var(--bg-card);
+  border: 1px solid var(--accent);
+}
+.mod-section.drag-over {
+  border: 2px dashed var(--accent);
+  border-radius: var(--radius);
+  background: var(--bg-elev);
+}
+.mod-drag-handle {
+  cursor: grab;
+  padding: 5px 10px;
+  background: var(--bg-elev);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  color: var(--ink-secondary);
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  user-select: none;
+  transition: all 0.15s ease;
+}
+.mod-drag-handle:hover {
+  background: var(--bg-card-hover);
+  color: var(--ink);
+  border-color: var(--ink-faint);
+  box-shadow: var(--shadow-sm);
+}
+.mod-drag-handle:active {
+  cursor: grabbing;
+  transform: scale(0.96);
+}
+.wb-practice-card {
+  transition: all 0.2s ease;
+}
+.wb-opt {
+  transition: all 0.15s ease;
+}
+.wb-opt:hover {
+  background: var(--bg-card-hover);
+  border-color: var(--ink-faint);
+}
+.wb-opt.selected {
+  border-color: var(--accent);
+  font-weight: 600;
+  background: var(--bg-elev);
+}
+.wb-opt.correct {
+  background: rgba(52, 199, 89, 0.15) !important;
+  border-color: var(--green) !important;
+  color: var(--green);
+  font-weight: 700;
+}
+.wb-opt.wrong {
+  background: rgba(255, 59, 48, 0.15) !important;
+  border-color: var(--red) !important;
+  color: var(--red);
+  font-weight: 700;
+}
+
 </style>
 </head>
 <body>
@@ -1239,7 +1315,7 @@ let quizState = {
   version: '2.0', schemaVersion: QUIZ_SCHEMA,
   passages: [], quizSets: [],
   grammarQuestions: [], vocabularyQuestions: [],
-  vocabularyBook: [], synonymLibrary: [],
+  vocabularyBook: [], phraseLibrary: [], synonymLibrary: [],
   highlights: [], wrongBook: [],
   answerLog: {},
   currentPassageId: null,
@@ -1292,6 +1368,18 @@ let resources = JSON.parse(localStorage.getItem('study_resources_pro')) || sampl
 let exercises = JSON.parse(localStorage.getItem('study_exercises_pro')) || sampleExercises;
 let subjectScores = JSON.parse(localStorage.getItem('study_scores_pro')) || sampleSubjectScores;
 let countdownConfig = JSON.parse(localStorage.getItem('study_countdown_pro')) || sampleCountdown;
+let modOrder = JSON.parse(localStorage.getItem('study_mod_order_pro')) || ['tasks', 'exercises', 'resources'];
+
+const sampleStudyTasks = [
+  {id:'st_1', subject:'english', title:'Review Non-finite Verbs grammar rules', priority:'high', status:'completed', dueDate:'2026-07-01'},
+  {id:'st_2', subject:'english', title:'Complete timed Cloze test practice (20min)', priority:'high', status:'pending', dueDate:'2026-07-02'},
+  {id:'st_3', subject:'english', title:'Read IELTS Academic Passage Set 3 & summarize', priority:'medium', status:'pending', dueDate:'2026-07-05'},
+  {id:'st_4', subject:'chinese', title:'标注文言文经典120个实词与虚词用法', priority:'high', status:'completed', dueDate:'2026-07-02'},
+  {id:'st_5', subject:'chinese', title:'笔译苏轼传第三段并整理译文笔记', priority:'high', status:'pending', dueDate:'2026-07-03'},
+  {id:'st_6', subject:'politic', title:'熟记唯物辩证法对立统一规律答题模板', priority:'high', status:'completed', dueDate:'2026-07-01'},
+  {id:'st_7', subject:'politic', title:'全真模拟真题第38题大题限时自测', priority:'medium', status:'pending', dueDate:'2026-07-02'}
+];
+let studyTasks = JSON.parse(localStorage.getItem('study_tasks_pro')) || sampleStudyTasks;
 
 // === STUDY SUGGEST STATE ===
 const SUGGEST_KEY = 'study_suggest_unified';
@@ -1331,6 +1419,7 @@ function loadQuiz() {
       quizState.wrongBook = quizState.wrongBook || [];
       quizState.highlights = quizState.highlights || [];
       quizState.vocabularyBook = quizState.vocabularyBook || [];
+      quizState.phraseLibrary = quizState.phraseLibrary || [];
       quizState.synonymLibrary = quizState.synonymLibrary || [];
       quizState.quizSets = quizState.quizSets || [];
       quizState.currentQuizSetId = quizState.currentQuizSetId || {};
@@ -1373,6 +1462,8 @@ function saveResState() {
   localStorage.setItem('study_exercises_pro', JSON.stringify(exercises));
   localStorage.setItem('study_scores_pro', JSON.stringify(subjectScores));
   localStorage.setItem('study_countdown_pro', JSON.stringify(countdownConfig));
+  localStorage.setItem('study_mod_order_pro', JSON.stringify(modOrder));
+  localStorage.setItem('study_tasks_pro', JSON.stringify(studyTasks));
 }
 function saveSuggest() { localStorage.setItem(SUGGEST_KEY, JSON.stringify(studySuggest)); }
 
@@ -1489,6 +1580,7 @@ function renderSharedStats() {
     <div class="sidebar-stat"><span>Quiz Done</span><span class="num">${quizCompleted}</span></div>
     <div class="sidebar-stat"><span>Wrong</span><span class="num">${quizWrong}</span></div>
     <div class="sidebar-stat"><span>Vocabulary</span><span class="num">${quizVocab}</span></div>
+    <div class="sidebar-stat"><span>Phrases</span><span class="num">${quizState.phraseLibrary.length}</span></div>
     <div class="sidebar-stat"><span>Tasks Pending</span><span class="num">${resPending}</span></div>
     <div class="sidebar-stat"><span>Tasks Done</span><span class="num">${resDone}</span></div>
   `;
@@ -1551,20 +1643,18 @@ function renderQuizHub(container) {
   // Section Pills
   html += `<div class="quiz-toolbar">
     <div class="section-pills" id="sectionPills">${renderSectionPillsHTML()}</div>
-    <button class="apple-btn" onclick="openQuizVocab()">R Vocab (${quizState.vocabularyBook.length})</button>
+    <button class="apple-btn" onclick="openQuizVocab()">R Vocabulary (${quizState.vocabularyBook.length})</button>
+    <button class="apple-btn" onclick="openQuizPhrases()">P Phrases (${quizState.phraseLibrary.length})</button>
     <button class="apple-btn" onclick="openQuizSynonyms()">Syn Synonyms (${quizState.synonymLibrary.length})</button>
     <button class="apple-btn" onclick="openQuizWrongBook()">X Wrong Book (${quizState.wrongBook.length})</button>
     <button class="apple-btn" onclick="openQuizSettings()">Set Settings</button>
   </div>`;
 
-  // Reading area (collapsed by default - user can expand)
+  // Reading area (always visible, toggle removed)
   const p = currentPassage();
   if (p && p.content) {
     html += `<div style="margin-bottom:16px;">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;cursor:pointer" onclick="toggleReading()">
-        <h3 style="font-size:14px;font-weight:700;display:flex;align-items:center;gap:8px;">Reading Reading Passage <span style="font-size:11px;color:var(--ink-tertiary)">click to toggle</span></h3>
-      </div>
-      <div id="readingArea" style="display:none;background:var(--bg-card);border:1px solid var(--line);border-radius:var(--radius);padding:20px;max-height:400px;overflow-y:auto;">
+      <div id="readingArea" style="background:var(--bg-card);border:1px solid var(--line);border-radius:var(--radius);padding:20px;max-height:400px;overflow-y:auto;">
         <div style="font-size:16px;font-weight:700;margin-bottom:6px;">${esc(p.title||p.customName)}</div>
         <div class="reading-body" id="readingBody">${buildReadingHTML(p.content, quizState.highlights.filter(h=>h.passageId===p.id))}</div>
       </div>
@@ -1588,7 +1678,8 @@ function renderQuizHub(container) {
     <div style="font-size:11px;color:var(--ink-tertiary);">Completed: <b style="color:var(--ink)">${Object.keys(quizState.answerLog).length}</b></div>
     <div style="font-size:11px;color:var(--ink-tertiary);">Wrong: <b style="color:var(--red)">${quizState.wrongBook.length}</b></div>
     <div style="font-size:11px;color:var(--ink-tertiary);">Vocab: <b style="color:var(--ink)">${quizState.vocabularyBook.length}</b></div>
-    <div style="margin-left:auto;display:flex;gap:6px;">
+    <div style="margin-left:auto;display:flex;gap:6px;flex-wrap:wrap;">
+      <button class="apple-btn small primary" style="font-weight:700;" onclick="redoCurrentQuizSet()">↻ Redo This Set (重新做这套题)</button>
       <button class="apple-btn small" onclick="loadSeedData()">Load Sample</button>
       <button class="apple-btn small danger" onclick="clearAllQuiz()">Clear All</button>
     </div>
@@ -1601,8 +1692,7 @@ function renderQuizHub(container) {
 }
 
 function toggleReading() {
-  const el = document.getElementById('readingArea');
-  if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
+  // Toggle functionality removed as required
 }
 
 function switchQuizTab(tab) { quizState.activeTab = tab; saveQuiz(); render(); }
@@ -1703,12 +1793,13 @@ function renderSectionTitleBarHTML() {
   return `<div style="margin-bottom:12px;">
     <h2 style="font-size:18px;font-weight:700;margin-bottom:4px;" contenteditable="true" id="passageTitleEditable" onblur="savePassageTitle()">${esc(p.title||p.customName)}</h2>
     <div style="font-size:11px;color:var(--ink-tertiary);margin-bottom:8px;">Section: ${esc(p.customName)}</div>
-    <div class="quizset-bar">
-      <label>Quiz Set:</label>
-      <select onchange="onQuizSetChange(this.value)">${opts}</select>
+    <div class="quizset-bar" style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+      <label style="font-weight:600;">Quiz Set:</label>
+      <select onchange="onQuizSetChange(this.value)" style="padding:4px 8px;">${opts}</select>
       <button class="apple-btn small" onclick="addQuizSet()">+ New</button>
       <button class="apple-btn small" onclick="renameCurrentQS()" ${curVal==='__all__'||!curVal?'disabled':''}>Rename</button>
       <button class="apple-btn small danger" onclick="deleteCurrentQS()" ${curVal==='__all__'||!curVal?'disabled':''}>Delete</button>
+      <button class="apple-btn small primary" style="margin-left:auto;font-weight:700;display:flex;align-items:center;gap:4px;" onclick="redoCurrentQuizSet()">↻ Redo This Set (重新做这套题)</button>
     </div>
   </div>`;
 }
@@ -1770,9 +1861,12 @@ function renderQuestionsHTML() {
     ? quizState.grammarQuestions.filter(q=>q.passageId===p.id && activeSet.has(q.quizSetId))
     : quizState.vocabularyQuestions.filter(q=>q.passageId===p.id && activeSet.has(q.quizSetId));
 
-  let html = `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-    <div style="font-size:12px;color:var(--ink-tertiary)">${pool.length} questions</div>
-    <button class="apple-btn" onclick="openQuestionEditor(null,'${isGrammar?'grammar':'vocab'}')">+ Add Question</button>
+  let html = `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
+    <div style="font-size:13px;color:var(--ink-secondary);font-weight:600;">${pool.length} questions in current view</div>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <button class="apple-btn small primary" style="font-weight:700;" onclick="redoCurrentQuizSet()">↻ Redo This Set (重新做这套题)</button>
+      <button class="apple-btn primary small" onclick="openQuestionEditor(null,'${isGrammar?'grammar':'vocab'}')">+ Add Question</button>
+    </div>
   </div>`;
 
   if (!pool.length) {
@@ -1786,13 +1880,19 @@ function renderQuestionsHTML() {
 
 function renderQuestionCard(q, num, qType) {
   const log = quizState.answerLog[q.id];
+  const inWb = quizState.wrongBook.some(w => w.qId === q.id || (w.question && w.question === q.question));
+  
   let html = `<div class="q-card" data-qid="${q.id}">
     <div class="q-meta">Q${num} · ${qType.toUpperCase()}${q.synonymGroup?' · '+esc(q.synonymGroup):''}</div>
-    <div style="display:flex;gap:6px;margin-bottom:8px;">
-      <button class="q-tool-btn" onclick="openAddVocabDialog('${esc(q.question).replace(/'/g,"\\'")}')">+ Vocab</button>
+    <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap;align-items:center;">
+      <button class="q-tool-btn ${inWb ? 'active' : ''}" style="${inWb ? 'background:rgba(255,59,48,0.12);color:var(--red);font-weight:700;' : ''}" onclick="toggleQuestionWrongBook('${q.id}', '${qType}')">
+        ${inWb ? '★ In Wrong Book (取消)' : '+ Add to Wrong Book (加入错题)'}
+      </button>
+      <button class="q-tool-btn" onclick="openAddVocabDialog('${esc(q.question).replace(/'/g,"\'")}', '', '${esc(q.question).replace(/'/g,"\'")}', '${appState.currentSubject}')">+ Vocabulary</button>
+      <button class="q-tool-btn" onclick="openAddPhraseDialog('${esc(q.question).replace(/'/g,"\'")}', '', '${esc(q.question).replace(/'/g,"\'")}', '${appState.currentSubject}')">+ Phrase</button>
       <button class="q-tool-btn" onclick="openAddSynonymDialog('${q.id}')">Syn Synonyms</button>
     </div>
-    <div class="q-text">${esc(q.question)}</div>
+    <div class="q-text" style="font-size:15px;font-weight:600;color:var(--ink);margin-bottom:8px;">${esc(q.question)}</div>
     <div class="q-options">`;
 
   q.options.forEach(opt => {
@@ -1805,7 +1905,15 @@ function renderQuestionCard(q, num, qType) {
 
   if (log) {
     html += `<div class="q-status ${log.correct?'ok':'err'}">${log.correct?'OK Correct':'X Wrong · Answer: '+esc(q.answer)}</div>`;
-    html += `<div class="q-explain show">${esc(q.explanation||'')}</div>`;
+    html += `<div class="q-explain show" style="margin-top:8px;padding:12px;background:var(--bg-elev);border:1px solid var(--line);border-radius:var(--radius-sm);">
+      <div style="font-weight:700;margin-bottom:4px;font-size:13px;">Explanation (答案解析):</div>
+      <div>${esc(q.explanation||'No explanation provided.')}</div>
+      <div class="explain-actions" style="margin-top:10px;padding-top:8px;border-top:1px dashed var(--line);display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        <span style="font-size:11px;color:var(--ink-tertiary);font-weight:600;">Answer Collections (解析收藏):</span>
+        <button class="apple-btn small" onclick="addSelectedOrPromptVocab('${q.id}')">+ Add Word (单词)</button>
+        <button class="apple-btn small" onclick="addSelectedOrPromptPhrase('${q.id}')">+ Add Phrase (词组)</button>
+      </div>
+    </div>`;
   }
 
   html += `<div class="q-actions">
@@ -1815,6 +1923,110 @@ function renderQuestionCard(q, num, qType) {
     <button onclick="deleteQuestion('${q.id}','${qType}')">Delete</button>
   </div></div>`;
   return html;
+}
+
+// ================================================================
+//  REDO QUIZ SET / REDO WRONG BOOK FUNCTIONS
+// ================================================================
+function redoCurrentQuizSet() {
+  const p = currentPassage();
+  if (!p) { toast('No section selected (请先选择章节)'); return; }
+  const activeIds = getActiveQuizSetIds();
+  const activeSet = new Set(activeIds);
+  
+  const grammarPool = quizState.grammarQuestions.filter(q => q.passageId === p.id && activeSet.has(q.quizSetId));
+  const vocabPool = quizState.vocabularyQuestions.filter(q => q.passageId === p.id && activeSet.has(q.quizSetId));
+  const allPool = [...grammarPool, ...vocabPool];
+
+  if (!allPool.length) {
+    toast('No questions in this set (本套题暂无题目)');
+    return;
+  }
+
+  let answeredCount = 0;
+  allPool.forEach(q => {
+    if (quizState.answerLog[q.id]) answeredCount++;
+  });
+
+  if (!confirm(`确定要重新做一遍这套题吗？\n将清空本套题共 ${allPool.length} 道题目（已答 ${answeredCount} 题）的答题状态，以便重新自测练习！`)) {
+    return;
+  }
+
+  allPool.forEach(q => {
+    delete quizState.answerLog[q.id];
+  });
+
+  saveQuiz();
+  renderSharedStats();
+  render();
+  toast('已重置！可以重新练习这套题了 ↻');
+}
+
+function redoAllWrongBookQuestions() {
+  const p = currentPassage();
+  const all = [...quizState.wrongBook];
+  let filtered = p ? all.filter(w => w.passageId === p.id) : all;
+  if (wbFilter === 'unresolved') filtered = filtered.filter(w => !w.completed);
+  if (wbFilter === 'resolved') filtered = filtered.filter(w => w.completed);
+
+  if (!filtered.length) { toast('No questions to reset'); return; }
+  if (!confirm(`确定要重置当前视图下的 ${filtered.length} 道错题的答题状态吗？\n方便您重新从第一题自测刷题！`)) return;
+
+  filtered.forEach(w => {
+    w._chosen = null;
+    w._checked = false;
+  });
+  wbCurrentIndex = 0;
+  openQuizWrongBook(0, wbFilter);
+  toast('错题已全部重置！请重新做题 ↻');
+}
+
+function toggleQuestionWrongBook(qId, qType) {
+  const pool = qType === 'grammar' ? quizState.grammarQuestions : quizState.vocabularyQuestions;
+  const q = pool.find(x => x.id === qId); if (!q) return;
+  const idx = quizState.wrongBook.findIndex(w => w.qId === qId || w.question === q.question);
+  if (idx !== -1) {
+    quizState.wrongBook.splice(idx, 1);
+    toast('Removed from Wrong Book (已取消)');
+  } else {
+    quizState.wrongBook.push({
+      id: uid('wb'), qType, qId, passageId: q.passageId, quizSetId: q.quizSetId || null,
+      question: q.question, options: q.options, correctAnswer: q.answer, yourAnswer: null,
+      explanation: q.explanation || '', ts: Date.now(), completed: false
+    });
+    toast('Added to Wrong Book (已加入错题)');
+  }
+  saveQuiz();
+  renderSharedStats();
+  render();
+}
+
+function addSelectedOrPromptVocab(qId) {
+  const selText = window.getSelection().toString().trim();
+  let defaultExample = '';
+  let defaultSource = 'Quiz Hub Q#' + qId;
+  const card = document.querySelector(`.q-card[data-qid="${qId}"]`) || document.querySelector(`.wb-practice-card`);
+  if (card) {
+    const qText = card.querySelector('.q-text')?.textContent || '';
+    const expText = card.querySelector('.q-explain')?.textContent || '';
+    defaultExample = qText + (expText ? ' | ' + expText : '');
+    if (defaultExample.length > 120) defaultExample = defaultExample.slice(0, 120) + '...';
+  }
+  openAddVocabDialog(selText, defaultExample, defaultSource, appState.currentSubject);
+}
+
+function addSelectedOrPromptPhrase(qId) {
+  const selText = window.getSelection().toString().trim();
+  let defaultExample = '';
+  let defaultSource = 'Quiz Hub Q#' + qId;
+  const card = document.querySelector(`.q-card[data-qid="${qId}"]`) || document.querySelector(`.wb-practice-card`);
+  if (card) {
+    const qText = card.querySelector('.q-text')?.textContent || '';
+    const expText = card.querySelector('.q-explain')?.textContent || '';
+    defaultExample = qText + (expText ? ' | ' + expText : '');
+    if (defaultExample.length > 120) defaultExample = defaultExample.slice(0, 120) + '...';
+  }
+  openAddPhraseDialog(selText, defaultExample, defaultSource, appState.currentSubject);
 }
 
 function selectOption(btn, letter, qId) {
@@ -2043,62 +2255,270 @@ function addToVocabBook(word, extra={}) {
   word = (word||'').trim(); if(!word) return false;
   const exists = quizState.vocabularyBook.find(v=>v.word.toLowerCase()===word.toLowerCase());
   if(exists){toast('Already in vocab: '+word);return false;}
-  quizState.vocabularyBook.push({word,meaning:extra.meaning||'',example:extra.example||'',synonyms:extra.synonyms||[],notes:extra.notes||'',addedAt:Date.now(),srsBox:0,srsNext:Date.now(),srsReviews:0,srsLapses:0});
-  saveQuiz(); render(); toast('Added to vocab: '+word); return true;
+  quizState.vocabularyBook.push({
+    word, meaning: extra.meaning||'', example: extra.example||'',
+    source: extra.source || 'Quiz Hub', subject: extra.subject || appState.currentSubject,
+    dateAdded: todayISO(), addedAt: Date.now(), starred: false,
+    synonyms: extra.synonyms||[], notes: extra.notes||'',
+    srsBox:0, srsNext:Date.now(), srsReviews:0, srsLapses:0
+  });
+  saveQuiz(); renderSharedStats(); render(); toast('Added to vocab: '+word); return true;
 }
 
-function openQuizVocab() {
+// ================================================================
+//  VOCABULARY LIBRARY (INDEPENDENT)
+// ================================================================
+let vocabSearchQ = '';
+let vocabFilterSubj = 'all';
+let vocabFilterStarred = false;
+
+function openQuizVocab(searchQ = vocabSearchQ, filterSubj = vocabFilterSubj, filterStarred = vocabFilterStarred) {
+  if (typeof searchQ === 'string') vocabSearchQ = searchQ;
+  if (filterSubj) vocabFilterSubj = filterSubj;
+  if (typeof filterStarred === 'boolean') vocabFilterStarred = filterStarred;
   quizState.vocabularyBook.forEach(ensureSrs);
-  const items = [...quizState.vocabularyBook].sort((a,b)=>(b.addedAt||0)-(a.addedAt||0));
-  const dueCount = srsDueList(quizState.vocabularyBook).length;
-  const list = items.length ? items.map(v => {
-    const isDue = (v.srsNext||0)<=Date.now();
-    return `<div class="list-item" data-w="${esc(v.word)}">
-      <h4>${esc(v.word)} <span style="color:var(--ink-tertiary);font-weight:400;font-size:12px">— ${esc(v.meaning||'')}</span></h4>
-      <div class="meta">${esc(v.example||'')}</div>
-      <div class="chips"><span class="chip">Box ${v.srsBox||0}</span>${isDue?'<span class="chip" style="color:var(--orange)">Due</span>':'<span class="chip" style="color:var(--green)">Next: '+new Date(v.srsNext).toLocaleDateString()+'</span>'}${v.synonyms?.length?v.synonyms.map(s=>`<span class="chip">${esc(s)}</span>`).join(''):''}</div>
-      <div class="actions">
-        <button onclick="closeSheet('genericSheet');startSrsReview('vocab',[quizState.vocabularyBook.find(x=>x.word==='${esc(v.word)}')])">Review</button>
-        <button onclick="editVocabItem('${esc(v.word)}')">Edit</button>
-        <button onclick="quizState.vocabularyBook=quizState.vocabularyBook.filter(x=>x.word!=='${esc(v.word)}');saveQuiz();closeSheet('genericSheet');render();">Delete</button>
+  
+  let items = [...quizState.vocabularyBook].sort((a,b) => (b.addedAt||0) - (a.addedAt||0));
+  if (vocabSearchQ) {
+    const q = vocabSearchQ.toLowerCase();
+    items = items.filter(v => v.word.toLowerCase().includes(q) || (v.meaning||'').toLowerCase().includes(q) || (v.source||'').toLowerCase().includes(q));
+  }
+  if (vocabFilterSubj !== 'all') items = items.filter(v => v.subject === vocabFilterSubj);
+  if (vocabFilterStarred) items = items.filter(v => v.starred);
+
+  const subjOpts = `<option value="all">All Subjects</option>` + Object.keys(customSubjects).map(k => `<option value="${k}" ${k === vocabFilterSubj ? 'selected' : ''}>${esc(customSubjects[k].label)}</option>`).join('');
+
+  const filterBar = `<div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center;">
+    <input type="text" placeholder="Search vocabulary word, meaning, source..." value="${esc(vocabSearchQ)}" style="flex:1;min-width:180px;" oninput="openQuizVocab(this.value, vocabFilterSubj, vocabFilterStarred)"/>
+    <select style="padding:6px 10px;" onchange="openQuizVocab(vocabSearchQ, this.value, vocabFilterStarred)">${subjOpts}</select>
+    <button class="apple-btn small ${vocabFilterStarred ? 'active' : ''}" style="${vocabFilterStarred ? 'background:var(--yellow);color:#000;font-weight:700;' : ''}" onclick="openQuizVocab(vocabSearchQ, vocabFilterSubj, !vocabFilterStarred)">★ Favorites (${quizState.vocabularyBook.filter(v=>v.starred).length})</button>
+    <button class="apple-btn primary small" onclick="openAddVocabDialog('', '', '', appState.currentSubject)">+ Add Vocabulary</button>
+  </div>`;
+
+  const listHTML = items.length ? items.map(v => {
+    const sColor = customSubjects[v.subject]?.color || 'var(--ink-tertiary)';
+    const sLabel = customSubjects[v.subject]?.label || v.subject || 'General';
+    return `<div class="list-item" style="display:flex;justify-content:space-between;align-items:flex-start;padding:14px;background:var(--bg-elev);border:1px solid var(--line);border-radius:var(--radius-sm);margin-bottom:8px;box-shadow:var(--shadow-sm);">
+      <div style="flex:1;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap;">
+          <h4 style="font-size:16px;font-weight:700;margin:0;color:var(--ink);">${esc(v.word)}</h4>
+          <span style="font-size:11px;padding:2px 8px;border-radius:4px;background:${sColor}18;color:${sColor};font-weight:600;">${esc(sLabel)}</span>
+          ${v.source ? `<span style="font-size:11px;color:var(--ink-tertiary);background:var(--bg-card);padding:2px 6px;border-radius:4px;border:1px solid var(--line-light);">Src: ${esc(v.source)}</span>` : ''}
+          <span style="font-size:11px;color:var(--ink-tertiary);margin-left:auto;">Added: ${v.dateAdded || new Date(v.addedAt||Date.now()).toLocaleDateString()}</span>
+        </div>
+        <div class="meta" style="font-size:14px;color:var(--ink-secondary);font-weight:500;margin-bottom:4px;">${esc(v.meaning || 'No meaning provided')}</div>
+        ${v.example ? `<div style="font-size:13px;color:var(--ink-tertiary);font-style:italic;line-height:1.4;">"${esc(v.example)}"</div>` : ''}
+      </div>
+      <div class="actions" style="display:flex;gap:6px;margin-left:14px;flex-shrink:0;">
+        <button class="apple-btn small ${v.starred ? 'active' : ''}" style="${v.starred ? 'color:var(--yellow);font-weight:700;' : ''}" onclick="toggleVocabStar('${esc(v.word)}')">★</button>
+        <button class="apple-btn small" onclick="openEditVocabDialog('${esc(v.word)}')">Edit</button>
+        <button class="apple-btn small danger" onclick="deleteVocabItem('${esc(v.word)}')">Delete</button>
       </div>
     </div>`;
-  }).join('') : `<div class="empty-state">Vocabulary book is empty</div>`;
+  }).join('') : `<div class="empty-state">No vocabulary items match criteria</div>`;
 
-  openGenericSheet(`R Vocabulary (${items.length})${dueCount?' · ! '+dueCount+' due':''}`,
-    `<div class="field"><input id="vSearch" placeholder="Search..." oninput="filterVocabSearch(this.value)"/></div><div id="vList">${list}</div>`,
-    [{text:`Rev Review (${dueCount})`,cls:dueCount?'primary':'',onclick:()=>{closeSheet('genericSheet');startSrsReview('vocab');}},{text:'+ Add',onclick:()=>editVocabItem(null)},{text:'Close',onclick:()=>closeSheet('genericSheet')}]
-  );
+  openGenericSheet(`R Vocabulary Library (${quizState.vocabularyBook.length})`, filterBar + `<div style="max-height:420px;overflow-y:auto;">${listHTML}</div>`, [
+    { text: 'Close', cls: 'primary', onclick: () => { closeSheet('genericSheet'); render(); } }
+  ]);
 }
 
-function filterVocabSearch(q) {
-  document.querySelectorAll('#vList .list-item').forEach(el => {
-    el.style.display = el.dataset.w.toLowerCase().includes(q.toLowerCase()) ? '' : 'none';
-  });
+function toggleVocabStar(word) {
+  const v = quizState.vocabularyBook.find(x => x.word === word);
+  if (v) {
+    v.starred = !v.starred;
+    saveQuiz();
+    openQuizVocab();
+    toast(v.starred ? 'Added to Favorites (已收藏)' : 'Removed from Favorites');
+  }
 }
 
-function editVocabItem(word) {
-  const v = word ? quizState.vocabularyBook.find(x=>x.word===word) : {word:'',meaning:'',example:'',synonyms:[],notes:''};
-  if(!v) return;
-  openGenericSheet(word?'Edit Vocab':'Add Vocab',`
-    <div class="field"><label>Word</label><input id="vw" value="${esc(v.word)}" ${word?'disabled':''}/></div>
-    <div class="field"><label>Meaning</label><input id="vm" value="${esc(v.meaning||'')}"/></div>
-    <div class="field"><label>Example</label><textarea id="ve">${esc(v.example||'')}</textarea></div>
-    <div class="field"><label>Synonyms</label><input id="vs" value="${esc((v.synonyms||[]).join(', '))}"/></div>
-    <div class="field"><label>Notes</label><textarea id="vn">${esc(v.notes||'')}</textarea></div>
-  `,[
-    {text:'Cancel',onclick:()=>closeSheet('genericSheet')},
-    {text:'Save',cls:'primary',onclick:()=>{
-      const wVal=(document.getElementById('vw').value||v.word||'').trim();if(!wVal){toast('Word required');return;}
-      v.word=wVal;v.meaning=document.getElementById('vm').value.trim();v.example=document.getElementById('ve').value.trim();
-      v.synonyms=document.getElementById('vs').value.split(',').map(s=>s.trim()).filter(Boolean);v.notes=document.getElementById('vn').value.trim();
-      if(!word){if(quizState.vocabularyBook.find(x=>x.word.toLowerCase()===wVal.toLowerCase())){toast('Exists');return;}v.addedAt=Date.now();ensureSrs(v);quizState.vocabularyBook.push(v);}
-      saveQuiz();closeSheet('genericSheet');render();
+function openEditVocabDialog(word) {
+  const v = quizState.vocabularyBook.find(x => x.word === word);
+  if (!v) return;
+  openAddVocabDialog(v.word, v.example || '', v.source || '', v.subject || appState.currentSubject);
+}
+
+function deleteVocabItem(word) {
+  if (!confirm(`Delete vocabulary word "${word}"?`)) return;
+  quizState.vocabularyBook = quizState.vocabularyBook.filter(x => x.word !== word);
+  saveQuiz();
+  renderSharedStats();
+  openQuizVocab();
+  toast('Deleted from Vocabulary Library');
+}
+
+// ================================================================
+//  PHRASE LIBRARY (INDEPENDENT)
+// ================================================================
+let phraseSearchQ = '';
+let phraseFilterSubj = 'all';
+let phraseFilterStarred = false;
+
+function openQuizPhrases(searchQ = phraseSearchQ, filterSubj = phraseFilterSubj, filterStarred = phraseFilterStarred) {
+  if (typeof searchQ === 'string') phraseSearchQ = searchQ;
+  if (filterSubj) phraseFilterSubj = filterSubj;
+  if (typeof filterStarred === 'boolean') phraseFilterStarred = filterStarred;
+  
+  let items = [...quizState.phraseLibrary].sort((a,b) => (b.addedAt||0) - (a.addedAt||0));
+  if (phraseSearchQ) {
+    const q = phraseSearchQ.toLowerCase();
+    items = items.filter(p => p.phrase.toLowerCase().includes(q) || (p.meaning||'').toLowerCase().includes(q) || (p.example||'').toLowerCase().includes(q) || (p.source||'').toLowerCase().includes(q));
+  }
+  if (phraseFilterSubj !== 'all') items = items.filter(p => p.subject === phraseFilterSubj);
+  if (phraseFilterStarred) items = items.filter(p => p.starred);
+
+  const subjOpts = `<option value="all">All Subjects</option>` + Object.keys(customSubjects).map(k => `<option value="${k}" ${k === phraseFilterSubj ? 'selected' : ''}>${esc(customSubjects[k].label)}</option>`).join('');
+
+  const filterBar = `<div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center;">
+    <input type="text" placeholder="Search phrase, meaning, example, source..." value="${esc(phraseSearchQ)}" style="flex:1;min-width:180px;" oninput="openQuizPhrases(this.value, phraseFilterSubj, phraseFilterStarred)"/>
+    <select style="padding:6px 10px;" onchange="openQuizPhrases(phraseSearchQ, this.value, phraseFilterStarred)">${subjOpts}</select>
+    <button class="apple-btn small ${phraseFilterStarred ? 'active' : ''}" style="${phraseFilterStarred ? 'background:var(--yellow);color:#000;font-weight:700;' : ''}" onclick="openQuizPhrases(phraseSearchQ, phraseFilterSubj, !phraseFilterStarred)">★ Favorites (${quizState.phraseLibrary.filter(p=>p.starred).length})</button>
+    <button class="apple-btn primary small" onclick="openAddPhraseDialog('', '', '', appState.currentSubject)">+ Add Phrase</button>
+  </div>`;
+
+  const listHTML = items.length ? items.map(p => {
+    const sColor = customSubjects[p.subject]?.color || 'var(--ink-tertiary)';
+    const sLabel = customSubjects[p.subject]?.label || p.subject || 'General';
+    return `<div class="list-item" style="display:flex;justify-content:space-between;align-items:flex-start;padding:14px;background:var(--bg-elev);border:1px solid var(--line);border-radius:var(--radius-sm);margin-bottom:8px;box-shadow:var(--shadow-sm);">
+      <div style="flex:1;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap;">
+          <h4 style="font-size:16px;font-weight:700;margin:0;color:var(--ink);">${esc(p.phrase)}</h4>
+          <span style="font-size:11px;padding:2px 8px;border-radius:4px;background:${sColor}18;color:${sColor};font-weight:600;">${esc(sLabel)}</span>
+          ${p.source ? `<span style="font-size:11px;color:var(--ink-tertiary);background:var(--bg-card);padding:2px 6px;border-radius:4px;border:1px solid var(--line-light);">Src: ${esc(p.source)}</span>` : ''}
+          <span style="font-size:11px;color:var(--ink-tertiary);margin-left:auto;">Added: ${p.dateAdded || new Date(p.addedAt||Date.now()).toLocaleDateString()}</span>
+        </div>
+        <div class="meta" style="font-size:14px;color:var(--ink-secondary);font-weight:500;margin-bottom:4px;">${esc(p.meaning || 'No meaning provided')}</div>
+        ${p.example ? `<div style="font-size:13px;color:var(--ink-tertiary);font-style:italic;line-height:1.4;">"${esc(p.example)}"</div>` : ''}
+      </div>
+      <div class="actions" style="display:flex;gap:6px;margin-left:14px;flex-shrink:0;">
+        <button class="apple-btn small ${p.starred ? 'active' : ''}" style="${p.starred ? 'color:var(--yellow);font-weight:700;' : ''}" onclick="togglePhraseStar('${esc(p.phrase)}')">★</button>
+        <button class="apple-btn small" onclick="openEditPhraseDialog('${esc(p.phrase)}')">Edit</button>
+        <button class="apple-btn small danger" onclick="deletePhraseItem('${esc(p.phrase)}')">Delete</button>
+      </div>
+    </div>`;
+  }).join('') : `<div class="empty-state">No phrases match criteria</div>`;
+
+  openGenericSheet(`P Phrase Library (${quizState.phraseLibrary.length})`, filterBar + `<div style="max-height:420px;overflow-y:auto;">${listHTML}</div>`, [
+    { text: 'Close', cls: 'primary', onclick: () => { closeSheet('genericSheet'); render(); } }
+  ]);
+}
+
+function togglePhraseStar(phrase) {
+  const p = quizState.phraseLibrary.find(x => x.phrase === phrase);
+  if (p) {
+    p.starred = !p.starred;
+    saveQuiz();
+    openQuizPhrases();
+    toast(p.starred ? 'Added to Favorites (已收藏)' : 'Removed from Favorites');
+  }
+}
+
+function openEditPhraseDialog(phrase) {
+  const p = quizState.phraseLibrary.find(x => x.phrase === phrase);
+  if (!p) return;
+  openAddPhraseDialog(p.phrase, p.example || '', p.source || '', p.subject || appState.currentSubject);
+}
+
+function deletePhraseItem(phrase) {
+  if (!confirm(`Delete phrase "${phrase}"?`)) return;
+  quizState.phraseLibrary = quizState.phraseLibrary.filter(x => x.phrase !== phrase);
+  saveQuiz();
+  renderSharedStats();
+  openQuizPhrases();
+  toast('Deleted from Phrase Library');
+}
+
+// ================================================================
+//  ADD DIALOGS FOR VOCABULARY & PHRASE
+// ================================================================
+function openAddVocabDialog(defaultWord = '', defaultExample = '', defaultSource = '', defaultSubj = '') {
+  const subjOpts = Object.keys(customSubjects).map(k => `<option value="${k}" ${k === (defaultSubj || appState.currentSubject) ? 'selected' : ''}>${esc(customSubjects[k].label)}</option>`).join('');
+  openGenericSheet('Add to Vocabulary Library', `
+    <div class="field"><label>Word (单词)</label><input id="add_vw_word" value="${esc(defaultWord)}" placeholder="e.g. abandon"/></div>
+    <div class="field"><label>Meaning (释义)</label><input id="add_vw_mean" placeholder="e.g. 放弃，抛弃"/></div>
+    <div class="field"><label>Source (来源)</label><input id="add_vw_src" value="${esc(defaultSource || 'Quiz Hub')}" placeholder="e.g. Reading passage 1"/></div>
+    <div class="field"><label>Subject (学科)</label><select id="add_vw_subj">${subjOpts}</select></div>
+    <div class="field"><label>Example / Note (例句)</label><textarea id="add_vw_ex" rows="2" placeholder="e.g. He decided to abandon the plan.">${esc(defaultExample)}</textarea></div>
+  `, [
+    { text: 'Cancel', onclick: () => closeSheet('genericSheet') },
+    { text: 'Save Vocabulary', cls: 'primary', onclick: () => {
+      const word = document.getElementById('add_vw_word').value.trim();
+      if (!word) { toast('Word required'); return; }
+      const meaning = document.getElementById('add_vw_mean').value.trim();
+      const source = document.getElementById('add_vw_src').value.trim();
+      const subject = document.getElementById('add_vw_subj').value;
+      const example = document.getElementById('add_vw_ex').value.trim();
+      
+      const exists = quizState.vocabularyBook.find(v => v.word.toLowerCase() === word.toLowerCase());
+      if (exists) {
+        exists.meaning = meaning || exists.meaning;
+        exists.example = example || exists.example;
+        exists.source = source || exists.source;
+        exists.subject = subject || exists.subject;
+        toast('Updated existing vocabulary word: ' + word);
+      } else {
+        quizState.vocabularyBook.push({
+          word, meaning, example, source, subject,
+          dateAdded: todayISO(), addedAt: Date.now(),
+          starred: false, srsBox: 0, srsNext: Date.now(), srsReviews: 0, srsLapses: 0
+        });
+        toast('Added to Vocabulary Library: ' + word);
+      }
+      saveQuiz();
+      closeSheet('genericSheet');
+      renderSharedStats();
+      render();
     }}
   ]);
 }
 
+function openAddPhraseDialog(defaultPhrase = '', defaultExample = '', defaultSource = '', defaultSubj = '') {
+  const subjOpts = Object.keys(customSubjects).map(k => `<option value="${k}" ${k === (defaultSubj || appState.currentSubject) ? 'selected' : ''}>${esc(customSubjects[k].label)}</option>`).join('');
+  openGenericSheet('Add to Phrase Library', `
+    <div class="field"><label>Phrase (词组)</label><input id="add_ph_phrase" value="${esc(defaultPhrase)}" placeholder="e.g. take advantage of"/></div>
+    <div class="field"><label>Meaning (释义)</label><input id="add_ph_mean" placeholder="e.g. 利用，占……的便宜"/></div>
+    <div class="field"><label>Example (例句)</label><textarea id="add_ph_ex" rows="2" placeholder="e.g. We should take advantage of this opportunity.">${esc(defaultExample)}</textarea></div>
+    <div class="field"><label>Source (来源)</label><input id="add_ph_src" value="${esc(defaultSource || 'Quiz Hub')}" placeholder="e.g. Passage 2"/></div>
+    <div class="field"><label>Subject (学科)</label><select id="add_ph_subj">${subjOpts}</select></div>
+  `, [
+    { text: 'Cancel', onclick: () => closeSheet('genericSheet') },
+    { text: 'Save Phrase', cls: 'primary', onclick: () => {
+      const phrase = document.getElementById('add_ph_phrase').value.trim();
+      if (!phrase) { toast('Phrase required'); return; }
+      const meaning = document.getElementById('add_ph_mean').value.trim();
+      const example = document.getElementById('add_ph_ex').value.trim();
+      const source = document.getElementById('add_ph_src').value.trim();
+      const subject = document.getElementById('add_ph_subj').value;
+      
+      const exists = quizState.phraseLibrary.find(p => p.phrase.toLowerCase() === phrase.toLowerCase());
+      if (exists) {
+        exists.meaning = meaning || exists.meaning;
+        exists.example = example || exists.example;
+        exists.source = source || exists.source;
+        exists.subject = subject || exists.subject;
+        toast('Updated existing phrase: ' + phrase);
+      } else {
+        quizState.phraseLibrary.push({
+          phrase, meaning, example, source, subject,
+          dateAdded: todayISO(), addedAt: Date.now(),
+          starred: false
+        });
+        toast('Added to Phrase Library: ' + phrase);
+      }
+      saveQuiz();
+      closeSheet('genericSheet');
+      renderSharedStats();
+      render();
+    }}
+  ]);
+}
+
+function editVocabItem(word) {
+  openEditVocabDialog(word);
+}
+
 // ================================================================
+//  SYNONYM LIBRARY// ================================================================
 //  SYNONYM LIBRARY
 // ================================================================
 function openQuizSynonyms() {
@@ -2186,38 +2606,161 @@ function openAddSynonymDialog(qId) {
 }
 
 // ================================================================
-//  WRONG BOOK
+//  WRONG BOOK — INTERACTIVE QUESTION PRACTICING INTERFACE
 // ================================================================
-function openQuizWrongBook() {
+let wbCurrentIndex = 0;
+let wbFilter = 'all'; // 'all', 'unresolved', 'resolved'
+
+function openQuizWrongBook(idx = 0, filter = wbFilter) {
+  if (typeof idx === 'number') wbCurrentIndex = idx;
+  if (filter) wbFilter = filter;
   const p = currentPassage();
-  const all = [...quizState.wrongBook].sort((a,b)=>b.ts-a.ts);
-  const filtered = p ? all.filter(w=>w.passageId===p.id) : all;
+  const all = [...quizState.wrongBook];
+  let filtered = p ? all.filter(w => w.passageId === p.id) : all;
+  if (wbFilter === 'unresolved') filtered = filtered.filter(w => !w.completed);
+  if (wbFilter === 'resolved') filtered = filtered.filter(w => w.completed);
 
-  const html = filtered.length ? filtered.map(w => `<div class="list-item">
-    <div class="chips"><span class="chip" style="color:var(--red)">${w.qType==='grammar'?'Grammar':'Vocab'}</span></div>
-    <h4>${esc(w.question)}</h4>
-    <div class="meta">Your: ${esc(w.yourAnswer)} · Correct: ${esc(w.correctAnswer)}</div>
-    ${w.explanation?`<div class="meta" style="margin-top:4px">${esc(w.explanation)}</div>`:''}
-    <div class="actions">
-      <button onclick="retryWrong('${w.id}')">Retry</button>
-      <button onclick="quizState.wrongBook=quizState.wrongBook.filter(x=>x.id!=='${w.id}');saveQuiz();closeSheet('genericSheet');render();">Delete</button>
+  if (wbCurrentIndex >= filtered.length) wbCurrentIndex = Math.max(0, filtered.length - 1);
+  if (wbCurrentIndex < 0) wbCurrentIndex = 0;
+
+  const totalAll = all.length;
+  const totalUnres = all.filter(w => !w.completed).length;
+  const totalRes = all.filter(w => w.completed).length;
+
+  const filterBar = `<div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;align-items:center;">
+    <span style="font-size:12px;font-weight:700;color:var(--ink-secondary);margin-right:4px;">Filter:</span>
+    <button class="apple-btn small ${wbFilter === 'all' && !p ? 'active' : ''}" onclick="quizState.currentPassageId=null;openQuizWrongBook(0, 'all')">All (${totalAll})</button>
+    <button class="apple-btn small ${wbFilter === 'unresolved' ? 'active' : ''}" onclick="openQuizWrongBook(0, 'unresolved')">Unresolved (${totalUnres})</button>
+    <button class="apple-btn small ${wbFilter === 'resolved' ? 'active' : ''}" onclick="openQuizWrongBook(0, 'resolved')">Resolved (${totalRes})</button>
+    ${quizState.passages.map(pp => `<button class="apple-btn small ${pp.id === p?.id ? 'active' : ''}" onclick="quizState.currentPassageId='${pp.id}';openQuizWrongBook(0, '${wbFilter}')">${esc(pp.customName)}</button>`).join('')}
+    <button class="apple-btn small primary" style="margin-left:auto;font-weight:700;" onclick="redoAllWrongBookQuestions()">↻ Reset All in View (全部重做)</button>
+  </div>`;
+
+  if (!filtered.length) {
+    openGenericSheet('X Wrong Book Practice', filterBar + `<div class="empty-state">No wrong questions found in this filter!</div>`, [
+      { text: 'Close', cls: 'primary', onclick: () => closeSheet('genericSheet') }
+    ]);
+    return;
+  }
+
+  const w = filtered[wbCurrentIndex];
+  const qNum = wbCurrentIndex + 1;
+  const total = filtered.length;
+  const isResolved = !!w.completed;
+
+  // Options rendering
+  let optionsHTML = `<div class="q-options" style="margin-top:12px;margin-bottom:16px;">`;
+  (w.options || []).forEach(opt => {
+    const letter = (opt.match(/^([A-Z])[.\s、)]/) || [])[1] || opt[0];
+    let cls = 'q-opt wb-opt';
+    if (w._checked) {
+      if (letter === w.correctAnswer) cls += ' correct';
+      else if (letter === w._chosen) cls += ' wrong';
+    } else if (w._chosen === letter) {
+      cls += ' selected';
+    }
+    optionsHTML += `<button class="${cls}" style="text-align:left;width:100%;padding:10px 14px;margin-bottom:6px;border-radius:var(--radius-sm);border:1px solid var(--line);" onclick="selectWbOption(this, '${letter}', '${w.id}')">${esc(opt)}</button>`;
+  });
+  optionsHTML += `</div>`;
+
+  // Explanation if checked
+  let explainHTML = '';
+  if (w._checked) {
+    const isOk = w._chosen === w.correctAnswer;
+    explainHTML = `<div class="q-status ${isOk ? 'ok' : 'err'}" style="margin-top:12px;padding:10px;border-radius:var(--radius-sm);background:${isOk?'rgba(52,199,89,0.1)':'rgba(255,59,48,0.1)'};color:${isOk?'var(--green)':'var(--red)'};font-weight:700;">
+      ${isOk ? 'OK Correct!' : 'X Wrong · Correct Answer: ' + esc(w.correctAnswer)}
     </div>
-  </div>`).join('') : `<div class="empty-state">No wrong answers${p?' in current section':''}</div>`;
+    <div class="q-explain show" style="margin-top:10px;padding:14px;background:var(--bg-elev);border:1px solid var(--line);border-radius:var(--radius-sm);">
+      <div style="font-weight:700;margin-bottom:6px;font-size:13px;color:var(--ink);">Explanation (答案解析):</div>
+      <div style="font-size:14px;color:var(--ink-secondary);line-height:1.5;">${esc(w.explanation || 'No explanation provided.')}</div>
+      <div class="explain-actions" style="margin-top:12px;padding-top:10px;border-top:1px dashed var(--line);display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        <span style="font-size:11px;color:var(--ink-tertiary);font-weight:600;">Answer Collections (解析收藏):</span>
+        <button class="apple-btn small" onclick="addSelectedOrPromptVocab('${w.qId || w.id}')">+ Add Word (单词)</button>
+        <button class="apple-btn small" onclick="addSelectedOrPromptPhrase('${w.qId || w.id}')">+ Add Phrase (词组)</button>
+      </div>
+    </div>`;
+  }
 
-  openGenericSheet('X Wrong Book ('+filtered.length+')',
-    `<div style="display:flex;gap:6px;margin-bottom:12px"><button class="apple-btn small ${!p?'active':''}" onclick="quizState.currentPassageId=null;saveQuiz();closeSheet('genericSheet');openQuizWrongBook();">All</button>${quizState.passages.map(pp=>`<button class="apple-btn small ${pp.id===p?.id?'active':''}" onclick="quizState.currentPassageId='${pp.id}';saveQuiz();closeSheet('genericSheet');openQuizWrongBook();">${esc(pp.customName)}</button>`).join('')}</div>`+html,
-    [{text:'Close',cls:'primary',onclick:()=>closeSheet('genericSheet')}]
-  );
+  const cardHTML = `<div class="q-card wb-practice-card" data-wbid="${w.id}" style="padding:18px;background:var(--bg-card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow-sm);">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;border-bottom:1px solid var(--line);padding-bottom:10px;">
+      <span style="font-size:13px;font-weight:700;color:var(--accent);">Question ${qNum} of ${total} (${w.qType ? w.qType.toUpperCase() : 'QUIZ'})</span>
+      <div style="display:flex;gap:6px;align-items:center;">
+        ${isResolved ? `<span style="background:var(--green);color:#fff;font-size:11px;font-weight:700;padding:3px 10px;border-radius:12px;">✓ Resolved</span>` : `<span style="background:var(--red);color:#fff;font-size:11px;font-weight:700;padding:3px 10px;border-radius:12px;">Unresolved</span>`}
+      </div>
+    </div>
+    <div style="display:flex;gap:6px;margin-bottom:12px;">
+      <button class="q-tool-btn" onclick="openAddVocabDialog('${esc(w.question).replace(/'/g, "\'")}', '', '${esc(w.question).replace(/'/g, "\'")}', '${appState.currentSubject}')">+ Vocab</button>
+      <button class="q-tool-btn" onclick="openAddPhraseDialog('${esc(w.question).replace(/'/g, "\'")}', '', '${esc(w.question).replace(/'/g, "\'")}', '${appState.currentSubject}')">+ Phrase</button>
+    </div>
+    <div class="q-text" style="font-size:16px;font-weight:600;color:var(--ink);line-height:1.4;">${esc(w.question)}</div>
+    ${optionsHTML}
+    ${explainHTML}
+    <div style="display:flex;gap:8px;margin-top:18px;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:14px;align-items:center;">
+      <button class="apple-btn primary" onclick="checkWbAnswer('${w.id}')">Check Answer (做题)</button>
+      <button class="apple-btn" onclick="retryWbQuestion('${w.id}')">Retry (重新做)</button>
+      <button class="apple-btn" style="${isResolved ? 'color:var(--orange);' : 'color:var(--green);font-weight:600;'}" onclick="toggleWbResolved('${w.id}')">
+        ${isResolved ? 'Unmark / Add Back (再次加入错题)' : '✓ Mark Completed (标记完成)'}
+      </button>
+      <button class="apple-btn danger" style="margin-left:auto;" onclick="deleteWbQuestion('${w.id}')">Delete (删除错题)</button>
+    </div>
+  </div>
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-top:16px;">
+    <button class="apple-btn" onclick="openQuizWrongBook(${wbCurrentIndex - 1}, '${wbFilter}')" ${wbCurrentIndex === 0 ? 'disabled' : ''}>← Previous</button>
+    <span style="font-size:12px;color:var(--ink-secondary);font-weight:500;">Wrong Book Practice Mode</span>
+    <button class="apple-btn" onclick="openQuizWrongBook(${wbCurrentIndex + 1}, '${wbFilter}')" ${wbCurrentIndex >= total - 1 ? 'disabled' : ''}>Next →</button>
+  </div>`;
+
+  openGenericSheet(`X Wrong Book (${all.length}) — Practice Mode`, filterBar + cardHTML, [
+    { text: 'Close', cls: 'primary', onclick: () => { closeSheet('genericSheet'); render(); } }
+  ]);
+}
+
+function selectWbOption(btn, letter, wbId) {
+  const card = btn.closest('.wb-practice-card');
+  card.querySelectorAll('.wb-opt').forEach(o => o.classList.remove('selected'));
+  btn.classList.add('selected');
+  const w = quizState.wrongBook.find(x => x.id === wbId);
+  if (w) w._chosen = letter;
+}
+
+function checkWbAnswer(wbId) {
+  const w = quizState.wrongBook.find(x => x.id === wbId);
+  if (!w) return;
+  if (!w._chosen) { toast('Select an option first'); return; }
+  w._checked = true;
+  openQuizWrongBook(wbCurrentIndex, wbFilter);
+}
+
+function retryWbQuestion(wbId) {
+  const w = quizState.wrongBook.find(x => x.id === wbId);
+  if (!w) return;
+  w._chosen = null;
+  w._checked = false;
+  openQuizWrongBook(wbCurrentIndex, wbFilter);
+  toast('Question reset for retry');
+}
+
+function toggleWbResolved(wbId) {
+  const w = quizState.wrongBook.find(x => x.id === wbId);
+  if (!w) return;
+  w.completed = !w.completed;
+  saveQuiz();
+  renderSharedStats();
+  openQuizWrongBook(wbCurrentIndex, wbFilter);
+  toast(w.completed ? 'Marked as completed / resolved!' : 'Added back to unresolved wrong book!');
+}
+
+function deleteWbQuestion(wbId) {
+  if (!confirm('Delete this question from Wrong Book?')) return;
+  quizState.wrongBook = quizState.wrongBook.filter(x => x.id !== wbId);
+  saveQuiz();
+  renderSharedStats();
+  openQuizWrongBook(wbCurrentIndex, wbFilter);
+  toast('Deleted from Wrong Book');
 }
 
 function retryWrong(wId) {
-  const w = quizState.wrongBook.find(x=>x.id===wId); if(!w) return;
-  quizState.currentPassageId = w.passageId;
-  if(w.quizSetId) quizState.currentQuizSetId[w.passageId] = w.quizSetId;
-  quizState.activeTab = w.qType==='grammar'?'grammar':'vocab';
-  delete quizState.answerLog[w.qId];
-  quizState.wrongBook = quizState.wrongBook.filter(x=>x.id!==wId);
-  saveQuiz(); closeSheet('genericSheet'); render();
+  retryWbQuestion(wId);
 }
 
 // ================================================================
@@ -2306,7 +2849,7 @@ function openQuizSettings() {
 }
 
 function exportQuizJSON() {
-  const obj = {version:'2.0',schemaVersion:QUIZ_SCHEMA,exportedAt:Date.now(),passages:quizState.passages,quizSets:quizState.quizSets,grammarQuestions:quizState.grammarQuestions,vocabularyQuestions:quizState.vocabularyQuestions,vocabularyBook:quizState.vocabularyBook,synonymLibrary:quizState.synonymLibrary,highlights:quizState.highlights,wrongBook:quizState.wrongBook,answerLog:quizState.answerLog,currentPassageId:quizState.currentPassageId,currentQuizSetId:quizState.currentQuizSetId};
+  const obj = {version:'2.0',schemaVersion:QUIZ_SCHEMA,exportedAt:Date.now(),passages:quizState.passages,quizSets:quizState.quizSets,grammarQuestions:quizState.grammarQuestions,vocabularyQuestions:quizState.vocabularyQuestions,vocabularyBook:quizState.vocabularyBook,phraseLibrary:quizState.phraseLibrary,synonymLibrary:quizState.synonymLibrary,highlights:quizState.highlights,wrongBook:quizState.wrongBook,answerLog:quizState.answerLog,currentPassageId:quizState.currentPassageId,currentQuizSetId:quizState.currentQuizSetId};
   downloadJSON(obj,'quiz_export_'+todayISO()+'.json');
   toast('Exported OK');
 }
@@ -2332,6 +2875,7 @@ function importQuizData(data) {
   quizState.grammarQuestions=Array.isArray(data.grammarQuestions)?data.grammarQuestions:[];
   quizState.vocabularyQuestions=Array.isArray(data.vocabularyQuestions)?data.vocabularyQuestions:[];
   quizState.vocabularyBook=Array.isArray(data.vocabularyBook)?data.vocabularyBook:[];
+  quizState.phraseLibrary=Array.isArray(data.phraseLibrary)?data.phraseLibrary:[];
   quizState.synonymLibrary=Array.isArray(data.synonymLibrary)?data.synonymLibrary:[];
   quizState.highlights=Array.isArray(data.highlights)?data.highlights:[];
   quizState.wrongBook=Array.isArray(data.wrongBook)?data.wrongBook:[];
@@ -2346,7 +2890,7 @@ function importQuizData(data) {
 
 function clearAllQuiz() {
   if(!confirm('Clear ALL quiz data? This cannot be undone.')) return;
-  quizState = {version:'2.0',schemaVersion:QUIZ_SCHEMA,passages:[],quizSets:[],grammarQuestions:[],vocabularyQuestions:[],vocabularyBook:[],synonymLibrary:[],highlights:[],wrongBook:[],answerLog:{},currentPassageId:null,currentQuizSetId:{},activeQuizSetIds:{},activeTab:'grammar',activeQIndex:{grammar:{},vocab:{}}};
+  quizState = {version:'2.0',schemaVersion:QUIZ_SCHEMA,passages:[],quizSets:[],grammarQuestions:[],vocabularyQuestions:[],vocabularyBook:[],phraseLibrary:[],synonymLibrary:[],highlights:[],wrongBook:[],answerLog:{},currentPassageId:null,currentQuizSetId:{},activeQuizSetIds:{},activeTab:'grammar',activeQIndex:{grammar:{},vocab:{}}};
   saveQuiz(); render();
 }
 
@@ -2357,6 +2901,7 @@ function loadSeedData() {
   seed.grammarQuestions.forEach(q=>{if(!quizState.grammarQuestions.find(x=>x.id===q.id))quizState.grammarQuestions.push(q);});
   seed.vocabularyQuestions.forEach(q=>{if(!quizState.vocabularyQuestions.find(x=>x.id===q.id))quizState.vocabularyQuestions.push(q);});
   seed.vocabularyBook.forEach(v=>{if(!quizState.vocabularyBook.find(x=>x.word===v.word))quizState.vocabularyBook.push(v);});
+  (seed.phraseLibrary||[]).forEach(p=>{if(!quizState.phraseLibrary.find(x=>x.phrase===p.phrase))quizState.phraseLibrary.push(p);});
   seed.synonymLibrary.forEach(g=>{if(!quizState.synonymLibrary.find(x=>x.groupName===g.groupName))quizState.synonymLibrary.push(g);});
   if(!quizState.currentPassageId&&quizState.passages.length) quizState.currentPassageId=quizState.passages[0].id;
   saveQuiz(); render(); toast('Sample data loaded');
@@ -2375,7 +2920,8 @@ function getSeedData() {
     vocabularyQuestions:[
       {id:'v_seed_001',passageId:'sec_seed_002',quizSetId:null,synonymGroup:'depend on',question:'Closest synonym of "depend on"?',options:['A. rely on','B. look after','C. turn off','D. give away'],answer:'A',explanation:'depend on 与 rely on 都表示依赖。'}
     ],
-    vocabularyBook:[{word:'reconsider',meaning:'重新考虑',example:'You should reconsider.',synonyms:['review','rethink'],notes:'',addedAt:Date.now(),srsBox:0,srsNext:Date.now(),srsReviews:0,srsLapses:0}],
+    vocabularyBook:[{word:'reconsider',meaning:'重新考虑',example:'You should reconsider.',source:'Sample Passage',subject:'english',dateAdded:'2026-07-03',addedAt:Date.now(),starred:false,synonyms:['review','rethink'],notes:'',srsBox:0,srsNext:Date.now(),srsReviews:0,srsLapses:0}],
+    phraseLibrary:[{phrase:'take advantage of',meaning:'利用，占便宜',example:'We should take advantage of this opportunity.',source:'Sample Passage',subject:'english',dateAdded:'2026-07-03',addedAt:Date.now(),starred:false}],
     synonymLibrary:[{groupName:'Depend Group',words:['depend on','rely on','count on','hinge on'],notes:'表示依赖',srsBox:0,srsNext:Date.now(),srsReviews:0,srsLapses:0}]
   };
 }
@@ -2409,7 +2955,7 @@ async function cloudUpload() {
   if(!token){alert('Token required');return;}
   try{
     toast('Uploading...');
-    const body={description:'Quiz Backup',public:false,files:{[filename]:{content:JSON.stringify({version:'2.0',schemaVersion:QUIZ_SCHEMA,exportedAt:Date.now(),passages:quizState.passages,quizSets:quizState.quizSets,grammarQuestions:quizState.grammarQuestions,vocabularyQuestions:quizState.vocabularyQuestions,vocabularyBook:quizState.vocabularyBook,synonymLibrary:quizState.synonymLibrary,highlights:quizState.highlights,wrongBook:quizState.wrongBook,answerLog:quizState.answerLog,currentPassageId:quizState.currentPassageId,currentQuizSetId:quizState.currentQuizSetId},null,2)}}};
+    const body={description:'Quiz Backup',public:false,files:{[filename]:{content:JSON.stringify({version:'2.0',schemaVersion:QUIZ_SCHEMA,exportedAt:Date.now(),passages:quizState.passages,quizSets:quizState.quizSets,grammarQuestions:quizState.grammarQuestions,vocabularyQuestions:quizState.vocabularyQuestions,vocabularyBook:quizState.vocabularyBook,phraseLibrary:quizState.phraseLibrary,synonymLibrary:quizState.synonymLibrary,highlights:quizState.highlights,wrongBook:quizState.wrongBook,answerLog:quizState.answerLog,currentPassageId:quizState.currentPassageId,currentQuizSetId:quizState.currentQuizSetId},null,2)}}};
     let url='https://api.github.com/gists';let method='POST';
     if(gistId){url+='/'+gistId;method='PATCH';}
     const res=await fetch(url,{method,headers:{'Accept':'application/vnd.github+json','Authorization':'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify(body)});
@@ -2457,15 +3003,15 @@ function renderStudyResources(container) {
       <div class="value">${resources.length}</div>
       <div class="sub">all subjects</div>
     </div>
-    <div class="res-stat-card" onclick="resViewState.filterType='exercises';resViewState.filterStatus='pending';render()">
+    <div class="res-stat-card" onclick="resViewState.filterType='tasks';resViewState.filterStatus='pending';render()">
       <div class="label">Pending Tasks</div>
-      <div class="value" style="color:var(--pink)">${exercises.filter(e=>e.status==='pending').length}</div>
-      <div class="sub">exercises in progress</div>
+      <div class="value" style="color:var(--pink)">${studyTasks.filter(t=>t.status==='pending').length + exercises.filter(e=>e.status==='pending').length}</div>
+      <div class="sub">tasks & exercises</div>
     </div>
     <div class="res-stat-card" onclick="resViewState.filterType='exercises';resViewState.filterStatus='completed';render()">
       <div class="label">Completed</div>
-      <div class="value" style="color:var(--green)">${exercises.filter(e=>e.status==='completed').length}</div>
-      <div class="sub">exercises done</div>
+      <div class="value" style="color:var(--green)">${studyTasks.filter(t=>t.status==='completed').length + exercises.filter(e=>e.status==='completed').length}</div>
+      <div class="sub">total done</div>
     </div>
     <div class="res-stat-card countdown">
       <div class="label" style="display:flex;justify-content:space-between;align-items:center">Countdown <button class="apple-btn small" style="font-size:10px;padding:2px 6px" onclick="openCountdownEdit()">Edit</button></div>
@@ -2493,7 +3039,7 @@ function renderStudyResources(container) {
         </div>
       </div>
       <div style="display:flex;gap:8px">
-        <button class="apple-btn small" onclick="openScoreModal('${subj}')">Set Configure Score</button>
+        <button class="apple-btn small" onclick="openScoreModal('${subj}')">Configure Score & Subjects</button>
       </div>
       ${sc.note?`<div class="score-note-box" onmouseup="handleNoteSelection('${subj}')">${parseInlineHighlight(subj,sc.note)}</div>`:''}
     </div>`;
@@ -2515,55 +3061,91 @@ function renderStudyResources(container) {
   // Filter Bar
   html += renderResFilterBar();
 
-  // Exercises Section
-  let ex = exercises.filter(e => !subj || e.subject===subj);
-  if(resViewState.filterSubject!=='all') ex = ex.filter(e=>e.subject===resViewState.filterSubject);
-  if(resViewState.filterPriority!=='all') ex = ex.filter(e=>e.priority===resViewState.filterPriority);
-  if(resViewState.filterStatus!=='all') ex = ex.filter(e=>e.status===resViewState.filterStatus);
-  if(resViewState.filterType==='all'||resViewState.filterType==='exercises') {
-    const overdueCount = getOverdueCount();
-    html += `<div class="res-section" id="exercisesSection">
-      <div class="res-section-head">
-        <div style="display:flex;align-items:center;gap:10px">
-          <h3>Tasks Exercise Bank <span class="count-pill">${ex.length}</span></h3>
-          ${overdueCount>0?`<button class="apple-btn small danger" onclick="openOverdueModal()">! Overdue (${overdueCount})</button>`:`<span style="font-size:11px;color:var(--green);font-weight:600">OK All on track</span>`}
-        </div>
-        <button class="apple-btn primary" onclick="openExerciseModal('${subj}')">+ Add Exercise</button>
-      </div>
-      ${ex.length?`<div class="exercise-list">${ex.map(e=>exerciseCard(e)).join('')}</div>`:`<div class="empty-state">No exercises</div>`}
-    </div>`;
-  }
+  // Modular Drag & Drop Rendering of Tasks, Exercise Bank, Resources
+  const modMap = {
+    tasks: renderModTasks(subj),
+    exercises: renderModExercises(subj),
+    resources: renderModResources(subj)
+  };
 
-  // Resources Section
-  if(resViewState.filterType==='all'||resViewState.filterType==='resources') {
-    let res = resources.filter(r=>!subj||r.subject===subj);
-    if(resViewState.filterSubject!=='all') res = res.filter(r=>r.subject===resViewState.filterSubject);
-    const notStarted = res.filter(r=>r.status==='not_started'||(r.startDate&&r.startDate>todayISO()));
-    const pending = res.filter(r=>r.status==='pending'&&(!r.startDate||r.startDate<=todayISO()));
-    const completed = res.filter(r=>r.status==='completed');
-    let displayed = [...res];
-    if(resViewState.resTab==='not_started') displayed=notStarted;
-    if(resViewState.resTab==='pending') displayed=pending;
-    if(resViewState.resTab==='completed') displayed=completed;
-
-    html += `<div class="res-section" id="resourcesSection">
-      <div class="res-section-head">
-        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-          <h3> Resources <span class="count-pill">${displayed.length}</span></h3>
-          <div class="res-tab-bar">
-            <button class="res-tab-btn ${resViewState.resTab==='all'?'active':''}" onclick="resViewState.resTab='all';render()">All (${res.length})</button>
-            <button class="res-tab-btn ${resViewState.resTab==='not_started'?'active':''}" onclick="resViewState.resTab='not_started';render()">Not Started (${notStarted.length})</button>
-            <button class="res-tab-btn ${resViewState.resTab==='pending'?'active':''}" onclick="resViewState.resTab='pending';render()">In Progress (${pending.length})</button>
-            <button class="res-tab-btn ${resViewState.resTab==='completed'?'active':''}" onclick="resViewState.resTab='completed';render()">Done (${completed.length})</button>
-          </div>
-        </div>
-        <button class="apple-btn primary" onclick="openResourceModal('${subj}')">+ Add Resource</button>
-      </div>
-      ${displayed.length?`<div class="resource-grid">${displayed.map(r=>resourceCard(r)).join('')}</div>`:`<div class="empty-state">No resources</div>`}
-    </div>`;
-  }
+  modOrder.forEach(mKey => {
+    if (modMap[mKey]) html += modMap[mKey];
+  });
 
   container.innerHTML = html;
+}
+
+function renderModTasks(subj) {
+  let tList = studyTasks.filter(t => !subj || t.subject === subj);
+  if (resViewState.filterSubject !== 'all') tList = tList.filter(t => t.subject === resViewState.filterSubject);
+  if (resViewState.filterPriority !== 'all') tList = tList.filter(t => t.priority === resViewState.filterPriority);
+  if (resViewState.filterStatus !== 'all') tList = tList.filter(t => t.status === resViewState.filterStatus);
+  if (resViewState.filterType !== 'all' && resViewState.filterType !== 'tasks') return '';
+
+  const overdueCount = tList.filter(t => t.status !== 'completed' && checkIsOverdue(t.dueDate, false)).length;
+  return `<div class="res-section mod-section" id="mod_tasks" draggable="true" data-mod="tasks" ondragstart="handleModDragStart(event)" ondragover="handleModDragOver(event)" ondrop="handleModDrop(event)" ondragend="handleModDragEnd(event)">
+    <div class="res-section-head" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+      <div style="display:flex;align-items:center;gap:10px">
+        <span class="mod-drag-handle" title="Drag to reorder module">⠿ Drag Tasks</span>
+        <h3>Tasks <span class="count-pill">${tList.length}</span></h3>
+        ${overdueCount > 0 ? `<button class="apple-btn small danger" onclick="openOverdueModal()">! Overdue (${overdueCount})</button>` : `<span style="font-size:11px;color:var(--green);font-weight:600">OK All on track</span>`}
+      </div>
+      <button class="apple-btn primary" onclick="openTaskModal('${subj}')">+ Add Task</button>
+    </div>
+    ${tList.length ? `<div class="exercise-list">${tList.map(t => taskCard(t)).join('')}</div>` : `<div class="empty-state">No tasks in this view</div>`}
+  </div>`;
+}
+
+function renderModExercises(subj) {
+  let ex = exercises.filter(e => !subj || e.subject === subj);
+  if (resViewState.filterSubject !== 'all') ex = ex.filter(e => e.subject === resViewState.filterSubject);
+  if (resViewState.filterPriority !== 'all') ex = ex.filter(e => e.priority === resViewState.filterPriority);
+  if (resViewState.filterStatus !== 'all') ex = ex.filter(e => e.status === resViewState.filterStatus);
+  if (resViewState.filterType !== 'all' && resViewState.filterType !== 'exercises') return '';
+
+  const overdueCount = getOverdueCount();
+  return `<div class="res-section mod-section" id="mod_exercises" draggable="true" data-mod="exercises" ondragstart="handleModDragStart(event)" ondragover="handleModDragOver(event)" ondrop="handleModDrop(event)" ondragend="handleModDragEnd(event)">
+    <div class="res-section-head" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+      <div style="display:flex;align-items:center;gap:10px">
+        <span class="mod-drag-handle" title="Drag to reorder module">⠿ Drag Exercise Bank</span>
+        <h3>Exercise Bank <span class="count-pill">${ex.length}</span></h3>
+        ${overdueCount > 0 ? `<button class="apple-btn small danger" onclick="openOverdueModal()">! Overdue (${overdueCount})</button>` : `<span style="font-size:11px;color:var(--green);font-weight:600">OK All on track</span>`}
+      </div>
+      <button class="apple-btn primary" onclick="openExerciseModal('${subj}')">+ Add Exercise</button>
+    </div>
+    ${ex.length ? `<div class="exercise-list">${ex.map(e => exerciseCard(e)).join('')}</div>` : `<div class="empty-state">No exercises</div>`}
+  </div>`;
+}
+
+function renderModResources(subj) {
+  let res = resources.filter(r => !subj || r.subject === subj);
+  if (resViewState.filterSubject !== 'all') res = res.filter(r => r.subject === resViewState.filterSubject);
+  if (resViewState.filterType !== 'all' && resViewState.filterType !== 'resources') return '';
+
+  const notStarted = res.filter(r => r.status === 'not_started' || (r.startDate && r.startDate > todayISO()));
+  const pending = res.filter(r => r.status === 'pending' && (!r.startDate || r.startDate <= todayISO()));
+  const completed = res.filter(r => r.status === 'completed');
+  let displayed = [...res];
+  if (resViewState.resTab === 'not_started') displayed = notStarted;
+  if (resViewState.resTab === 'pending') displayed = pending;
+  if (resViewState.resTab === 'completed') displayed = completed;
+
+  return `<div class="res-section mod-section" id="mod_resources" draggable="true" data-mod="resources" ondragstart="handleModDragStart(event)" ondragover="handleModDragOver(event)" ondrop="handleModDrop(event)" ondragend="handleModDragEnd(event)">
+    <div class="res-section-head" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+        <span class="mod-drag-handle" title="Drag to reorder module">⠿ Drag Resources</span>
+        <h3>Resources <span class="count-pill">${displayed.length}</span></h3>
+        <div class="res-tab-bar">
+          <button class="res-tab-btn ${resViewState.resTab === 'all' ? 'active' : ''}" onclick="resViewState.resTab='all';render()">All (${res.length})</button>
+          <button class="res-tab-btn ${resViewState.resTab === 'not_started' ? 'active' : ''}" onclick="resViewState.resTab='not_started';render()">Not Started (${notStarted.length})</button>
+          <button class="res-tab-btn ${resViewState.resTab === 'pending' ? 'active' : ''}" onclick="resViewState.resTab='pending';render()">In Progress (${pending.length})</button>
+          <button class="res-tab-btn ${resViewState.resTab === 'completed' ? 'active' : ''}" onclick="resViewState.resTab='completed';render()">Done (${completed.length})</button>
+        </div>
+      </div>
+      <button class="apple-btn primary" onclick="openResourceModal('${subj}')">+ Add Resource</button>
+    </div>
+    ${displayed.length ? `<div class="resource-grid">${displayed.map(r => resourceCard(r)).join('')}</div>` : `<div class="empty-state">No resources</div>`}
+  </div>`;
 }
 
 function renderResFilterBar() {
@@ -2581,7 +3163,7 @@ function renderResFilterBar() {
     </div>
     <div style="display:flex;align-items:center;gap:8px"><label>Type</label>
       <select onchange="resViewState.filterType=this.value;render()">
-        <option value="all" ${resViewState.filterType==='all'?'selected':''}>All</option><option value="resources" ${resViewState.filterType==='resources'?'selected':''}>Resources</option><option value="exercises" ${resViewState.filterType==='exercises'?'selected':''}>Exercises</option>
+        <option value="all" ${resViewState.filterType==='all'?'selected':''}>All</option><option value="tasks" ${resViewState.filterType==='tasks'?'selected':''}>Tasks</option><option value="resources" ${resViewState.filterType==='resources'?'selected':''}>Resources</option><option value="exercises" ${resViewState.filterType==='exercises'?'selected':''}>Exercises</option>
       </select>
     </div>
     <div style="display:flex;align-items:center;gap:8px"><label>Status</label>
@@ -2665,6 +3247,147 @@ function exerciseCard(e) {
       ${subtasks.map(st=>{const stOverdue=checkIsOverdue(st.dueDate,st.completed);return `<div class="subtask-item"><div class="subtask-left" onclick="toggleSubtask('${e.id}','${st.id}')"><div class="st-check ${st.completed?'checked':''}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5L19 7"/></svg></div><span class="st-text ${st.completed?'checked':''}">${esc(st.title)}</span>${st.dueDate?`<span class="st-due ${stOverdue?'overdue':''}">Due ${st.dueDate}${stOverdue?' (Overdue)':''}</span>`:''}</div></div>`;}).join('')}
     </div>
   </div>`;
+}
+
+// ================================================================
+//  TASK MODULE & DRAG HANDLERS
+// ================================================================
+function taskCard(t) {
+  const checked = t.status === 'completed';
+  const isOverdue = checkIsOverdue(t.dueDate, checked);
+  return `<div class="ex-card ${checked?'completed':''}" data-id="${t.id}" style="margin-bottom:8px;padding:12px;background:var(--bg-elev);border:1px solid var(--line);border-radius:var(--radius-sm);">
+    <div class="ex-row" style="display:flex;align-items:center;gap:10px;">
+      <div class="ex-check ${checked?'checked':''}" onclick="toggleTaskStatus('${t.id}')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5L19 7"/></svg>
+      </div>
+      <span class="ex-subject-tag" style="background:${customSubjects[t.subject]?.tint||'var(--bg-card)'};color:${customSubjects[t.subject]?.color||'var(--ink)'};font-size:11px;padding:2px 8px;border-radius:4px;font-weight:600;">${customSubjects[t.subject]?.label||t.subject}</span>
+      <div class="ex-body" style="flex:1;">
+        <div class="ex-title-row" style="display:flex;align-items:center;gap:6px;">
+          <span class="priority-tag priority-${t.priority||'medium'}" style="font-size:10px;text-transform:uppercase;font-weight:700;">${(t.priority||'medium')}</span>
+          <div class="ex-title" style="font-size:15px;font-weight:600;color:var(--ink);">${esc(t.title)}</div>
+        </div>
+        <div class="ex-meta" style="font-size:12px;color:var(--ink-tertiary);margin-top:4px;">
+          ${t.dueDate?`<span style="${isOverdue?'color:var(--red);font-weight:700':''}">Due ${t.dueDate} ${isOverdue?'(Overdue!)':''}</span>`:'No due date'}
+        </div>
+      </div>
+      <span class="ex-status ${t.status}" style="font-size:11px;font-weight:700;">${t.status==='pending'?'Pending':'Done'}</span>
+      <div style="display:flex;align-items:center;gap:4px;flex-shrink:0;">
+        <button class="apple-btn small" onclick="openEditTaskModal('${t.id}')">Edit</button>
+        <button class="ex-tool-btn delete" onclick="deleteTask('${t.id}')">Del</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function toggleTaskStatus(id) {
+  const t = studyTasks.find(x => x.id === id);
+  if (t) {
+    t.status = t.status === 'pending' ? 'completed' : 'pending';
+    saveResState();
+    renderSharedStats();
+    render();
+  }
+}
+
+function deleteTask(id) {
+  if (!confirm('Delete this task?')) return;
+  studyTasks = studyTasks.filter(x => x.id !== id);
+  saveResState();
+  renderSharedStats();
+  render();
+  toast('Task deleted');
+}
+
+function openTaskModal(subject) {
+  const subjOpts = Object.keys(customSubjects).map(k => `<option value="${k}" ${k === (subject || appState.currentSubject) ? 'selected' : ''}>${esc(customSubjects[k].label)}</option>`).join('');
+  openGenericSheet('Add Task', `
+    <div class="field"><label>Subject</label><select id="t_subj">${subjOpts}</select></div>
+    <div class="field"><label>Title</label><input id="t_title" placeholder="e.g. Review vocabulary chapter 4"/></div>
+    <div class="field"><label>Priority</label><select id="t_prio"><option value="high">High</option><option value="medium" selected>Medium</option><option value="low">Low</option></select></div>
+    <div class="field"><label>Due Date</label><input type="date" id="t_due" value="${todayISO()}"/></div>
+  `, [
+    { text: 'Cancel', onclick: () => closeSheet('genericSheet') },
+    { text: 'Create Task', cls: 'primary', onclick: () => {
+      const title = document.getElementById('t_title').value.trim();
+      if (!title) { toast('Title required'); return; }
+      studyTasks.push({
+        id: uid('t'), subject: document.getElementById('t_subj').value,
+        title, priority: document.getElementById('t_prio').value,
+        status: 'pending', dueDate: document.getElementById('t_due').value
+      });
+      saveResState();
+      closeSheet('genericSheet');
+      renderSharedStats();
+      render();
+      toast('Task created');
+    }}
+  ]);
+}
+
+function openEditTaskModal(id) {
+  const t = studyTasks.find(x => x.id === id); if (!t) return;
+  const subjOpts = Object.keys(customSubjects).map(k => `<option value="${k}" ${k === t.subject ? 'selected' : ''}>${esc(customSubjects[k].label)}</option>`).join('');
+  openGenericSheet('Edit Task', `
+    <div class="field"><label>Subject</label><select id="t_subj">${subjOpts}</select></div>
+    <div class="field"><label>Title</label><input id="t_title" value="${esc(t.title)}"/></div>
+    <div class="field"><label>Priority</label><select id="t_prio"><option value="high" ${t.priority==='high'?'selected':''}>High</option><option value="medium" ${t.priority==='medium'?'selected':''}>Medium</option><option value="low" ${t.priority==='low'?'selected':''}>Low</option></select></div>
+    <div class="field"><label>Due Date</label><input type="date" id="t_due" value="${t.dueDate||''}"/></div>
+  `, [
+    { text: 'Cancel', onclick: () => closeSheet('genericSheet') },
+    { text: 'Save Changes', cls: 'primary', onclick: () => {
+      const title = document.getElementById('t_title').value.trim();
+      if (!title) { toast('Title required'); return; }
+      t.subject = document.getElementById('t_subj').value;
+      t.title = title;
+      t.priority = document.getElementById('t_prio').value;
+      t.dueDate = document.getElementById('t_due').value;
+      saveResState();
+      closeSheet('genericSheet');
+      renderSharedStats();
+      render();
+      toast('Task saved');
+    }}
+  ]);
+}
+
+let draggedModId = null;
+function handleModDragStart(e) {
+  draggedModId = e.currentTarget.dataset.mod;
+  e.currentTarget.classList.add('dragging');
+  e.dataTransfer.effectAllowed = 'move';
+}
+function handleModDragOver(e) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  const section = e.currentTarget.closest('.mod-section');
+  if (section && section.dataset.mod !== draggedModId) {
+    section.classList.add('drag-over');
+  }
+}
+function handleModDrop(e) {
+  e.preventDefault();
+  const targetSection = e.currentTarget.closest('.mod-section');
+  if (targetSection) {
+    targetSection.classList.remove('drag-over');
+    const targetModId = targetSection.dataset.mod;
+    if (draggedModId && targetModId && draggedModId !== targetModId) {
+      const fromIdx = modOrder.indexOf(draggedModId);
+      const toIdx = modOrder.indexOf(targetModId);
+      if (fromIdx !== -1 && toIdx !== -1) {
+        modOrder.splice(fromIdx, 1);
+        modOrder.splice(toIdx, 0, draggedModId);
+        localStorage.setItem('study_mod_order_pro', JSON.stringify(modOrder));
+        render();
+        toast('Module order automatically saved!');
+      }
+    }
+  }
+}
+function handleModDragEnd(e) {
+  document.querySelectorAll('.mod-section').forEach(el => {
+    el.classList.remove('dragging');
+    el.classList.remove('drag-over');
+  });
 }
 
 // Resource Actions
@@ -2794,6 +3517,7 @@ function submitNewExercise() {
 function openScoreModal(subj) {
   const sc = subjectScores[subj]||{maxScore:100,currentScore:0,targetScore:90,note:'',modules:[]};
   openGenericSheet(`${customSubjects[subj]?.label||subj} Score Config`,`
+    <button class="apple-btn primary" style="width:100%;margin-bottom:14px;font-weight:700;" onclick="openSubjectManagerModal()">★ Subject Manager (名称 · 颜色 · 新增 · 删除 · 排序)</button>
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
       <div class="field"><label>Current</label><input id="scCurrent" type="number" value="${sc.currentScore}"/></div>
       <div class="field"><label>Target</label><input id="scTarget" type="number" value="${sc.targetScore}"/></div>
@@ -2855,6 +3579,92 @@ function openAddSubjectModal() {
       saveResState();closeSheet('genericSheet');switchSubject(id);
     }}
   ]);
+}
+
+// ================================================================
+//  SUBJECT MANAGER
+// ================================================================
+function openSubjectManagerModal() {
+  const keys = Object.keys(customSubjects);
+  const rowsHTML = keys.map((k, idx) => {
+    const s = customSubjects[k];
+    return `<div class="subj-mgr-row" style="display:flex;align-items:center;gap:8px;padding:10px;background:var(--bg-elev);border:1px solid var(--line);border-radius:var(--radius-sm);margin-bottom:8px;">
+      <div style="display:flex;flex-direction:column;gap:2px;">
+        <button class="apple-btn small" style="padding:2px 6px;font-size:10px;" onclick="moveSubjectOrder('${k}', -1)" ${idx === 0 ? 'disabled' : ''}>↑</button>
+        <button class="apple-btn small" style="padding:2px 6px;font-size:10px;" onclick="moveSubjectOrder('${k}', 1)" ${idx === keys.length - 1 ? 'disabled' : ''}>↓</button>
+      </div>
+      <span style="width:14px;height:14px;border-radius:50%;background:${s.color};flex-shrink:0;"></span>
+      <div style="flex:1;display:flex;gap:8px;align-items:center;">
+        <input type="text" id="subj_lbl_${k}" value="${esc(s.label)}" style="flex:1;font-weight:600;" onchange="updateSubjectField('${k}', 'label', this.value)"/>
+        <input type="color" id="subj_clr_${k}" value="${s.color}" style="width:36px;height:32px;padding:1px;cursor:pointer;border-radius:6px;" onchange="updateSubjectField('${k}', 'color', this.value)"/>
+      </div>
+      <button class="apple-btn small danger" onclick="deleteSubjectManager('${k}')" ${keys.length <= 1 ? 'disabled' : ''}>Delete</button>
+    </div>`;
+  }).join('');
+
+  openGenericSheet('Subject Manager', `
+    <div style="margin-bottom:14px;font-size:12px;color:var(--ink-secondary);">
+      Manage subject names, colors, and order. Changes instantly sync across Sidebar, Quiz Hub, Study Resources, Statistics, and Score.
+    </div>
+    <div style="max-height:350px;overflow-y:auto;margin-bottom:16px;">
+      ${rowsHTML}
+    </div>
+    <div style="border-top:1px dashed var(--line);padding-top:12px;display:flex;justify-content:space-between;align-items:center;">
+      <span style="font-weight:700;font-size:13px;">Add New Subject:</span>
+      <button class="apple-btn primary small" onclick="openAddSubjectModal()">+ New Subject</button>
+    </div>
+  `, [
+    { text: 'Done', cls: 'primary', onclick: () => { saveResState(); closeSheet('genericSheet'); render(); } }
+  ]);
+}
+
+function updateSubjectField(key, field, val) {
+  if (!customSubjects[key]) return;
+  if (field === 'label') {
+    customSubjects[key].label = val.trim() || key;
+  } else if (field === 'color') {
+    customSubjects[key].color = val;
+    customSubjects[key].tint = val + '18';
+    customSubjects[key].text = val;
+  }
+  saveResState();
+  renderSharedStats();
+  render();
+  toast('Subject updated & synced!');
+}
+
+function moveSubjectOrder(key, dir) {
+  const keys = Object.keys(customSubjects);
+  const idx = keys.indexOf(key);
+  if (idx === -1) return;
+  const newIdx = idx + dir;
+  if (newIdx < 0 || newIdx >= keys.length) return;
+  
+  const newObj = {};
+  keys.splice(idx, 1);
+  keys.splice(newIdx, 0, key);
+  keys.forEach(k => { newObj[k] = customSubjects[k]; });
+  customSubjects = newObj;
+  saveResState();
+  openSubjectManagerModal();
+  renderSharedStats();
+  render();
+}
+
+function deleteSubjectManager(key) {
+  const keys = Object.keys(customSubjects);
+  if (keys.length <= 1) { toast('Cannot delete the last subject'); return; }
+  if (!confirm(`Delete subject "${customSubjects[key]?.label}"?`)) return;
+  delete customSubjects[key];
+  if (subjectScores[key]) delete subjectScores[key];
+  if (appState.currentSubject === key) {
+    appState.currentSubject = Object.keys(customSubjects)[0];
+  }
+  saveResState();
+  openSubjectManagerModal();
+  renderSharedStats();
+  render();
+  toast('Subject deleted');
 }
 
 // ================================================================
@@ -2976,7 +3786,7 @@ function exportAllData() {
     exportDate:new Date().toISOString(),
     appState,
     quizData:{...quizState},
-    resources:{customSubjects,resources,exercises,subjectScores,countdownConfig},
+    resources:{customSubjects,resources,exercises,subjectScores,countdownConfig,modOrder,studyTasks},
     studySuggest
   };
   downloadJSON(backup,'study_dashboard_full_backup_'+todayISO()+'.json');
@@ -2997,6 +3807,8 @@ function importAllData(event) {
         if(data.resources.exercises) exercises = data.resources.exercises;
         if(data.resources.subjectScores) subjectScores = data.resources.subjectScores;
         if(data.resources.countdownConfig) countdownConfig = data.resources.countdownConfig;
+        if(data.resources.modOrder) modOrder = data.resources.modOrder;
+        if(data.resources.studyTasks) studyTasks = data.resources.studyTasks;
       }
       if(data.studySuggest) studySuggest = data.studySuggest;
       saveAll(); render();
@@ -3057,5 +3869,5 @@ document.getElementById('topbarTitle').textContent = appState.currentModule==='q
 
 render();
 </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a15549cc8f2f490f',t:'MTc4MzA3NTM5Ng=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</body>
 </html>
