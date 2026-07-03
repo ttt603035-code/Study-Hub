@@ -1320,9 +1320,7 @@ body.body-dragging-mod * {
 
 <!-- Selection Menu -->
 <div class="sel-menu" id="selMenu" style="display:none">
-  <button data-color="yellow"><span class="swatch" style="background:#FFF"></span>Light</button>
-  <button data-color="blue"><span class="swatch" style="background:#AAA"></span>Medium</button>
-  <button data-color="pink"><span class="swatch" style="background:#666"></span>Dark</button>
+  <button data-color="dark-brown" style="font-weight:700;"><span class="swatch" style="background:#735835"></span>Highlight (深棕色)</button>
   <button data-act="note">Note</button>
   <button data-act="vocab">+ Vocab</button>
 </div>
@@ -1667,7 +1665,7 @@ function renderGlobalSearch() {
   const matchedPassages = quizState.passages.filter(p => matchesSearch(p.customName||'',q) || matchesSearch(p.title||'',q) || matchesSearch(p.content||'',q));
   const matchedGQ = quizState.grammarQuestions.filter(x => matchesSearch(x.question,q) || (x.options||[]).some(o=>matchesSearch(o,q)));
   const matchedVQ = quizState.vocabularyQuestions.filter(x => matchesSearch(x.question,q) || matchesSearch(x.synonymGroup||'',q));
-  const matchedVocab = quizState.vocabularyBook.filter(v => matchesSearch(v.word,q) || matchesSearch(v.meaning||'',q));
+  const matchedVocab = (quizState.wordBook||[]).filter(v => matchesSearch((v.text||v.word||''),q) || matchesSearch(v.meaning||'',q));
   const matchedResources = resources.filter(r => matchesSearch(r.title,q) || matchesSearch(r.path||'',q) || (r.tags||[]).some(t=>matchesSearch(t,q)));
   const matchedExercises = exercises.filter(e => matchesSearch(e.title,q) || (e.subtasks||[]).some(s=>matchesSearch(s.title,q)));
   const matchedLinks = (studySuggest.links||[]).filter(l => matchesSearch(l.title,q) || matchesSearch(l.url||'',q) || matchesSearch(l.description||'',q));
@@ -1677,7 +1675,7 @@ function renderGlobalSearch() {
   if (matchedPassages.length) html += `<div class="res-section"><div class="res-section-head"><h3>Passages <span class="count-pill">${matchedPassages.length}</span></h3></div><div>${matchedPassages.map(p=>`<div class="list-item"><h4>${esc(p.customName)}</h4><div class="meta">${esc((p.content||'').slice(0,120))}...</div></div>`).join('')}</div></div>`;
   if (matchedGQ.length) html += `<div class="res-section"><div class="res-section-head"><h3>Grammar Questions <span class="count-pill">${matchedGQ.length}</span></h3></div><div>${matchedGQ.slice(0,10).map(q=>`<div class="list-item"><h4>${esc(q.question.slice(0,100))}</h4><div class="meta">Answer: ${esc(q.answer)}</div></div>`).join('')}</div></div>`;
   if (matchedVQ.length) html += `<div class="res-section"><div class="res-section-head"><h3>Vocab Questions <span class="count-pill">${matchedVQ.length}</span></h3></div><div>${matchedVQ.slice(0,10).map(q=>`<div class="list-item"><h4>${esc(q.question.slice(0,100))}</h4><div class="meta">${esc(q.synonymGroup||'')}</div></div>`).join('')}</div></div>`;
-  if (matchedVocab.length) html += `<div class="res-section"><div class="res-section-head"><h3>Vocabulary <span class="count-pill">${matchedVocab.length}</span></h3></div><div>${matchedVocab.map(v=>`<div class="list-item"><h4>${esc(v.word)}</h4><div class="meta">${esc(v.meaning||'')}</div></div>`).join('')}</div></div>`;
+  if (matchedVocab.length) html += `<div class="res-section"><div class="res-section-head"><h3>Vocabulary <span class="count-pill">${matchedVocab.length}</span></h3></div><div>${matchedVocab.map(v=>`<div class="list-item"><h4>${esc(v.text||'')}</h4><div class="meta">${esc(v.meaning||'')}</div></div>`).join('')}</div></div>`;
   if (matchedResources.length) html += `<div class="res-section"><div class="res-section-head"><h3>Resources <span class="count-pill">${matchedResources.length}</span></h3></div><div class="resource-grid">${matchedResources.map(r=>resourceCard(r)).join('')}</div></div>`;
   if (matchedExercises.length) html += `<div class="res-section"><div class="res-section-head"><h3>Exercises <span class="count-pill">${matchedExercises.length}</span></h3></div><div class="exercise-list">${matchedExercises.map(e=>exerciseCard(e)).join('')}</div></div>`;
   if (matchedLinks.length) html += `<div class="res-section"><div class="res-section-head"><h3>Links <span class="count-pill">${matchedLinks.length}</span></h3></div><div>${matchedLinks.map(l=>`<div class="link-card"><div class="link-info"><div class="link-title">${esc(l.title)}</div><div class="link-url">${esc(l.url)}</div></div></div>`).join('')}</div></div>`;
@@ -1701,8 +1699,7 @@ function renderQuizHub(container) {
   // Section Pills
   html += `<div class="quiz-toolbar">
     <div class="section-pills" id="sectionPills">${renderSectionPillsHTML()}</div>
-    <button class="apple-btn" onclick="openQuizVocab()">R Vocabulary (${quizState.vocabularyBook.length})</button>
-    <button class="apple-btn" onclick="openQuizPhrases()">P Phrases (${quizState.phraseLibrary.length})</button>
+    <button class="apple-btn" style="font-weight:600;" onclick="openQuizWordBook()">📖 Word Book (${quizState.wordBook.length})</button>
     <button class="apple-btn" onclick="openQuizSynonyms()">Syn Synonyms (${quizState.synonymLibrary.length})</button>
     <button class="apple-btn" onclick="openQuizWrongBook()">X Wrong Book (${quizState.wrongBook.length})</button>
     <button class="apple-btn" onclick="openQuizSettings()">Set Settings</button>
@@ -2195,14 +2192,21 @@ function buildReadingHTML(content, hls) {
     return{html:esc(t.text),start:t.start,end:t.end};
   });
   let html='';
-  const hlWords = new Set((quizState.wordBook||[]).filter(w=>w.highlight).map(w=>w.text.toLowerCase()));
+  const hlWordsMap = new Map();
+  (quizState.wordBook||[]).filter(w=>w.highlight).forEach(w => {
+    hlWordsMap.set(w.text.toLowerCase(), w);
+  });
   for(const part of parts){
     const activeH = hls.find(h=>{const s=h.charStart??-1;const e=h.charEnd??-1;return s>=0&&e>=0&&part.start>=s&&part.end<=e;});
-    const isWbkHl = part.wordText && hlWords.has(part.wordText.toLowerCase());
-    if(activeH || isWbkHl){
-      const hid = activeH ? activeH.id : (quizState.wordBook.find(w=>w.text.toLowerCase()===part.wordText.toLowerCase())?.id || '');
-      const cls="hl hl-brown" + ((activeH && activeH.note) ? " has-note":"");
-      html+=`<span class="${cls}" style="background:rgba(162,132,94,0.22);border-bottom:2px solid #A2845E;border-radius:3px;padding:0 2px;cursor:pointer;" data-hid="${esc(hid)}">${part.html}</span>`;
+    const wbkItem = part.wordText ? hlWordsMap.get(part.wordText.toLowerCase()) : null;
+    if(activeH || wbkItem){
+      const hid = activeH ? activeH.id : (wbkItem?.id || '');
+      const color = activeH?.highlightColor || wbkItem?.highlightColor || 'medium-brown';
+      let bg = 'rgba(162,132,94,0.35)', border = '#A2845E';
+      if (color === 'light-brown' || color === 'yellow') { bg = 'rgba(212,186,148,0.28)'; border = '#D4BA94'; }
+      if (true) { bg = 'rgba(115,88,53,0.48)'; border = '#735835'; }
+      const cls = `hl hl-${color}` + ((activeH && activeH.note) ? " has-note":"");
+      html+=`<span class="${cls}" style="background:${bg};border-bottom:2px solid ${border};border-radius:3px;padding:0 2px;cursor:pointer;" data-hid="${esc(hid)}">${part.html}</span>`;
     }
     else html+=part.html;
   }
@@ -2269,8 +2273,8 @@ document.getElementById('selMenu').addEventListener('click', e => {
   if(!info||!text){menu.style.display='none';return;}
   const p = currentPassage(); if(!p){menu.style.display='none';return;}
   if(btn.dataset.color) addHighlight(p.id,info.start,info.end,text,btn.dataset.color,'');
-  else if(btn.dataset.act==='note'){const note=prompt('Note:','');if(note!==null)addHighlight(p.id,info.start,info.end,text,'yellow',note.trim());}
-  else if(btn.dataset.act==='vocab') addToVocabBook(text.trim());
+  else if(btn.dataset.act==='note'){const note=prompt('Note:','');if(note!==null)addHighlight(p.id,info.start,info.end,text,'medium-brown',note.trim());}
+  else if(btn.dataset.act==='vocab') addToWordBook(text.trim(), { source: 'Reading Passage', highlight: true, highlightColor: 'medium-brown' });
   menu.style.display='none'; window.getSelection().removeAllRanges();
 });
 
@@ -2281,17 +2285,18 @@ function addHighlight(pid,start,end,text,color,note){
   const exists = quizState.wordBook.find(w => w.text.toLowerCase() === textVal.toLowerCase());
   if (exists) {
     exists.highlight = true;
+    exists.highlightColor = color || 'dark-brown';
     if (note) exists.example = `Note: ${note}`;
-    toast(`"${textVal}" 已在生词本中，已设为浅棕高亮！`);
+    toast(`"${textVal}" 已在生词本中，设为棕色高亮 (${color})！`);
   } else {
     quizState.wordBook.push({
       id: uid('wbk'), text: textVal, meaning: note || 'Reading Highlight', example: 'Highlighted in passage',
       source: 'Reading Passage', subject: appState.currentSubject || 'english',
-      dateAdded: todayISO(), addedAt: Date.now(), highlight: true, starred: false,
+      dateAdded: todayISO(), addedAt: Date.now(), highlight: true, highlightColor: color || 'dark-brown', starred: false,
       charStart: start, charEnd: end, passageId: pid,
       srsBox: 0, srsNext: Date.now(), srsReviews: 0, srsLapses: 0
     });
-    toast(`✓ 已转入 Word Book 生词本并设为浅棕色高亮: "${textVal}"`);
+    toast(`✓ 已转入生词本并高亮 (${color}): "${textVal}"`);
   }
   saveQuiz(); renderSharedStats(); render();
 }
@@ -2313,7 +2318,7 @@ function showWordPopup(wordEl) {
   const word = wordEl.dataset.word; const wl = word.toLowerCase();
   const pop = document.getElementById('wordPop');
   const groups = quizState.synonymLibrary.filter(g=>(g.words||[]).some(w=>w.toLowerCase()===wl));
-  const inVocab = quizState.vocabularyBook.find(v=>v.word.toLowerCase()===wl);
+  const inVocab = (quizState.wordBook||[]).find(v=>(v.text||v.word||'').toLowerCase()===wl);
   let html = `<h4>${esc(word)}</h4>`;
   if(groups.length){groups.forEach(g=>{const others=g.words.filter(w=>w.toLowerCase()!==wl);html+=`<div style="margin-bottom:6px"><div style="font-size:10px;color:var(--ink-tertiary);margin-bottom:4px">${esc(g.groupName||'Synonyms')}</div><div class="syn-list">${others.map(s=>`<span class="syn-chip" onclick="replaceWord('${wl}','${esc(s)}')">${esc(s)}</span>`).join('')}</div></div>`;});}
   else html+=`<div style="font-size:11px;color:var(--ink-tertiary);margin-bottom:6px">No synonym groups found.</div>`;
@@ -2954,7 +2959,7 @@ function retryWrong(wId) {
 // ================================================================
 let srsSession = null;
 function startSrsReview(mode, customList) {
-  const source = mode==='vocab' ? quizState.vocabularyBook : quizState.synonymLibrary;
+  const source = mode==='vocab' ? (quizState.wordBook||[]) : quizState.synonymLibrary;
   source.forEach(ensureSrs);
   let queue;
   if(Array.isArray(customList)&&customList.length){customList.forEach(ensureSrs);queue=customList.slice();}
@@ -3104,8 +3109,11 @@ function getSeedData() {
     vocabularyQuestions:[
       {id:'v_seed_001',passageId:'sec_seed_002',quizSetId:null,synonymGroup:'depend on',question:'Closest synonym of "depend on"?',options:['A. rely on','B. look after','C. turn off','D. give away'],answer:'A',explanation:'depend on 与 rely on 都表示依赖。'}
     ],
-    vocabularyBook:[{word:'reconsider',meaning:'重新考虑',example:'You should reconsider.',source:'Sample Passage',subject:'english',dateAdded:'2026-07-03',addedAt:Date.now(),starred:false,synonyms:['review','rethink'],notes:'',srsBox:0,srsNext:Date.now(),srsReviews:0,srsLapses:0}],
-    phraseLibrary:[{phrase:'take advantage of',meaning:'利用，占便宜',example:'We should take advantage of this opportunity.',source:'Sample Passage',subject:'english',dateAdded:'2026-07-03',addedAt:Date.now(),starred:false}],
+        wordBook:[
+      {id:'wbk_1', text:'reconsider', meaning:'重新考虑', example:'You should reconsider the decision.', subject:'english', source:'Academic Writing', dateAdded:'2026-07-03', addedAt:Date.now()-86400000, highlight:true, highlightColor:'dark-brown', starred:true, srsBox:0, srsNext:Date.now(), srsReviews:1, srsLapses:0},
+      {id:'wbk_2', text:'take advantage of', meaning:'利用，占……的便宜', example:'We should take advantage of this opportunity.', subject:'english', source:'Reading Passage 1', dateAdded:'2026-07-03', addedAt:Date.now()-43200000, highlight:false, starred:false, srsBox:1, srsNext:Date.now()+86400000, srsReviews:2, srsLapses:0},
+      {id:'wbk_3', text:'depends on', meaning:'依赖于；取决于', example:'The project depends on careful planning.', subject:'english', source:'Academic Writing', dateAdded:'2026-07-03', addedAt:Date.now(), highlight:true, highlightColor:'dark-brown', starred:false, srsBox:0, srsNext:Date.now(), srsReviews:0, srsLapses:0}
+    ],
     synonymLibrary:[{groupName:'Depend Group',words:['depend on','rely on','count on','hinge on'],notes:'表示依赖',srsBox:0,srsNext:Date.now(),srsReviews:0,srsLapses:0}]
   };
 }
@@ -3346,6 +3354,104 @@ function renderModResources(subj) {
     ${displayed.length ? `<div class="resource-grid">${displayed.map(r => resourceCard(r)).join('')}</div>` : `<div class="empty-state">No resources</div>`}
   </div>`;
 }
+function renderResFilterBar() {
+  return `<div class="res-filter-bar" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:18px;padding:12px 16px;background:var(--bg-elev);border:1px solid var(--line);border-radius:var(--radius);">
+    <div style="display:flex;align-items:center;gap:6px;"><label style="font-size:12px;font-weight:700;color:var(--ink-secondary);">Subject</label>
+      <select style="padding:4px 8px;font-size:13px;" onchange="resViewState.filterSubject=this.value;render()">
+        <option value="all" ${resViewState.filterSubject==='all'?'selected':''}>Current Subject</option>
+        ${Object.keys(customSubjects).map(k=>`<option value="${k}" ${resViewState.filterSubject===k?'selected':''}>${esc(customSubjects[k].label)}</option>`).join('')}
+      </select>
+    </div>
+    <div style="display:flex;align-items:center;gap:6px;"><label style="font-size:12px;font-weight:700;color:var(--ink-secondary);">Priority</label>
+      <select style="padding:4px 8px;font-size:13px;" onchange="resViewState.filterPriority=this.value;render()">
+        <option value="all">All</option><option value="high" ${resViewState.filterPriority==='high'?'selected':''}>High</option><option value="medium" ${resViewState.filterPriority==='medium'?'selected':''}>Medium</option><option value="low" ${resViewState.filterPriority==='low'?'selected':''}>Low</option>
+      </select>
+    </div>
+    <div style="display:flex;align-items:center;gap:6px;"><label style="font-size:12px;font-weight:700;color:var(--ink-secondary);">Type</label>
+      <select style="padding:4px 8px;font-size:13px;" onchange="resViewState.filterType=this.value;render()">
+        <option value="all" ${resViewState.filterType==='all'?'selected':''}>All</option><option value="tasks" ${resViewState.filterType==='tasks'?'selected':''}>Tasks</option><option value="resources" ${resViewState.filterType==='resources'?'selected':''}>Resources</option><option value="exercises" ${resViewState.filterType==='exercises'?'selected':''}>Exercises</option>
+      </select>
+    </div>
+    <div style="display:flex;align-items:center;gap:6px;"><label style="font-size:12px;font-weight:700;color:var(--ink-secondary);">Status</label>
+      <select style="padding:4px 8px;font-size:13px;" onchange="resViewState.filterStatus=this.value;render()">
+        <option value="all">All</option><option value="pending" ${resViewState.filterStatus==='pending'?'selected':''}>Pending</option><option value="completed" ${resViewState.filterStatus==='completed'?'selected':''}>Completed</option>
+      </select>
+    </div>
+    <button class="apple-btn small" style="margin-left:auto;font-weight:600;" onclick="resViewState={filterSubject:'all',filterType:'all',filterStatus:'all',filterPriority:'all',resTab:'all'};render()">Reset Filters</button>
+  </div>`;
+}
+
+// Resource Card
+function resourceCard(r) {
+  const isDone = r.status==='completed';
+  const isNotStarted = r.status==='not_started'||(r.startDate&&r.startDate>todayISO());
+  const statusText = isDone?'Completed':isNotStarted?`Plan: ${r.startDate||'Not set'}`:'In Progress';
+  const statusColor = isDone?'var(--green)':isNotStarted?'var(--orange)':'var(--ink-secondary)';
+  const statusBg = isDone?'rgba(48,209,88,0.1)':isNotStarted?'rgba(255,159,10,0.1)':'var(--bg-elev)';
+
+  return `<div class="res-card ${isDone?'completed':''}" data-id="${r.id}" style="margin-bottom:8px;padding:14px;background:var(--bg-elev);border:1px solid var(--line);border-radius:var(--radius-sm);">
+    <div class="res-top" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+      <div class="res-title-wrap" style="display:flex;align-items:center;gap:10px;">
+        <div class="res-check ${isDone?'checked':''}" onclick="toggleResourceStatus('${r.id}')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5L19 7"/></svg>
+        </div>
+        <div class="res-title" style="font-size:16px;font-weight:700;color:var(--ink);">${esc(r.title)}</div>
+      </div>
+      <div style="display:flex;gap:4px">
+        <button class="apple-btn small" onclick="openEditResourceModal('${r.id}')">Edit</button>
+        <button class="res-tool-btn delete" onclick="deleteResource('${r.id}')">Del</button>
+      </div>
+    </div>
+    <div class="res-path" style="font-size:12px;color:var(--ink-tertiary);margin-bottom:8px;">${esc(r.path||'—')}</div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+      <span style="font-size:11px;font-weight:700;color:${statusColor};background:${statusBg};padding:2px 8px;border-radius:6px">${statusText}</span>
+      <div class="res-tags">${(r.tags||[]).map(t=>`<span class="pill-tag">${esc(t)}</span>`).join('')}</div>
+    </div>
+    <div class="res-bottom" style="display:flex;justify-content:space-between;align-items:center;border-top:1px dashed var(--line);padding-top:8px;font-size:11px;color:var(--ink-tertiary);">
+      <span class="res-date">Added ${r.createdAt}</span>
+      <button class="apple-btn small" onclick="alert('Open: ${esc(r.path||'')}')">Open</button>
+    </div>
+  </div>`;
+}
+
+// Exercise Card
+function exerciseCard(e) {
+  const subtasks = e.subtasks||[];
+  const totalSt = subtasks.length;
+  const doneSt = subtasks.filter(st=>st.completed).length;
+  const checked = e.status==='completed';
+  const isOverdue = checkIsOverdue(e.dueDate, checked);
+
+  return `<div class="ex-card ${checked?'completed':''} ${e.pinned?'pinned':''}" data-id="${e.id}" style="margin-bottom:8px;padding:14px;background:var(--bg-elev);border:1px solid var(--line);border-radius:var(--radius-sm);">
+    <div class="ex-row" style="display:flex;align-items:center;gap:10px;">
+      <div class="ex-check ${checked?'checked':''}" onclick="toggleExerciseMain('${e.id}')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5L19 7"/></svg>
+      </div>
+      <span class="ex-subject-tag" style="background:${customSubjects[e.subject]?.tint||'var(--bg-card)'};color:${customSubjects[e.subject]?.color||'var(--ink)'};font-size:11px;padding:2px 8px;border-radius:4px;font-weight:600;">${customSubjects[e.subject]?.label||e.subject}</span>
+      <div class="ex-body" style="flex:1;">
+        <div class="ex-title-row" style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+          ${e.pinned?'<span style="font-size:10px;font-weight:700;color:var(--yellow);background:rgba(255,214,10,0.12);padding:2px 6px;border-radius:4px">Pinned</span>':''}
+          <span class="priority-tag priority-${e.priority||'medium'}" style="font-size:10px;text-transform:uppercase;font-weight:700;">${(e.priority||'medium')}</span>
+          <div class="ex-title" style="font-size:16px;font-weight:700;color:var(--ink);">${esc(e.title)}</div>
+        </div>
+        <div class="ex-meta" style="font-size:12px;color:var(--ink-tertiary);display:flex;gap:10px;">
+          ${e.dueDate?`<span style="${isOverdue?'color:var(--red);font-weight:700':''}">Due ${e.dueDate} ${isOverdue?'(Overdue!)':''}</span>`:'No due date'}
+          ${totalSt?`<span style="background:var(--bg-card);padding:1px 6px;border-radius:4px;font-weight:600;border:1px solid var(--line);">${doneSt}/${totalSt} done</span>`:''}
+        </div>
+      </div>
+      <span class="ex-status ${e.status}" style="font-size:11px;font-weight:700;">${e.status==='pending'?'Pending':'Done'}</span>
+      <div style="display:flex;align-items:center;gap:4px;flex-shrink:0">
+        <button class="ex-tool-btn pin ${e.pinned?'active':''}" onclick="togglePinExercise('${e.id}')">Pin</button>
+        <button class="apple-btn small" onclick="openEditExerciseModal('${e.id}')">Edit</button>
+        <button class="ex-tool-btn delete" onclick="deleteExercise('${e.id}')">Del</button>
+      </div>
+    </div>
+    ${totalSt ? `<div class="subtasks-area" style="margin-top:10px;padding-top:8px;border-top:1px dashed var(--line);display:flex;flex-direction:column;gap:6px;">
+      ${subtasks.map(st=>{const stOverdue=checkIsOverdue(st.dueDate,st.completed);return `<div class="subtask-item" style="display:flex;align-items:center;gap:8px;font-size:13px;"><div class="subtask-left" onclick="toggleSubtask('${e.id}','${st.id}')" style="display:flex;align-items:center;gap:6px;cursor:pointer;"><div class="st-check ${st.completed?'checked':''}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5L19 7"/></svg></div><span class="st-text ${st.completed?'checked':''}" style="${st.completed?'text-decoration:line-through;color:var(--ink-tertiary);':''}">${esc(st.title)}</span></div>${st.dueDate?`<span class="st-due ${stOverdue?'overdue':''}" style="margin-left:auto;font-size:11px;color:var(--ink-tertiary);">${st.dueDate}</span>`:''}</div>`;}).join('')}
+    </div>` : ''}
+  </div>`;
+}
+
 function taskCard(t) {
   const checked = t.status === 'completed';
   const isOverdue = checkIsOverdue(t.dueDate, checked);
