@@ -1169,6 +1169,64 @@ textarea { resize: vertical; }
   font-weight: 700;
 }
 
+
+.mod-touch-dragging {
+  position: relative;
+  z-index: 9999 !important;
+  transform: scale(1.025);
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.28), 0 0 0 2px var(--accent) !important;
+  transition: box-shadow 0.25s ease, transform 0.25s cubic-bezier(0.25, 1, 0.5, 1);
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+
+/* ============================================================
+   SIDEBAR COLLAPSE STYLES
+   ============================================================ */
+.app {
+  transition: grid-template-columns 0.28s cubic-bezier(0.25, 1, 0.5, 1);
+}
+.app.sidebar-collapsed {
+  grid-template-columns: 0px 1fr !important;
+}
+.app.sidebar-collapsed .sidebar {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  border-right: none !important;
+  overflow: hidden !important;
+}
+.sidebar {
+  transition: opacity 0.2s ease, padding 0.28s ease, border-color 0.28s ease;
+  overflow-x: hidden;
+}
+
+
+/* ============================================================
+   ANTI-SELECTION & NO-TOUCH-CALLOUT FOR DRAGGING
+   ============================================================ */
+.mod-section,
+.mod-section *,
+.mod-drag-handle,
+.mod-drag-handle * {
+  -webkit-touch-callout: none !important;
+  -webkit-user-select: none !important;
+  user-select: none !important;
+  -webkit-user-drag: none !important;
+}
+body.body-dragging-mod,
+body.body-dragging-mod * {
+  -webkit-touch-callout: none !important;
+  -webkit-user-select: none !important;
+  user-select: none !important;
+  -webkit-user-drag: none !important;
+  cursor: grabbing !important;
+}
+
 </style>
 </head>
 <body>
@@ -1176,8 +1234,9 @@ textarea { resize: vertical; }
 <div class="app">
   <!-- SIDEBAR -->
   <aside class="sidebar">
-    <div class="sidebar-brand">
-      Study Hub
+    <div class="sidebar-brand" style="display:flex;justify-content:space-between;align-items:center;">
+      <span>Study Hub</span>
+      <button class="apple-btn small" onclick="toggleSidebar()" title="折叠导航栏 (Collapse Sidebar)" style="padding:4px 6px;color:var(--ink-secondary);"><svg style="width:16px;height:16px;vertical-align:-2px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2z"></path><path d="M9 3v18"></path><path d="m14 9-3 3 3 3"></path></svg></button>
     </div>
 
     <!-- Module Switcher (Capsule Menu) -->
@@ -1211,12 +1270,14 @@ textarea { resize: vertical; }
 
   <!-- TOPBAR -->
   <header class="topbar">
+    <button class="apple-btn small" id="topbarSidebarToggle" onclick="toggleSidebar()" title="展开/折叠导航栏 (Toggle Sidebar)" style="margin-right:8px;padding:6px 8px;color:var(--ink);"><svg style="width:16px;height:16px;vertical-align:-2px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2z"></path><path d="M9 3v18"></path><path d="m10 15 3-3-3-3"></path></svg></button>
     <div class="topbar-title" id="topbarTitle">Quiz Hub</div>
     <div class="topbar-search">
       <span class="search-icon" style="font-weight:700;">⌕</span>
       <input id="globalSearch" type="text" placeholder="Search quizzes, vocabulary, resources, notes..." oninput="onGlobalSearch(this.value)" />
     </div>
     <div class="topbar-actions">
+      <button class="apple-btn" onclick="refreshDashboard()" title="Refresh Dashboard"><svg style="width:14px;height:14px;vertical-align:-2px;margin-right:4px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"></path><path d="M21 13a9 9 0 1 1-3-7.7L21 8"></path></svg>Refresh</button>
       <button class="apple-btn" onclick="openStudySuggest()" id="btnStudySuggest">Study Suggest</button>
       <button class="apple-btn" onclick="exportAllData()">↓ Export</button>
       <button class="apple-btn" onclick="document.getElementById('importFileInput').click()">↑ Import</button>
@@ -1239,7 +1300,6 @@ textarea { resize: vertical; }
       <div class="suggest-tabs">
         <div class="suggest-tab active" data-stab="notes" onclick="switchSuggestTab('notes')">Note Notes</div>
         <div class="suggest-tab" data-stab="links" onclick="switchSuggestTab('links')">Useful Links</div>
-        <div class="suggest-tab" data-stab="highlights" onclick="switchSuggestTab('highlights')">Highlights</div>
       </div>
       <div id="suggestContent"></div>
     </div>
@@ -1315,7 +1375,7 @@ let quizState = {
   version: '2.0', schemaVersion: QUIZ_SCHEMA,
   passages: [], quizSets: [],
   grammarQuestions: [], vocabularyQuestions: [],
-  vocabularyBook: [], phraseLibrary: [], synonymLibrary: [],
+  wordBook: [], synonymLibrary: [],
   highlights: [], wrongBook: [],
   answerLog: {},
   currentPassageId: null,
@@ -1418,8 +1478,7 @@ function loadQuiz() {
       quizState.answerLog = quizState.answerLog || {};
       quizState.wrongBook = quizState.wrongBook || [];
       quizState.highlights = quizState.highlights || [];
-      quizState.vocabularyBook = quizState.vocabularyBook || [];
-      quizState.phraseLibrary = quizState.phraseLibrary || [];
+      quizState.wordBook = quizState.wordBook || [];
       quizState.synonymLibrary = quizState.synonymLibrary || [];
       quizState.quizSets = quizState.quizSets || [];
       quizState.currentQuizSetId = quizState.currentQuizSetId || {};
@@ -1572,15 +1631,14 @@ function renderSharedStats() {
   const el = document.getElementById('sidebarStats');
   const quizCompleted = Object.keys(quizState.answerLog).length;
   const quizWrong = quizState.wrongBook.length;
-  const quizVocab = quizState.vocabularyBook.length;
+  const quizWordBook = quizState.wordBook.length;
   const resPending = exercises.filter(e=>e.status==='pending').length;
   const resDone = exercises.filter(e=>e.status==='completed').length;
 
   el.innerHTML = `
     <div class="sidebar-stat"><span>Quiz Done</span><span class="num">${quizCompleted}</span></div>
     <div class="sidebar-stat"><span>Wrong</span><span class="num">${quizWrong}</span></div>
-    <div class="sidebar-stat"><span>Vocabulary</span><span class="num">${quizVocab}</span></div>
-    <div class="sidebar-stat"><span>Phrases</span><span class="num">${quizState.phraseLibrary.length}</span></div>
+    <div class="sidebar-stat" style="cursor:pointer;" onclick="openQuizWordBook()"><span>Word Book</span><span class="num">${quizState.wordBook.length}</span></div>
     <div class="sidebar-stat"><span>Tasks Pending</span><span class="num">${resPending}</span></div>
     <div class="sidebar-stat"><span>Tasks Done</span><span class="num">${resDone}</span></div>
   `;
@@ -1650,16 +1708,7 @@ function renderQuizHub(container) {
     <button class="apple-btn" onclick="openQuizSettings()">Set Settings</button>
   </div>`;
 
-  // Reading area (always visible, toggle removed)
-  const p = currentPassage();
-  if (p && p.content) {
-    html += `<div style="margin-bottom:16px;">
-      <div id="readingArea" style="background:var(--bg-card);border:1px solid var(--line);border-radius:var(--radius);padding:20px;max-height:400px;overflow-y:auto;">
-        <div style="font-size:16px;font-weight:700;margin-bottom:6px;">${esc(p.title||p.customName)}</div>
-        <div class="reading-body" id="readingBody">${buildReadingHTML(p.content, quizState.highlights.filter(h=>h.passageId===p.id))}</div>
-      </div>
-    </div>`;
-  }
+  // Topic Introductory text removed as required (Requirement 8)
 
   // Section Title + QuizSet bar
   html += renderSectionTitleBarHTML();
@@ -1677,9 +1726,8 @@ function renderQuizHub(container) {
   html += `<div style="display:flex;gap:10px;align-items:center;margin-top:20px;padding:12px 16px;background:var(--bg-card);border:1px solid var(--line);border-radius:var(--radius);flex-wrap:wrap;">
     <div style="font-size:11px;color:var(--ink-tertiary);">Completed: <b style="color:var(--ink)">${Object.keys(quizState.answerLog).length}</b></div>
     <div style="font-size:11px;color:var(--ink-tertiary);">Wrong: <b style="color:var(--red)">${quizState.wrongBook.length}</b></div>
-    <div style="font-size:11px;color:var(--ink-tertiary);">Vocab: <b style="color:var(--ink)">${quizState.vocabularyBook.length}</b></div>
+    <div style="font-size:11px;color:var(--ink-tertiary);">Word Book: <b style="color:var(--ink)">${quizState.wordBook.length}</b></div>
     <div style="margin-left:auto;display:flex;gap:6px;flex-wrap:wrap;">
-      <button class="apple-btn small primary" style="font-weight:700;" onclick="redoCurrentQuizSet()">↻ Redo This Set (重新做这套题)</button>
       <button class="apple-btn small" onclick="loadSeedData()">Load Sample</button>
       <button class="apple-btn small danger" onclick="clearAllQuiz()">Clear All</button>
     </div>
@@ -1782,6 +1830,7 @@ function renderSectionTitleBarHTML() {
   if (!sets.length) ensureDefaultQuizSet(p.id);
   const allSets = getQuizSets(p.id);
   const activeIds = getActiveQuizSetIds();
+  const activeSet = new Set(activeIds);
   const curVal = activeIds.length===allSets.length && allSets.length>1 ? '__all__' : (activeIds[0]||'');
   const opts = [`<option value="__all__" ${curVal==='__all__'?'selected':''}>All Sets (${allSets.length})</option>`,
     ...allSets.map(qs => {
@@ -1790,16 +1839,27 @@ function renderSectionTitleBarHTML() {
       return `<option value="${esc(qs.id)}" ${curVal===qs.id?'selected':''}>${esc(qs.name)} (${gc+vc})</option>`;
     })].join('');
 
-  return `<div style="margin-bottom:12px;">
-    <h2 style="font-size:18px;font-weight:700;margin-bottom:4px;" contenteditable="true" id="passageTitleEditable" onblur="savePassageTitle()">${esc(p.title||p.customName)}</h2>
-    <div style="font-size:11px;color:var(--ink-tertiary);margin-bottom:8px;">Section: ${esc(p.customName)}</div>
-    <div class="quizset-bar" style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
-      <label style="font-weight:600;">Quiz Set:</label>
-      <select onchange="onQuizSetChange(this.value)" style="padding:4px 8px;">${opts}</select>
+  const pool = [...quizState.grammarQuestions.filter(q=>q.passageId===p.id && activeSet.has(q.quizSetId)), ...quizState.vocabularyQuestions.filter(q=>q.passageId===p.id && activeSet.has(q.quizSetId))];
+  const answeredCount = pool.filter(q => quizState.answerLog[q.id]).length;
+  const progPercent = pool.length ? Math.round((answeredCount / pool.length) * 100) : 0;
+
+  return `<div style="margin-bottom:16px;padding:16px;background:var(--bg-elev);border:1px solid var(--line);border-radius:var(--radius);">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:10px;">
+      <div>
+        <h2 style="font-size:20px;font-weight:800;margin:0;color:var(--ink);" contenteditable="true" id="passageTitleEditable" onblur="savePassageTitle()">${esc(p.title||p.customName)}</h2>
+        <div style="font-size:12px;color:var(--ink-secondary);margin-top:2px;">Topic / Section · No intro text shown (Requirement 8)</div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        <span style="background:var(--bg-card);padding:4px 12px;border-radius:var(--radius-pill);font-size:12px;font-weight:600;color:var(--ink-secondary);border:1px solid var(--line);">📊 题量: <b>${pool.length}</b> 题</span>
+        <span style="background:var(--green)18;color:var(--green);padding:4px 12px;border-radius:var(--radius-pill);font-size:12px;font-weight:700;">✓ 进度: <b>${answeredCount}/${pool.length}</b> (${progPercent}%)</span>
+      </div>
+    </div>
+    <div class="quizset-bar" style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;border-top:1px dashed var(--line);padding-top:12px;">
+      <label style="font-weight:600;font-size:13px;">Quiz Set:</label>
+      <select onchange="onQuizSetChange(this.value)" style="padding:4px 8px;font-size:13px;">${opts}</select>
       <button class="apple-btn small" onclick="addQuizSet()">+ New</button>
       <button class="apple-btn small" onclick="renameCurrentQS()" ${curVal==='__all__'||!curVal?'disabled':''}>Rename</button>
       <button class="apple-btn small danger" onclick="deleteCurrentQS()" ${curVal==='__all__'||!curVal?'disabled':''}>Delete</button>
-      <button class="apple-btn small primary" style="margin-left:auto;font-weight:700;display:flex;align-items:center;gap:4px;" onclick="redoCurrentQuizSet()">↻ Redo This Set (重新做这套题)</button>
     </div>
   </div>`;
 }
@@ -1910,8 +1970,8 @@ function renderQuestionCard(q, num, qType) {
       <div>${esc(q.explanation||'No explanation provided.')}</div>
       <div class="explain-actions" style="margin-top:10px;padding-top:8px;border-top:1px dashed var(--line);display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
         <span style="font-size:11px;color:var(--ink-tertiary);font-weight:600;">Answer Collections (解析收藏):</span>
-        <button class="apple-btn small" onclick="addSelectedOrPromptVocab('${q.id}')">+ Add Word (单词)</button>
-        <button class="apple-btn small" onclick="addSelectedOrPromptPhrase('${q.id}')">+ Add Phrase (词组)</button>
+        <button class="apple-btn small primary" style="font-weight:700;" onclick="addSelectedToWordBook('${q.id}')">📖 + Add Selection (选中加入生词本)</button>
+        <button class="apple-btn small" onclick="openAddWordBookDialog('', '', 'Quiz Hub Q#${q.id}', '${appState.currentSubject}')">+ Manual Add</button>
       </div>
     </div>`;
   }
@@ -2131,13 +2191,19 @@ function buildReadingHTML(content, hls) {
   while((m=re.exec(content))!==null) tokens.push({text:m[0],start:m.index,end:m.index+m[0].length});
   const parts = tokens.map(t => {
     const isWord = /^[A-Za-z]/.test(t.text);
-    if(isWord){const key=t.text.toLowerCase();const rep=replacementMap[key];const dt=rep||t.text;return{html:`<span class="word${rep?' replaced':''}" data-word="${esc(t.text)}" data-start="${t.start}" data-end="${t.end}">${esc(dt)}</span>`,start:t.start,end:t.end};}
+    if(isWord){const key=t.text.toLowerCase();const rep=replacementMap[key];const dt=rep||t.text;return{html:`<span class="word${rep?' replaced':''}" data-word="${esc(t.text)}" data-start="${t.start}" data-end="${t.end}">${esc(dt)}</span>`,start:t.start,end:t.end,wordText:t.text};}
     return{html:esc(t.text),start:t.start,end:t.end};
   });
   let html='';
+  const hlWords = new Set((quizState.wordBook||[]).filter(w=>w.highlight).map(w=>w.text.toLowerCase()));
   for(const part of parts){
     const activeH = hls.find(h=>{const s=h.charStart??-1;const e=h.charEnd??-1;return s>=0&&e>=0&&part.start>=s&&part.end<=e;});
-    if(activeH){const cls="hl hl-"+(activeH.highlightColor||"yellow")+(activeH.note?" has-note":"");html+=`<span class="${cls}" data-hid="${esc(activeH.id)}">${part.html}</span>`;}
+    const isWbkHl = part.wordText && hlWords.has(part.wordText.toLowerCase());
+    if(activeH || isWbkHl){
+      const hid = activeH ? activeH.id : (quizState.wordBook.find(w=>w.text.toLowerCase()===part.wordText.toLowerCase())?.id || '');
+      const cls="hl hl-brown" + ((activeH && activeH.note) ? " has-note":"");
+      html+=`<span class="${cls}" style="background:rgba(162,132,94,0.22);border-bottom:2px solid #A2845E;border-radius:3px;padding:0 2px;cursor:pointer;" data-hid="${esc(hid)}">${part.html}</span>`;
+    }
     else html+=part.html;
   }
   return html;
@@ -2209,21 +2275,38 @@ document.getElementById('selMenu').addEventListener('click', e => {
 });
 
 function addHighlight(pid,start,end,text,color,note){
-  quizState.highlights.push({id:uid('hl'),passageId:pid,charStart:start,charEnd:end,selectedText:text,highlightColor:color,note:note||'',timestamp:Date.now()});
-  saveQuiz(); render();
+  quizState.wordBook = quizState.wordBook || [];
+  const textVal = (text || '').trim();
+  if (!textVal) return;
+  const exists = quizState.wordBook.find(w => w.text.toLowerCase() === textVal.toLowerCase());
+  if (exists) {
+    exists.highlight = true;
+    if (note) exists.example = `Note: ${note}`;
+    toast(`"${textVal}" 已在生词本中，已设为浅棕高亮！`);
+  } else {
+    quizState.wordBook.push({
+      id: uid('wbk'), text: textVal, meaning: note || 'Reading Highlight', example: 'Highlighted in passage',
+      source: 'Reading Passage', subject: appState.currentSubject || 'english',
+      dateAdded: todayISO(), addedAt: Date.now(), highlight: true, starred: false,
+      charStart: start, charEnd: end, passageId: pid,
+      srsBox: 0, srsNext: Date.now(), srsReviews: 0, srsLapses: 0
+    });
+    toast(`✓ 已转入 Word Book 生词本并设为浅棕色高亮: "${textVal}"`);
+  }
+  saveQuiz(); renderSharedStats(); render();
 }
 
 function openHighlightEditor(hid) {
-  const h = quizState.highlights.find(x=>x.id===hid); if(!h) return;
-  openGenericSheet('Edit Highlight', `
-    <div class="field"><label>Text</label><div style="padding:8px 12px;background:var(--bg-card);border-radius:8px;font-size:13px;">${esc(h.selectedText)}</div></div>
-    <div class="field"><label>Color</label><select id="hlColor"><option value="yellow"${h.highlightColor==='yellow'?' selected':''}>Yellow</option><option value="blue"${h.highlightColor==='blue'?' selected':''}>Blue</option><option value="pink"${h.highlightColor==='pink'?' selected':''}>Pink</option></select></div>
-    <div class="field"><label>Note</label><textarea id="hlNote">${esc(h.note||'')}</textarea></div>
-  `, [
-    {text:'Delete',cls:'danger',onclick:()=>{quizState.highlights=quizState.highlights.filter(x=>x.id!==hid);saveQuiz();closeSheet('genericSheet');render();}},
-    {text:'Cancel',onclick:()=>closeSheet('genericSheet')},
-    {text:'Save',cls:'primary',onclick:()=>{h.highlightColor=document.getElementById('hlColor').value;h.note=document.getElementById('hlNote').value.trim();saveQuiz();closeSheet('genericSheet');render();}}
-  ]);
+  let w = (quizState.wordBook || []).find(x => x.id === hid || x.text === hid);
+  if (!w && quizState.highlights) {
+    const h = quizState.highlights.find(x => x.id === hid);
+    if (h) {
+      transferHighlightToWordBook(hid);
+      w = quizState.wordBook.find(x => x.text.toLowerCase() === (h.selectedText||'').trim().toLowerCase());
+    }
+  }
+  if (w) openEditWordBookDialog(w.id);
+  else toast('请在生词本 (Word Book) 中查看和编辑该词');
 }
 
 function showWordPopup(wordEl) {
@@ -2251,274 +2334,386 @@ document.addEventListener('mousedown', e => {
 // ================================================================
 //  VOCABULARY BOOK
 // ================================================================
-function addToVocabBook(word, extra={}) {
-  word = (word||'').trim(); if(!word) return false;
-  const exists = quizState.vocabularyBook.find(v=>v.word.toLowerCase()===word.toLowerCase());
-  if(exists){toast('Already in vocab: '+word);return false;}
-  quizState.vocabularyBook.push({
-    word, meaning: extra.meaning||'', example: extra.example||'',
+function addToWordBook(text, extra={}) {
+  text = (text||'').trim(); if(!text) return false;
+  quizState.wordBook = quizState.wordBook || [];
+  const exists = quizState.wordBook.find(v => v.text.toLowerCase() === text.toLowerCase());
+  if(exists){ toast('已在生词本中: ' + text); return false; }
+  quizState.wordBook.push({
+    id: uid('wbk'), text, meaning: extra.meaning || '', example: extra.example || '',
     source: extra.source || 'Quiz Hub', subject: extra.subject || appState.currentSubject,
-    dateAdded: todayISO(), addedAt: Date.now(), starred: false,
-    synonyms: extra.synonyms||[], notes: extra.notes||'',
-    srsBox:0, srsNext:Date.now(), srsReviews:0, srsLapses:0
+    dateAdded: todayISO(), addedAt: Date.now(), highlight: !!extra.highlight, starred: !!extra.starred,
+    srsBox: 0, srsNext: Date.now(), srsReviews: 0, srsLapses: 0
   });
-  saveQuiz(); renderSharedStats(); render(); toast('Added to vocab: '+word); return true;
+  saveQuiz(); renderSharedStats(); render(); toast('✓ 已存入 Word Book 生词本: ' + text); return true;
 }
 
 // ================================================================
-//  VOCABULARY LIBRARY (INDEPENDENT)
+//  UNIFIED WORD BOOK (生词本) — LEARNING & REVIEW SYSTEM
 // ================================================================
-let vocabSearchQ = '';
-let vocabFilterSubj = 'all';
-let vocabFilterStarred = false;
+let wbkSearchQ = '';
+let wbkFilterSubj = 'all';
+let wbkSort = 'dateDesc'; // 'dateDesc', 'alpha', 'highlight'
+let wbkTab = 'all'; // 'all', 'due', 'highlight', 'starred'
 
-function openQuizVocab(searchQ = vocabSearchQ, filterSubj = vocabFilterSubj, filterStarred = vocabFilterStarred) {
-  if (typeof searchQ === 'string') vocabSearchQ = searchQ;
-  if (filterSubj) vocabFilterSubj = filterSubj;
-  if (typeof filterStarred === 'boolean') vocabFilterStarred = filterStarred;
-  quizState.vocabularyBook.forEach(ensureSrs);
+function openQuizWordBook(searchQ = wbkSearchQ, filterSubj = wbkFilterSubj, filterSort = wbkSort, filterTab = wbkTab) {
+  if (typeof searchQ === 'string') wbkSearchQ = searchQ;
+  if (filterSubj) wbkFilterSubj = filterSubj;
+  if (filterSort) wbkSort = filterSort;
+  if (filterTab) wbkTab = filterTab;
   
-  let items = [...quizState.vocabularyBook].sort((a,b) => (b.addedAt||0) - (a.addedAt||0));
-  if (vocabSearchQ) {
-    const q = vocabSearchQ.toLowerCase();
-    items = items.filter(v => v.word.toLowerCase().includes(q) || (v.meaning||'').toLowerCase().includes(q) || (v.source||'').toLowerCase().includes(q));
+  quizState.wordBook = quizState.wordBook || [];
+  let items = [...quizState.wordBook];
+
+  // Tab Filtering
+  const now = Date.now();
+  if (wbkTab === 'due') items = items.filter(w => (w.srsNext || 0) <= now);
+  if (wbkTab === 'highlight') items = items.filter(w => w.highlight);
+  if (wbkTab === 'starred') items = items.filter(w => w.starred);
+
+  // Subject & Search Filtering
+  if (wbkFilterSubj !== 'all') items = items.filter(w => w.subject === wbkFilterSubj);
+  if (wbkSearchQ) {
+    const q = wbkSearchQ.toLowerCase();
+    items = items.filter(w => w.text.toLowerCase().includes(q) || (w.meaning||'').toLowerCase().includes(q) || (w.example||'').toLowerCase().includes(q) || (w.source||'').toLowerCase().includes(q));
   }
-  if (vocabFilterSubj !== 'all') items = items.filter(v => v.subject === vocabFilterSubj);
-  if (vocabFilterStarred) items = items.filter(v => v.starred);
 
-  const subjOpts = `<option value="all">All Subjects</option>` + Object.keys(customSubjects).map(k => `<option value="${k}" ${k === vocabFilterSubj ? 'selected' : ''}>${esc(customSubjects[k].label)}</option>`).join('');
+  // Sorting
+  if (wbkSort === 'dateDesc') items.sort((a,b) => (b.addedAt||0) - (a.addedAt||0));
+  if (wbkSort === 'alpha') items.sort((a,b) => a.text.localeCompare(b.text));
+  if (wbkSort === 'highlight') items.sort((a,b) => (b.highlight?1:0) - (a.highlight?1:0) || (b.addedAt||0) - (a.addedAt||0));
 
-  const filterBar = `<div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center;">
-    <input type="text" placeholder="Search vocabulary word, meaning, source..." value="${esc(vocabSearchQ)}" style="flex:1;min-width:180px;" oninput="openQuizVocab(this.value, vocabFilterSubj, vocabFilterStarred)"/>
-    <select style="padding:6px 10px;" onchange="openQuizVocab(vocabSearchQ, this.value, vocabFilterStarred)">${subjOpts}</select>
-    <button class="apple-btn small ${vocabFilterStarred ? 'active' : ''}" style="${vocabFilterStarred ? 'background:var(--yellow);color:#000;font-weight:700;' : ''}" onclick="openQuizVocab(vocabSearchQ, vocabFilterSubj, !vocabFilterStarred)">★ Favorites (${quizState.vocabularyBook.filter(v=>v.starred).length})</button>
-    <button class="apple-btn primary small" onclick="openAddVocabDialog('', '', '', appState.currentSubject)">+ Add Vocabulary</button>
+  const totalCount = quizState.wordBook.length;
+  const dueCount = quizState.wordBook.filter(w => (w.srsNext || 0) <= now).length;
+  const hlCount = quizState.wordBook.filter(w => w.highlight).length;
+  const stCount = quizState.wordBook.filter(w => w.starred).length;
+
+  const subjOpts = `<option value="all">All Subjects</option>` + Object.keys(customSubjects).map(k => `<option value="${k}" ${k === wbkFilterSubj ? 'selected' : ''}>${esc(customSubjects[k].label)}</option>`).join('');
+
+  const topBanner = `<div style="padding:16px;background:var(--bg-elev);border:1px solid var(--line);border-radius:var(--radius);margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;box-shadow:var(--shadow-sm);">
+    <div>
+      <div style="font-size:16px;font-weight:800;color:var(--ink);display:flex;align-items:center;gap:6px;">📖 Word Book Review Mode (生词本复习系统)</div>
+      <div style="font-size:12px;color:var(--ink-secondary);margin-top:3px;">今日待复习: <b style="color:var(--orange);">${dueCount} 词</b> · 浅棕高亮: <b style="color:#A2845E;">${hlCount}</b> · 重点收藏: <b style="color:var(--yellow);">${stCount}</b></div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="apple-btn primary" style="font-weight:700;padding:8px 16px;background:var(--accent);color:#fff;" onclick="startWordBookReview('due')">★ 开始复习待记词 (${dueCount})</button>
+      <button class="apple-btn" style="font-weight:600;" onclick="startWordBookReview('random')">🔀 随机抽词复习</button>
+      <button class="apple-btn" style="font-weight:600;" onclick="startWordBookReview('all')">全量复习 (${totalCount})</button>
+    </div>
   </div>`;
 
-  const listHTML = items.length ? items.map(v => {
-    const sColor = customSubjects[v.subject]?.color || 'var(--ink-tertiary)';
-    const sLabel = customSubjects[v.subject]?.label || v.subject || 'General';
-    return `<div class="list-item" style="display:flex;justify-content:space-between;align-items:flex-start;padding:14px;background:var(--bg-elev);border:1px solid var(--line);border-radius:var(--radius-sm);margin-bottom:8px;box-shadow:var(--shadow-sm);">
+  const filterBar = `<div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center;">
+    <div style="display:flex;gap:6px;flex-wrap:wrap;">
+      <button class="apple-btn small ${wbkTab === 'all' ? 'active' : ''}" onclick="openQuizWordBook(wbkSearchQ, wbkFilterSubj, wbkSort, 'all')">全部 (${totalCount})</button>
+      <button class="apple-btn small ${wbkTab === 'due' ? 'active' : ''}" style="${wbkTab === 'due' ? 'background:var(--orange);color:#fff;font-weight:700;' : ''}" onclick="openQuizWordBook(wbkSearchQ, wbkFilterSubj, wbkSort, 'due')">今日待复习 (${dueCount})</button>
+      <button class="apple-btn small ${wbkTab === 'highlight' ? 'active' : ''}" style="${wbkTab === 'highlight' ? 'background:#A2845E;color:#fff;font-weight:700;' : ''}" onclick="openQuizWordBook(wbkSearchQ, wbkFilterSubj, wbkSort, 'highlight')">🖌 浅棕高亮 (${hlCount})</button>
+      <button class="apple-btn small ${wbkTab === 'starred' ? 'active' : ''}" style="${wbkTab === 'starred' ? 'background:var(--yellow);color:#000;font-weight:700;' : ''}" onclick="openQuizWordBook(wbkSearchQ, wbkFilterSubj, wbkSort, 'starred')">★ 收藏 (${stCount})</button>
+    </div>
+    <input type="text" placeholder="搜索生词/短语、释义、来源..." value="${esc(wbkSearchQ)}" style="flex:1;min-width:160px;padding:6px 10px;" oninput="openQuizWordBook(this.value, wbkFilterSubj, wbkSort, wbkTab)"/>
+    <select style="padding:6px 10px;" onchange="openQuizWordBook(wbkSearchQ, this.value, wbkSort, wbkTab)">${subjOpts}</select>
+    <select style="padding:6px 10px;" onchange="openQuizWordBook(wbkSearchQ, wbkFilterSubj, this.value, wbkTab)">
+      <option value="dateDesc" ${wbkSort==='dateDesc'?'selected':''}>按时间排序 (新→旧)</option>
+      <option value="alpha" ${wbkSort==='alpha'?'selected':''}>按字母排序 (A→Z)</option>
+      <option value="highlight" ${wbkSort==='highlight'?'selected':''}>高亮词置顶</option>
+    </select>
+    <button class="apple-btn primary small" style="font-weight:700;" onclick="openAddWordBookDialog('', '', '', appState.currentSubject)">+ 录入生词/短语</button>
+  </div>`;
+
+  const listHTML = items.length ? items.map(w => {
+    const sColor = customSubjects[w.subject]?.color || 'var(--ink-tertiary)';
+    const sLabel = customSubjects[w.subject]?.label || w.subject || 'General';
+    const isHl = !!w.highlight;
+    const hlCardStyle = isHl ? 'background:rgba(162,132,94,0.18);border:1px solid #A2845E;' : 'background:var(--bg-elev);border:1px solid var(--line);';
+    const isDue = (w.srsNext || 0) <= now;
+
+    return `<div class="list-item" style="display:flex;justify-content:space-between;align-items:flex-start;padding:14px;border-radius:var(--radius-sm);margin-bottom:10px;box-shadow:var(--shadow-sm);transition:all 0.2s ease;${hlCardStyle}">
       <div style="flex:1;">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap;">
-          <h4 style="font-size:16px;font-weight:700;margin:0;color:var(--ink);">${esc(v.word)}</h4>
+          <h4 style="font-size:17px;font-weight:800;margin:0;color:var(--ink);">${esc(w.text)}</h4>
           <span style="font-size:11px;padding:2px 8px;border-radius:4px;background:${sColor}18;color:${sColor};font-weight:600;">${esc(sLabel)}</span>
-          ${v.source ? `<span style="font-size:11px;color:var(--ink-tertiary);background:var(--bg-card);padding:2px 6px;border-radius:4px;border:1px solid var(--line-light);">Src: ${esc(v.source)}</span>` : ''}
-          <span style="font-size:11px;color:var(--ink-tertiary);margin-left:auto;">Added: ${v.dateAdded || new Date(v.addedAt||Date.now()).toLocaleDateString()}</span>
+          ${w.source ? `<span style="font-size:11px;color:var(--ink-tertiary);background:var(--bg-card);padding:2px 6px;border-radius:4px;border:1px solid var(--line-light);">Src: ${esc(w.source)}</span>` : ''}
+          ${isHl ? `<span style="font-size:11px;background:#A2845E;color:#fff;padding:2px 8px;border-radius:12px;font-weight:700;">🖌 Highlighted</span>` : ''}
+          ${isDue ? `<span style="font-size:11px;background:var(--orange);color:#fff;padding:2px 8px;border-radius:12px;font-weight:700;">待复习</span>` : `<span style="font-size:11px;color:var(--green);font-weight:600;">已复习 (Box ${w.srsBox||0})</span>`}
+          <span style="font-size:11px;color:var(--ink-tertiary);margin-left:auto;">Added: ${w.dateAdded || new Date(w.addedAt||Date.now()).toLocaleDateString()}</span>
         </div>
-        <div class="meta" style="font-size:14px;color:var(--ink-secondary);font-weight:500;margin-bottom:4px;">${esc(v.meaning || 'No meaning provided')}</div>
-        ${v.example ? `<div style="font-size:13px;color:var(--ink-tertiary);font-style:italic;line-height:1.4;">"${esc(v.example)}"</div>` : ''}
+        <div class="meta" style="font-size:15px;color:var(--ink);font-weight:600;margin-bottom:4px;">${esc(w.meaning || '暂无释义')}</div>
+        ${w.example ? `<div style="font-size:13px;color:var(--ink-secondary);font-style:italic;line-height:1.4;">"${esc(w.example)}"</div>` : ''}
       </div>
-      <div class="actions" style="display:flex;gap:6px;margin-left:14px;flex-shrink:0;">
-        <button class="apple-btn small ${v.starred ? 'active' : ''}" style="${v.starred ? 'color:var(--yellow);font-weight:700;' : ''}" onclick="toggleVocabStar('${esc(v.word)}')">★</button>
-        <button class="apple-btn small" onclick="openEditVocabDialog('${esc(v.word)}')">Edit</button>
-        <button class="apple-btn small danger" onclick="deleteVocabItem('${esc(v.word)}')">Delete</button>
+      <div class="actions" style="display:flex;gap:6px;margin-left:14px;flex-shrink:0;align-items:center;">
+        <button class="apple-btn small" style="${isHl ? 'background:#A2845E;color:#fff;font-weight:700;border-color:#A2845E;' : 'color:#A2845E;font-weight:600;'}" onclick="toggleWordBookHighlight('${w.id}')">🖌 Highlight</button>
+        <button class="apple-btn small ${w.starred ? 'active' : ''}" style="${w.starred ? 'color:var(--yellow);font-weight:700;' : ''}" onclick="toggleWordBookStar('${w.id}')">★</button>
+        <button class="apple-btn small" onclick="openEditWordBookDialog('${w.id}')">Edit</button>
+        <button class="apple-btn small danger" onclick="deleteWordBookItem('${w.id}')">Delete</button>
       </div>
     </div>`;
-  }).join('') : `<div class="empty-state">No vocabulary items match criteria</div>`;
+  }).join('') : `<div class="empty-state">在当前筛选下暂无生词记录！</div>`;
 
-  openGenericSheet(`R Vocabulary Library (${quizState.vocabularyBook.length})`, filterBar + `<div style="max-height:420px;overflow-y:auto;">${listHTML}</div>`, [
+  openGenericSheet(`📖 Word Book 生词本 (${quizState.wordBook.length})`, topBanner + filterBar + `<div style="max-height:430px;overflow-y:auto;">${listHTML}</div>`, [
     { text: 'Close', cls: 'primary', onclick: () => { closeSheet('genericSheet'); render(); } }
   ]);
 }
 
-function toggleVocabStar(word) {
-  const v = quizState.vocabularyBook.find(x => x.word === word);
-  if (v) {
-    v.starred = !v.starred;
+function toggleWordBookHighlight(id) {
+  const w = quizState.wordBook.find(x => x.id === id);
+  if (w) {
+    w.highlight = !w.highlight;
     saveQuiz();
-    openQuizVocab();
-    toast(v.starred ? 'Added to Favorites (已收藏)' : 'Removed from Favorites');
+    openQuizWordBook();
+    toast(w.highlight ? '🖌 已设为浅棕色高亮 (Highlighted)' : '已取消高亮');
   }
 }
 
-function openEditVocabDialog(word) {
-  const v = quizState.vocabularyBook.find(x => x.word === word);
-  if (!v) return;
-  openAddVocabDialog(v.word, v.example || '', v.source || '', v.subject || appState.currentSubject);
+function toggleWordBookStar(id) {
+  const w = quizState.wordBook.find(x => x.id === id);
+  if (w) {
+    w.starred = !w.starred;
+    saveQuiz();
+    openQuizWordBook();
+    toast(w.starred ? '★ 已加入重点收藏' : '已取消收藏');
+  }
 }
 
-function deleteVocabItem(word) {
-  if (!confirm(`Delete vocabulary word "${word}"?`)) return;
-  quizState.vocabularyBook = quizState.vocabularyBook.filter(x => x.word !== word);
+function openEditWordBookDialog(id) {
+  const w = quizState.wordBook.find(x => x.id === id);
+  if (!w) return;
+  openAddWordBookDialog(w.text, w.example || '', w.source || '', w.subject || appState.currentSubject, w.id);
+}
+
+function deleteWordBookItem(id) {
+  const w = quizState.wordBook.find(x => x.id === id);
+  if (!w) return;
+  if (!confirm(`确定要从生词本中删除 "${w.text}" 吗？`)) return;
+  quizState.wordBook = quizState.wordBook.filter(x => x.id !== id);
   saveQuiz();
   renderSharedStats();
-  openQuizVocab();
-  toast('Deleted from Vocabulary Library');
+  openQuizWordBook();
+  toast('已从生词本删除');
 }
 
 // ================================================================
-//  PHRASE LIBRARY (INDEPENDENT)
+//  WORD BOOK REVIEW MODE (生词本卡片复习系统)
 // ================================================================
-let phraseSearchQ = '';
-let phraseFilterSubj = 'all';
-let phraseFilterStarred = false;
+let wbkReviewSession = null;
 
-function openQuizPhrases(searchQ = phraseSearchQ, filterSubj = phraseFilterSubj, filterStarred = phraseFilterStarred) {
-  if (typeof searchQ === 'string') phraseSearchQ = searchQ;
-  if (filterSubj) phraseFilterSubj = filterSubj;
-  if (typeof filterStarred === 'boolean') phraseFilterStarred = filterStarred;
-  
-  let items = [...quizState.phraseLibrary].sort((a,b) => (b.addedAt||0) - (a.addedAt||0));
-  if (phraseSearchQ) {
-    const q = phraseSearchQ.toLowerCase();
-    items = items.filter(p => p.phrase.toLowerCase().includes(q) || (p.meaning||'').toLowerCase().includes(q) || (p.example||'').toLowerCase().includes(q) || (p.source||'').toLowerCase().includes(q));
+function startWordBookReview(mode = 'due') {
+  quizState.wordBook = quizState.wordBook || [];
+  const now = Date.now();
+  let queue = [];
+  if (mode === 'due') {
+    queue = quizState.wordBook.filter(w => (w.srsNext || 0) <= now);
+    if (!queue.length) { toast('🎉 今日所有生词已复习完毕！已为您转为全量随机复习'); queue = [...quizState.wordBook]; mode = 'random'; }
+  } else if (mode === 'random') {
+    queue = [...quizState.wordBook].sort(() => Math.random() - 0.5);
+  } else {
+    queue = [...quizState.wordBook];
   }
-  if (phraseFilterSubj !== 'all') items = items.filter(p => p.subject === phraseFilterSubj);
-  if (phraseFilterStarred) items = items.filter(p => p.starred);
 
-  const subjOpts = `<option value="all">All Subjects</option>` + Object.keys(customSubjects).map(k => `<option value="${k}" ${k === phraseFilterSubj ? 'selected' : ''}>${esc(customSubjects[k].label)}</option>`).join('');
+  if (!queue.length) { toast('生词本为空，请先录入或刷题时加入生词！'); return; }
 
-  const filterBar = `<div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center;">
-    <input type="text" placeholder="Search phrase, meaning, example, source..." value="${esc(phraseSearchQ)}" style="flex:1;min-width:180px;" oninput="openQuizPhrases(this.value, phraseFilterSubj, phraseFilterStarred)"/>
-    <select style="padding:6px 10px;" onchange="openQuizPhrases(phraseSearchQ, this.value, phraseFilterStarred)">${subjOpts}</select>
-    <button class="apple-btn small ${phraseFilterStarred ? 'active' : ''}" style="${phraseFilterStarred ? 'background:var(--yellow);color:#000;font-weight:700;' : ''}" onclick="openQuizPhrases(phraseSearchQ, phraseFilterSubj, !phraseFilterStarred)">★ Favorites (${quizState.phraseLibrary.filter(p=>p.starred).length})</button>
-    <button class="apple-btn primary small" onclick="openAddPhraseDialog('', '', '', appState.currentSubject)">+ Add Phrase</button>
+  wbkReviewSession = { queue, index: 0, showMeaning: false, mode, total: queue.length };
+  renderWordBookReviewCard();
+}
+
+function renderWordBookReviewCard() {
+  if (!wbkReviewSession || !wbkReviewSession.queue.length) return;
+  const cur = wbkReviewSession.queue[wbkReviewSession.index];
+  if (!cur) {
+    openGenericSheet('🎉 复习完成 (Review Completed)', `<div style="text-align:center;padding:30px;">
+      <h3 style="font-size:22px;color:var(--green);margin-bottom:10px;">太棒了！本组共 ${wbkReviewSession.total} 个单词/短语已全部复习！</h3>
+      <p style="color:var(--ink-secondary);font-size:14px;">继续保持每日复习，提升词汇记忆持久度与阅读速度！</p>
+    </div>`, [{ text: '返回生词本', cls: 'primary', onclick: () => openQuizWordBook() }]);
+    return;
+  }
+
+  const idx = wbkReviewSession.index;
+  const total = wbkReviewSession.total;
+  const isHl = !!cur.highlight;
+  const sColor = customSubjects[cur.subject]?.color || 'var(--ink-tertiary)';
+  const sLabel = customSubjects[cur.subject]?.label || cur.subject || 'General';
+
+  const cardStyle = isHl ? 'background:rgba(162,132,94,0.18);border:2px solid #A2845E;' : 'background:var(--bg-elev);border:1px solid var(--line);';
+
+  const headerBar = `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;border-bottom:1px solid var(--line);padding-bottom:10px;">
+    <span style="font-size:14px;font-weight:700;color:var(--accent);">复习进度: ${idx + 1} / ${total} (${wbkReviewSession.mode.toUpperCase()})</span>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <button class="apple-btn small" onclick="wbkReviewSession.queue.sort(()=>Math.random()-0.5); wbkReviewSession.index=0; wbkReviewSession.showMeaning=false; renderWordBookReviewCard();">🔀 打乱顺序</button>
+      <button class="apple-btn small" onclick="openQuizWordBook()">退出复习</button>
+    </div>
   </div>`;
 
-  const listHTML = items.length ? items.map(p => {
-    const sColor = customSubjects[p.subject]?.color || 'var(--ink-tertiary)';
-    const sLabel = customSubjects[p.subject]?.label || p.subject || 'General';
-    return `<div class="list-item" style="display:flex;justify-content:space-between;align-items:flex-start;padding:14px;background:var(--bg-elev);border:1px solid var(--line);border-radius:var(--radius-sm);margin-bottom:8px;box-shadow:var(--shadow-sm);">
-      <div style="flex:1;">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap;">
-          <h4 style="font-size:16px;font-weight:700;margin:0;color:var(--ink);">${esc(p.phrase)}</h4>
-          <span style="font-size:11px;padding:2px 8px;border-radius:4px;background:${sColor}18;color:${sColor};font-weight:600;">${esc(sLabel)}</span>
-          ${p.source ? `<span style="font-size:11px;color:var(--ink-tertiary);background:var(--bg-card);padding:2px 6px;border-radius:4px;border:1px solid var(--line-light);">Src: ${esc(p.source)}</span>` : ''}
-          <span style="font-size:11px;color:var(--ink-tertiary);margin-left:auto;">Added: ${p.dateAdded || new Date(p.addedAt||Date.now()).toLocaleDateString()}</span>
-        </div>
-        <div class="meta" style="font-size:14px;color:var(--ink-secondary);font-weight:500;margin-bottom:4px;">${esc(p.meaning || 'No meaning provided')}</div>
-        ${p.example ? `<div style="font-size:13px;color:var(--ink-tertiary);font-style:italic;line-height:1.4;">"${esc(p.example)}"</div>` : ''}
-      </div>
-      <div class="actions" style="display:flex;gap:6px;margin-left:14px;flex-shrink:0;">
-        <button class="apple-btn small ${p.starred ? 'active' : ''}" style="${p.starred ? 'color:var(--yellow);font-weight:700;' : ''}" onclick="togglePhraseStar('${esc(p.phrase)}')">★</button>
-        <button class="apple-btn small" onclick="openEditPhraseDialog('${esc(p.phrase)}')">Edit</button>
-        <button class="apple-btn small danger" onclick="deletePhraseItem('${esc(p.phrase)}')">Delete</button>
-      </div>
-    </div>`;
-  }).join('') : `<div class="empty-state">No phrases match criteria</div>`;
+  let mainContent = `<div style="padding:28px 20px;border-radius:var(--radius);text-align:center;margin-bottom:20px;box-shadow:var(--shadow-md);transition:all 0.25s ease;${cardStyle}">
+    <div style="display:flex;justify-content:center;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
+      <span style="font-size:11px;padding:3px 10px;border-radius:4px;background:${sColor}18;color:${sColor};font-weight:700;">${esc(sLabel)}</span>
+      ${cur.source ? `<span style="font-size:11px;color:var(--ink-secondary);background:var(--bg-card);padding:3px 10px;border-radius:4px;border:1px solid var(--line);">Src: ${esc(cur.source)}</span>` : ''}
+      ${isHl ? `<span style="font-size:11px;background:#A2845E;color:#fff;padding:3px 10px;border-radius:12px;font-weight:700;">🖌 Highlighted (浅棕高亮)</span>` : ''}
+    </div>
+    <div style="font-size:32px;font-weight:800;color:var(--ink);margin:24px 0;letter-spacing:-0.5px;">${esc(cur.text)}</div>`;
 
-  openGenericSheet(`P Phrase Library (${quizState.phraseLibrary.length})`, filterBar + `<div style="max-height:420px;overflow-y:auto;">${listHTML}</div>`, [
-    { text: 'Close', cls: 'primary', onclick: () => { closeSheet('genericSheet'); render(); } }
+  if (!wbkReviewSession.showMeaning) {
+    mainContent += `<div style="margin-top:30px;">
+      <button class="apple-btn primary" style="width:100%;padding:14px;font-size:16px;font-weight:700;box-shadow:var(--shadow-sm);" onclick="wbkReviewSession.showMeaning = true; renderWordBookReviewCard();">👁 显示释义与例句 (Show Meaning)</button>
+    </div>`;
+  } else {
+    mainContent += `<div style="margin-top:20px;padding-top:18px;border-top:1px dashed var(--line);text-align:left;background:var(--bg-card);padding:18px;border-radius:var(--radius-sm);box-shadow:var(--shadow-sm);">
+      <div style="font-size:13px;color:var(--ink-tertiary);font-weight:700;margin-bottom:4px;">释义 (Meaning):</div>
+      <div style="font-size:18px;font-weight:700;color:var(--ink);margin-bottom:12px;">${esc(cur.meaning || '暂无释义')}</div>
+      ${cur.example ? `<div style="font-size:13px;color:var(--ink-tertiary);font-weight:700;margin-bottom:4px;">例句 (Example):</div>
+      <div style="font-size:15px;color:var(--ink-secondary);font-style:italic;line-height:1.5;">"${esc(cur.example)}"</div>` : ''}
+    </div>
+    <div style="display:flex;gap:12px;margin-top:20px;">
+      <button class="apple-btn danger" style="flex:1;padding:12px;font-size:15px;font-weight:700;" onclick="markWordBookReviewItem('${cur.id}', 'forgot')">❌ 不会 (忘了 / 重复复习)</button>
+      <button class="apple-btn primary" style="flex:1;padding:12px;font-size:15px;font-weight:700;background:var(--green);border-color:var(--green);" onclick="markWordBookReviewItem('${cur.id}', 'remembered')">✓ 记住了 (完成 / 增加间隔)</button>
+    </div>`;
+  }
+  mainContent += `</div>`;
+
+  const footerBar = `<div style="display:flex;justify-content:space-between;align-items:center;margin-top:14px;">
+    <button class="apple-btn" onclick="wbkReviewStep(-1)" ${idx === 0 ? 'disabled' : ''}>← 上一词 (Prev)</button>
+    <div style="display:flex;gap:8px;">
+      <button class="apple-btn small" style="${isHl ? 'background:#A2845E;color:#fff;font-weight:700;border-color:#A2845E;' : 'color:#A2845E;font-weight:600;'}" onclick="toggleWordBookHighlight('${cur.id}'); renderWordBookReviewCard();">🖌 切换高亮</button>
+      <button class="apple-btn small ${cur.starred ? 'active' : ''}" style="${cur.starred ? 'color:var(--yellow);font-weight:700;' : ''}" onclick="toggleWordBookStar('${cur.id}'); renderWordBookReviewCard();">★ 收藏</button>
+    </div>
+    <button class="apple-btn" onclick="wbkReviewStep(1)" ${idx >= total - 1 ? 'disabled' : ''}>下一词 (Next) →</button>
+  </div>`;
+
+  openGenericSheet(`📖 Word Book 卡片复习 (${idx + 1}/${total})`, headerBar + mainContent + footerBar, [
+    { text: '结束复习返回列表', cls: 'primary', onclick: () => openQuizWordBook() }
   ]);
 }
 
-function togglePhraseStar(phrase) {
-  const p = quizState.phraseLibrary.find(x => x.phrase === phrase);
-  if (p) {
-    p.starred = !p.starred;
-    saveQuiz();
-    openQuizPhrases();
-    toast(p.starred ? 'Added to Favorites (已收藏)' : 'Removed from Favorites');
+function wbkReviewStep(dir) {
+  if (!wbkReviewSession) return;
+  const newIdx = wbkReviewSession.index + dir;
+  if (newIdx >= 0 && newIdx < wbkReviewSession.total) {
+    wbkReviewSession.index = newIdx;
+    wbkReviewSession.showMeaning = false;
+    renderWordBookReviewCard();
   }
 }
 
-function openEditPhraseDialog(phrase) {
-  const p = quizState.phraseLibrary.find(x => x.phrase === phrase);
-  if (!p) return;
-  openAddPhraseDialog(p.phrase, p.example || '', p.source || '', p.subject || appState.currentSubject);
-}
-
-function deletePhraseItem(phrase) {
-  if (!confirm(`Delete phrase "${phrase}"?`)) return;
-  quizState.phraseLibrary = quizState.phraseLibrary.filter(x => x.phrase !== phrase);
-  saveQuiz();
-  renderSharedStats();
-  openQuizPhrases();
-  toast('Deleted from Phrase Library');
+function markWordBookReviewItem(id, result) {
+  const item = quizState.wordBook.find(x => x.id === id);
+  if (item) {
+    const now = Date.now();
+    if (result === 'forgot') {
+      item.srsBox = 0;
+      item.srsNext = now; // due immediately or tomorrow
+      item.srsLapses = (item.srsLapses || 0) + 1;
+      toast('❌ 已标记为“不会”，将在近期复习队列中反复出现！');
+    } else {
+      item.srsBox = (item.srsBox || 0) + 1;
+      // Spaced repetition intervals: 1d, 3d, 7d, 14d, 30d
+      const days = [1, 3, 7, 14, 30][Math.min(4, item.srsBox)] || 1;
+      item.srsNext = now + days * 86400000;
+      item.srsReviews = (item.srsReviews || 0) + 1;
+      toast(`✓ 记住了！已增加记忆间隔 (下次复习: ${days}天后)`);
+    }
+    saveQuiz();
+    renderSharedStats();
+  }
+  if (wbkReviewSession.index < wbkReviewSession.total - 1) {
+    wbkReviewStep(1);
+  } else {
+    toast('🎉 当前卡片队列已刷完！');
+    openQuizWordBook();
+  }
 }
 
 // ================================================================
-//  ADD DIALOGS FOR VOCABULARY & PHRASE
+//  ADD / EDIT WORDBOOK DIALOG & SELECTION ADD ENGINE
 // ================================================================
-function openAddVocabDialog(defaultWord = '', defaultExample = '', defaultSource = '', defaultSubj = '') {
+function openAddWordBookDialog(defaultText = '', defaultExample = '', defaultSource = '', defaultSubj = '', editId = null) {
   const subjOpts = Object.keys(customSubjects).map(k => `<option value="${k}" ${k === (defaultSubj || appState.currentSubject) ? 'selected' : ''}>${esc(customSubjects[k].label)}</option>`).join('');
-  openGenericSheet('Add to Vocabulary Library', `
-    <div class="field"><label>Word (单词)</label><input id="add_vw_word" value="${esc(defaultWord)}" placeholder="e.g. abandon"/></div>
-    <div class="field"><label>Meaning (释义)</label><input id="add_vw_mean" placeholder="e.g. 放弃，抛弃"/></div>
-    <div class="field"><label>Source (来源)</label><input id="add_vw_src" value="${esc(defaultSource || 'Quiz Hub')}" placeholder="e.g. Reading passage 1"/></div>
-    <div class="field"><label>Subject (学科)</label><select id="add_vw_subj">${subjOpts}</select></div>
-    <div class="field"><label>Example / Note (例句)</label><textarea id="add_vw_ex" rows="2" placeholder="e.g. He decided to abandon the plan.">${esc(defaultExample)}</textarea></div>
+  const item = editId ? quizState.wordBook.find(x => x.id === editId) : null;
+  
+  openGenericSheet(editId ? 'Edit Word Book Item (编辑生词)' : '📖 Add to Word Book (录入生词/短语)', `
+    <div class="field"><label style="font-weight:700;">Word / Phrase (单词或短语，自动识别)</label><input id="add_wbk_text" value="${esc(item ? item.text : defaultText)}" placeholder="e.g. abandon 或 depends on careful planning"/></div>
+    <div class="field"><label style="font-weight:700;">Meaning (中文/释义)</label><input id="add_wbk_mean" value="${esc(item ? item.meaning : '')}" placeholder="e.g. 放弃；取决于周密的计划"/></div>
+    <div class="field"><label style="font-weight:700;">Example (上下文例句)</label><textarea id="add_wbk_ex" rows="2" placeholder="e.g. The success of the project depends on careful planning.">${esc(item ? item.example : defaultExample)}</textarea></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+      <div class="field"><label style="font-weight:700;">Source (出处/章节)</label><input id="add_wbk_src" value="${esc(item ? item.source : (defaultSource || 'Quiz Hub'))}"/></div>
+      <div class="field"><label style="font-weight:700;">Subject (所属学科)</label><select id="add_wbk_subj">${subjOpts}</select></div>
+    </div>
+    <div style="display:flex;gap:14px;margin-top:8px;padding:10px;background:var(--bg-elev);border-radius:var(--radius-sm);align-items:center;">
+      <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-weight:600;font-size:13px;color:#A2845E;">
+        <input type="checkbox" id="add_wbk_hl" ${item && item.highlight ? 'checked' : (!item && defaultText ? 'checked' : '')}/> 🖌 设为浅棕色高亮 (Light Brown Highlight)
+      </label>
+      <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-weight:600;font-size:13px;color:var(--yellow);">
+        <input type="checkbox" id="add_wbk_st" ${item && item.starred ? 'checked' : ''}/> ★ 加入重点收藏
+      </label>
+    </div>
   `, [
     { text: 'Cancel', onclick: () => closeSheet('genericSheet') },
-    { text: 'Save Vocabulary', cls: 'primary', onclick: () => {
-      const word = document.getElementById('add_vw_word').value.trim();
-      if (!word) { toast('Word required'); return; }
-      const meaning = document.getElementById('add_vw_mean').value.trim();
-      const source = document.getElementById('add_vw_src').value.trim();
-      const subject = document.getElementById('add_vw_subj').value;
-      const example = document.getElementById('add_vw_ex').value.trim();
-      
-      const exists = quizState.vocabularyBook.find(v => v.word.toLowerCase() === word.toLowerCase());
-      if (exists) {
-        exists.meaning = meaning || exists.meaning;
-        exists.example = example || exists.example;
-        exists.source = source || exists.source;
-        exists.subject = subject || exists.subject;
-        toast('Updated existing vocabulary word: ' + word);
+    { text: editId ? 'Save Changes' : '✓ Save to Word Book', cls: 'primary', onclick: () => {
+      const textVal = document.getElementById('add_wbk_text').value.trim();
+      if (!textVal) { toast('请填写单词或短语！'); return; }
+      const meaning = document.getElementById('add_wbk_mean').value.trim();
+      const example = document.getElementById('add_wbk_ex').value.trim();
+      const source = document.getElementById('add_wbk_src').value.trim();
+      const subject = document.getElementById('add_wbk_subj').value;
+      const highlight = document.getElementById('add_wbk_hl').checked;
+      const starred = document.getElementById('add_wbk_st').checked;
+
+      quizState.wordBook = quizState.wordBook || [];
+      if (editId && item) {
+        item.text = textVal;
+        item.meaning = meaning;
+        item.example = example;
+        item.source = source;
+        item.subject = subject;
+        item.highlight = highlight;
+        item.starred = starred;
+        toast('✓ 生词修改已保存！');
       } else {
-        quizState.vocabularyBook.push({
-          word, meaning, example, source, subject,
-          dateAdded: todayISO(), addedAt: Date.now(),
-          starred: false, srsBox: 0, srsNext: Date.now(), srsReviews: 0, srsLapses: 0
-        });
-        toast('Added to Vocabulary Library: ' + word);
+        const exists = quizState.wordBook.find(x => x.text.toLowerCase() === textVal.toLowerCase());
+        if (exists) {
+          exists.meaning = meaning || exists.meaning;
+          exists.example = example || exists.example;
+          exists.source = source || exists.source;
+          exists.highlight = highlight || exists.highlight;
+          exists.starred = starred || exists.starred;
+          toast('已为您更新现有的生词记录: ' + textVal);
+        } else {
+          quizState.wordBook.push({
+            id: uid('wbk'), text: textVal, meaning, example, source, subject,
+            dateAdded: todayISO(), addedAt: Date.now(), highlight, starred,
+            srsBox: 0, srsNext: Date.now(), srsReviews: 0, srsLapses: 0
+          });
+          toast('✓ 已存入 Word Book 生词本: ' + textVal);
+        }
       }
       saveQuiz();
       closeSheet('genericSheet');
       renderSharedStats();
       render();
-    }}
-  ]);
-}
-
-function openAddPhraseDialog(defaultPhrase = '', defaultExample = '', defaultSource = '', defaultSubj = '') {
-  const subjOpts = Object.keys(customSubjects).map(k => `<option value="${k}" ${k === (defaultSubj || appState.currentSubject) ? 'selected' : ''}>${esc(customSubjects[k].label)}</option>`).join('');
-  openGenericSheet('Add to Phrase Library', `
-    <div class="field"><label>Phrase (词组)</label><input id="add_ph_phrase" value="${esc(defaultPhrase)}" placeholder="e.g. take advantage of"/></div>
-    <div class="field"><label>Meaning (释义)</label><input id="add_ph_mean" placeholder="e.g. 利用，占……的便宜"/></div>
-    <div class="field"><label>Example (例句)</label><textarea id="add_ph_ex" rows="2" placeholder="e.g. We should take advantage of this opportunity.">${esc(defaultExample)}</textarea></div>
-    <div class="field"><label>Source (来源)</label><input id="add_ph_src" value="${esc(defaultSource || 'Quiz Hub')}" placeholder="e.g. Passage 2"/></div>
-    <div class="field"><label>Subject (学科)</label><select id="add_ph_subj">${subjOpts}</select></div>
-  `, [
-    { text: 'Cancel', onclick: () => closeSheet('genericSheet') },
-    { text: 'Save Phrase', cls: 'primary', onclick: () => {
-      const phrase = document.getElementById('add_ph_phrase').value.trim();
-      if (!phrase) { toast('Phrase required'); return; }
-      const meaning = document.getElementById('add_ph_mean').value.trim();
-      const example = document.getElementById('add_ph_ex').value.trim();
-      const source = document.getElementById('add_ph_src').value.trim();
-      const subject = document.getElementById('add_ph_subj').value;
-      
-      const exists = quizState.phraseLibrary.find(p => p.phrase.toLowerCase() === phrase.toLowerCase());
-      if (exists) {
-        exists.meaning = meaning || exists.meaning;
-        exists.example = example || exists.example;
-        exists.source = source || exists.source;
-        exists.subject = subject || exists.subject;
-        toast('Updated existing phrase: ' + phrase);
-      } else {
-        quizState.phraseLibrary.push({
-          phrase, meaning, example, source, subject,
-          dateAdded: todayISO(), addedAt: Date.now(),
-          starred: false
-        });
-        toast('Added to Phrase Library: ' + phrase);
+      if (document.querySelector('.list-item')) {
+        openQuizWordBook();
       }
-      saveQuiz();
-      closeSheet('genericSheet');
-      renderSharedStats();
-      render();
     }}
   ]);
 }
 
-function editVocabItem(word) {
-  openEditVocabDialog(word);
+function addSelectedToWordBook(qId) {
+  const selText = window.getSelection().toString().trim();
+  let defaultExample = '';
+  let defaultSource = 'Quiz Hub Q#' + qId;
+  const card = document.querySelector(`.q-card[data-qid="${qId}"]`) || document.querySelector(`.wb-practice-card`);
+  if (card) {
+    const qText = card.querySelector('.q-text')?.textContent || '';
+    const expText = card.querySelector('.q-explain')?.textContent || '';
+    defaultExample = qText + (expText ? ' | ' + expText : '');
+    if (defaultExample.length > 160) defaultExample = defaultExample.slice(0, 160) + '...';
+  }
+  if (!selText) {
+    toast('💡 请先用鼠标或手指拖选/划选需要记忆的生词或词组，再点击存入！已为您打开手动录入框。');
+  } else {
+    toast(`✓ 已捕获选中生词/短语: "${selText}"`);
+  }
+  openAddWordBookDialog(selText, defaultExample, defaultSource, appState.currentSubject);
 }
 
 // ================================================================
-//  SYNONYM LIBRARY// ================================================================
+//  SYNONYM LIBRARY//  SYNONYM LIBRARY// ================================================================
 //  SYNONYM LIBRARY
 // ================================================================
 function openQuizSynonyms() {
@@ -2565,20 +2760,11 @@ function editSynGroup(idx) {
   ]);
 }
 
-function openAddVocabDialog(prefill) {
-  openGenericSheet('+ Add to Vocabulary',`
-    <div class="field"><label>Word</label><input id="vwIn" value="${esc(prefill||'')}"/></div>
-    <div class="field"><label>Meaning</label><input id="vmIn"/></div>
-    <div class="field"><label>Example</label><textarea id="veIn"></textarea></div>
-    <div class="field"><label>Synonyms</label><input id="vsIn"/></div>
-  `,[
-    {text:'Cancel',onclick:()=>closeSheet('genericSheet')},
-    {text:'Save',cls:'primary',onclick:()=>{
-      const word=document.getElementById('vwIn').value.trim();if(!word){toast('Word required');return;}
-      addToVocabBook(word,{meaning:document.getElementById('vmIn').value.trim(),example:document.getElementById('veIn').value.trim(),synonyms:document.getElementById('vsIn').value.split(',').map(s=>s.trim()).filter(Boolean)});
-      closeSheet('genericSheet');
-    }}
-  ]);
+function openAddVocabDialog(prefill, ex, src, subj) {
+  openAddWordBookDialog(prefill, ex, src, subj);
+}
+function openAddPhraseDialog(prefill, ex, src, subj) {
+  openAddWordBookDialog(prefill, ex, src, subj);
 }
 
 function openAddSynonymDialog(qId) {
@@ -2675,8 +2861,8 @@ function openQuizWrongBook(idx = 0, filter = wbFilter) {
       <div style="font-size:14px;color:var(--ink-secondary);line-height:1.5;">${esc(w.explanation || 'No explanation provided.')}</div>
       <div class="explain-actions" style="margin-top:12px;padding-top:10px;border-top:1px dashed var(--line);display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
         <span style="font-size:11px;color:var(--ink-tertiary);font-weight:600;">Answer Collections (解析收藏):</span>
-        <button class="apple-btn small" onclick="addSelectedOrPromptVocab('${w.qId || w.id}')">+ Add Word (单词)</button>
-        <button class="apple-btn small" onclick="addSelectedOrPromptPhrase('${w.qId || w.id}')">+ Add Phrase (词组)</button>
+        <button class="apple-btn small primary" style="font-weight:700;" onclick="addSelectedToWordBook('${w.qId || w.id}')">📖 + Add Selection (选中加入生词本)</button>
+        <button class="apple-btn small" onclick="openAddWordBookDialog('', '', 'Wrong Book Q#${w.qId || w.id}', '${appState.currentSubject}')">+ Manual Add</button>
       </div>
     </div>`;
   }
@@ -2849,7 +3035,7 @@ function openQuizSettings() {
 }
 
 function exportQuizJSON() {
-  const obj = {version:'2.0',schemaVersion:QUIZ_SCHEMA,exportedAt:Date.now(),passages:quizState.passages,quizSets:quizState.quizSets,grammarQuestions:quizState.grammarQuestions,vocabularyQuestions:quizState.vocabularyQuestions,vocabularyBook:quizState.vocabularyBook,phraseLibrary:quizState.phraseLibrary,synonymLibrary:quizState.synonymLibrary,highlights:quizState.highlights,wrongBook:quizState.wrongBook,answerLog:quizState.answerLog,currentPassageId:quizState.currentPassageId,currentQuizSetId:quizState.currentQuizSetId};
+  const obj = {version:'2.0',schemaVersion:QUIZ_SCHEMA,exportedAt:Date.now(),passages:quizState.passages,quizSets:quizState.quizSets,grammarQuestions:quizState.grammarQuestions,vocabularyQuestions:quizState.vocabularyQuestions,wordBook:quizState.wordBook,synonymLibrary:quizState.synonymLibrary,highlights:quizState.highlights,wrongBook:quizState.wrongBook,answerLog:quizState.answerLog,currentPassageId:quizState.currentPassageId,currentQuizSetId:quizState.currentQuizSetId};
   downloadJSON(obj,'quiz_export_'+todayISO()+'.json');
   toast('Exported OK');
 }
@@ -2874,8 +3060,7 @@ function importQuizData(data) {
   quizState.quizSets=Array.isArray(data.quizSets)?data.quizSets:[];
   quizState.grammarQuestions=Array.isArray(data.grammarQuestions)?data.grammarQuestions:[];
   quizState.vocabularyQuestions=Array.isArray(data.vocabularyQuestions)?data.vocabularyQuestions:[];
-  quizState.vocabularyBook=Array.isArray(data.vocabularyBook)?data.vocabularyBook:[];
-  quizState.phraseLibrary=Array.isArray(data.phraseLibrary)?data.phraseLibrary:[];
+  quizState.wordBook=Array.isArray(data.wordBook)?data.wordBook:(Array.isArray(data.vocabularyBook)?data.vocabularyBook:[]);
   quizState.synonymLibrary=Array.isArray(data.synonymLibrary)?data.synonymLibrary:[];
   quizState.highlights=Array.isArray(data.highlights)?data.highlights:[];
   quizState.wrongBook=Array.isArray(data.wrongBook)?data.wrongBook:[];
@@ -2890,7 +3075,7 @@ function importQuizData(data) {
 
 function clearAllQuiz() {
   if(!confirm('Clear ALL quiz data? This cannot be undone.')) return;
-  quizState = {version:'2.0',schemaVersion:QUIZ_SCHEMA,passages:[],quizSets:[],grammarQuestions:[],vocabularyQuestions:[],vocabularyBook:[],phraseLibrary:[],synonymLibrary:[],highlights:[],wrongBook:[],answerLog:{},currentPassageId:null,currentQuizSetId:{},activeQuizSetIds:{},activeTab:'grammar',activeQIndex:{grammar:{},vocab:{}}};
+  quizState = {version:'2.0',schemaVersion:QUIZ_SCHEMA,passages:[],quizSets:[],grammarQuestions:[],vocabularyQuestions:[],wordBook:[],synonymLibrary:[],highlights:[],wrongBook:[],answerLog:{},currentPassageId:null,currentQuizSetId:{},activeQuizSetIds:{},activeTab:'grammar',activeQIndex:{grammar:{},vocab:{}}};
   saveQuiz(); render();
 }
 
@@ -2900,8 +3085,7 @@ function loadSeedData() {
   seed.passages.forEach(p=>{if(!quizState.passages.find(x=>x.id===p.id))quizState.passages.push(p);});
   seed.grammarQuestions.forEach(q=>{if(!quizState.grammarQuestions.find(x=>x.id===q.id))quizState.grammarQuestions.push(q);});
   seed.vocabularyQuestions.forEach(q=>{if(!quizState.vocabularyQuestions.find(x=>x.id===q.id))quizState.vocabularyQuestions.push(q);});
-  seed.vocabularyBook.forEach(v=>{if(!quizState.vocabularyBook.find(x=>x.word===v.word))quizState.vocabularyBook.push(v);});
-  (seed.phraseLibrary||[]).forEach(p=>{if(!quizState.phraseLibrary.find(x=>x.phrase===p.phrase))quizState.phraseLibrary.push(p);});
+  (seed.wordBook||[]).forEach(w=>{if(!quizState.wordBook.find(x=>x.text===w.text))quizState.wordBook.push(w);});
   seed.synonymLibrary.forEach(g=>{if(!quizState.synonymLibrary.find(x=>x.groupName===g.groupName))quizState.synonymLibrary.push(g);});
   if(!quizState.currentPassageId&&quizState.passages.length) quizState.currentPassageId=quizState.passages[0].id;
   saveQuiz(); render(); toast('Sample data loaded');
@@ -2910,8 +3094,8 @@ function loadSeedData() {
 function getSeedData() {
   return {
     passages:[
-      {id:'sec_seed_001',customName:'Subjunctive Mood',title:'Subjunctive Mood in Context',content:'If I were you, I would reconsider the decision. Were it not for his timely help, we might have failed the project. The teacher insisted that every student be present at the meeting.'},
-      {id:'sec_seed_002',customName:'Prepositions',title:'Prepositions in Academic Writing',content:'The success of the project depends on careful planning and effective communication. Researchers have long been concerned about the impact of climate change on coastal cities.'}
+      {id:'sec_seed_001',customName:'Subjunctive Mood',title:'Subjunctive Mood in Context',content:''},
+      {id:'sec_seed_002',customName:'Prepositions',title:'Prepositions in Academic Writing',content:''}
     ],
     grammarQuestions:[
       {id:'g_seed_001',passageId:'sec_seed_001',quizSetId:null,question:'Which sentence uses subjunctive mood correctly?',options:['A. If I was you, I will go.','B. If I were you, I would go.','C. If I am you, I would go.','D. If I be you, I go.'],answer:'B',explanation:'虚拟语气中，与现在事实相反时，be 动词用 were。'},
@@ -2955,7 +3139,7 @@ async function cloudUpload() {
   if(!token){alert('Token required');return;}
   try{
     toast('Uploading...');
-    const body={description:'Quiz Backup',public:false,files:{[filename]:{content:JSON.stringify({version:'2.0',schemaVersion:QUIZ_SCHEMA,exportedAt:Date.now(),passages:quizState.passages,quizSets:quizState.quizSets,grammarQuestions:quizState.grammarQuestions,vocabularyQuestions:quizState.vocabularyQuestions,vocabularyBook:quizState.vocabularyBook,phraseLibrary:quizState.phraseLibrary,synonymLibrary:quizState.synonymLibrary,highlights:quizState.highlights,wrongBook:quizState.wrongBook,answerLog:quizState.answerLog,currentPassageId:quizState.currentPassageId,currentQuizSetId:quizState.currentQuizSetId},null,2)}}};
+    const body={description:'Quiz Backup',public:false,files:{[filename]:{content:JSON.stringify({version:'2.0',schemaVersion:QUIZ_SCHEMA,exportedAt:Date.now(),passages:quizState.passages,quizSets:quizState.quizSets,grammarQuestions:quizState.grammarQuestions,vocabularyQuestions:quizState.vocabularyQuestions,wordBook:quizState.wordBook,synonymLibrary:quizState.synonymLibrary,highlights:quizState.highlights,wrongBook:quizState.wrongBook,answerLog:quizState.answerLog,currentPassageId:quizState.currentPassageId,currentQuizSetId:quizState.currentQuizSetId},null,2)}}};
     let url='https://api.github.com/gists';let method='POST';
     if(gistId){url+='/'+gistId;method='PATCH';}
     const res=await fetch(url,{method,headers:{'Accept':'application/vnd.github+json','Authorization':'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify(body)});
@@ -2998,20 +3182,20 @@ function renderStudyResources(container) {
 
   // Stats Row
   html += `<div class="res-stats-row">
-    <div class="res-stat-card" onclick="resViewState.filterType='resources';render()">
+    <div class="res-stat-card" onclick="jumpToModuleSection('mod_resources', 'all', 'all')">
       <div class="label">Total Resources</div>
       <div class="value">${resources.length}</div>
-      <div class="sub">all subjects</div>
+      <div class="sub">点击直达资源板块</div>
     </div>
-    <div class="res-stat-card" onclick="resViewState.filterType='tasks';resViewState.filterStatus='pending';render()">
+    <div class="res-stat-card" onclick="jumpToModuleSection('mod_tasks', 'pending', 'all')">
       <div class="label">Pending Tasks</div>
       <div class="value" style="color:var(--pink)">${studyTasks.filter(t=>t.status==='pending').length + exercises.filter(e=>e.status==='pending').length}</div>
-      <div class="sub">tasks & exercises</div>
+      <div class="sub">点击直达待办任务</div>
     </div>
-    <div class="res-stat-card" onclick="resViewState.filterType='exercises';resViewState.filterStatus='completed';render()">
+    <div class="res-stat-card" onclick="jumpToModuleSection('mod_exercises', 'completed', 'all')">
       <div class="label">Completed</div>
       <div class="value" style="color:var(--green)">${studyTasks.filter(t=>t.status==='completed').length + exercises.filter(e=>e.status==='completed').length}</div>
-      <div class="sub">total done</div>
+      <div class="sub">点击直达完成进度</div>
     </div>
     <div class="res-stat-card countdown">
       <div class="label" style="display:flex;justify-content:space-between;align-items:center">Countdown <button class="apple-btn small" style="font-size:10px;padding:2px 6px" onclick="openCountdownEdit()">Edit</button></div>
@@ -3083,10 +3267,15 @@ function renderModTasks(subj) {
   if (resViewState.filterType !== 'all' && resViewState.filterType !== 'tasks') return '';
 
   const overdueCount = tList.filter(t => t.status !== 'completed' && checkIsOverdue(t.dueDate, false)).length;
-  return `<div class="res-section mod-section" id="mod_tasks" draggable="true" data-mod="tasks" ondragstart="handleModDragStart(event)" ondragover="handleModDragOver(event)" ondrop="handleModDrop(event)" ondragend="handleModDragEnd(event)">
+  return `<div class="res-section mod-section" id="mod_tasks" data-mod="tasks" onpointerdown="initModPointerDrag(event, 'tasks')">
     <div class="res-section-head" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
       <div style="display:flex;align-items:center;gap:10px">
-        <span class="mod-drag-handle" title="Drag to reorder module">⠿ Drag Tasks</span>
+        <span class="mod-drag-handle" title="长按触屏拖动 / 排序">
+          <span style="font-size:14px;">⠿</span>
+          <span>长按拖移排序</span>
+          <button class="apple-btn small" style="padding:2px 6px;font-size:11px;" onclick="event.stopPropagation(); moveModuleOrder('tasks', -1)">↑</button>
+          <button class="apple-btn small" style="padding:2px 6px;font-size:11px;" onclick="event.stopPropagation(); moveModuleOrder('tasks', 1)">↓</button>
+        </span>
         <h3>Tasks <span class="count-pill">${tList.length}</span></h3>
         ${overdueCount > 0 ? `<button class="apple-btn small danger" onclick="openOverdueModal()">! Overdue (${overdueCount})</button>` : `<span style="font-size:11px;color:var(--green);font-weight:600">OK All on track</span>`}
       </div>
@@ -3104,10 +3293,15 @@ function renderModExercises(subj) {
   if (resViewState.filterType !== 'all' && resViewState.filterType !== 'exercises') return '';
 
   const overdueCount = getOverdueCount();
-  return `<div class="res-section mod-section" id="mod_exercises" draggable="true" data-mod="exercises" ondragstart="handleModDragStart(event)" ondragover="handleModDragOver(event)" ondrop="handleModDrop(event)" ondragend="handleModDragEnd(event)">
+  return `<div class="res-section mod-section" id="mod_exercises" data-mod="exercises" onpointerdown="initModPointerDrag(event, 'exercises')">
     <div class="res-section-head" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
       <div style="display:flex;align-items:center;gap:10px">
-        <span class="mod-drag-handle" title="Drag to reorder module">⠿ Drag Exercise Bank</span>
+        <span class="mod-drag-handle" title="长按触屏拖动 / 排序">
+          <span style="font-size:14px;">⠿</span>
+          <span>长按拖移排序</span>
+          <button class="apple-btn small" style="padding:2px 6px;font-size:11px;" onclick="event.stopPropagation(); moveModuleOrder('exercises', -1)">↑</button>
+          <button class="apple-btn small" style="padding:2px 6px;font-size:11px;" onclick="event.stopPropagation(); moveModuleOrder('exercises', 1)">↓</button>
+        </span>
         <h3>Exercise Bank <span class="count-pill">${ex.length}</span></h3>
         ${overdueCount > 0 ? `<button class="apple-btn small danger" onclick="openOverdueModal()">! Overdue (${overdueCount})</button>` : `<span style="font-size:11px;color:var(--green);font-weight:600">OK All on track</span>`}
       </div>
@@ -3130,10 +3324,15 @@ function renderModResources(subj) {
   if (resViewState.resTab === 'pending') displayed = pending;
   if (resViewState.resTab === 'completed') displayed = completed;
 
-  return `<div class="res-section mod-section" id="mod_resources" draggable="true" data-mod="resources" ondragstart="handleModDragStart(event)" ondragover="handleModDragOver(event)" ondrop="handleModDrop(event)" ondragend="handleModDragEnd(event)">
+  return `<div class="res-section mod-section" id="mod_resources" data-mod="resources" onpointerdown="initModPointerDrag(event, 'resources')">
     <div class="res-section-head" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
       <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-        <span class="mod-drag-handle" title="Drag to reorder module">⠿ Drag Resources</span>
+        <span class="mod-drag-handle" title="长按触屏拖动 / 排序">
+          <span style="font-size:14px;">⠿</span>
+          <span>长按拖移排序</span>
+          <button class="apple-btn small" style="padding:2px 6px;font-size:11px;" onclick="event.stopPropagation(); moveModuleOrder('resources', -1)">↑</button>
+          <button class="apple-btn small" style="padding:2px 6px;font-size:11px;" onclick="event.stopPropagation(); moveModuleOrder('resources', 1)">↓</button>
+        </span>
         <h3>Resources <span class="count-pill">${displayed.length}</span></h3>
         <div class="res-tab-bar">
           <button class="res-tab-btn ${resViewState.resTab === 'all' ? 'active' : ''}" onclick="resViewState.resTab='all';render()">All (${res.length})</button>
@@ -3147,111 +3346,6 @@ function renderModResources(subj) {
     ${displayed.length ? `<div class="resource-grid">${displayed.map(r => resourceCard(r)).join('')}</div>` : `<div class="empty-state">No resources</div>`}
   </div>`;
 }
-
-function renderResFilterBar() {
-  return `<div class="res-filter-bar">
-    <div style="display:flex;align-items:center;gap:8px"><label>Subject</label>
-      <select onchange="resViewState.filterSubject=this.value;render()">
-        <option value="all" ${resViewState.filterSubject==='all'?'selected':''}>Current Subject</option>
-        ${Object.keys(customSubjects).map(k=>`<option value="${k}" ${resViewState.filterSubject===k?'selected':''}>${esc(customSubjects[k].label)}</option>`).join('')}
-      </select>
-    </div>
-    <div style="display:flex;align-items:center;gap:8px"><label>Priority</label>
-      <select onchange="resViewState.filterPriority=this.value;render()">
-        <option value="all">All</option><option value="high" ${resViewState.filterPriority==='high'?'selected':''}>High</option><option value="medium" ${resViewState.filterPriority==='medium'?'selected':''}>Medium</option><option value="low" ${resViewState.filterPriority==='low'?'selected':''}>Low</option>
-      </select>
-    </div>
-    <div style="display:flex;align-items:center;gap:8px"><label>Type</label>
-      <select onchange="resViewState.filterType=this.value;render()">
-        <option value="all" ${resViewState.filterType==='all'?'selected':''}>All</option><option value="tasks" ${resViewState.filterType==='tasks'?'selected':''}>Tasks</option><option value="resources" ${resViewState.filterType==='resources'?'selected':''}>Resources</option><option value="exercises" ${resViewState.filterType==='exercises'?'selected':''}>Exercises</option>
-      </select>
-    </div>
-    <div style="display:flex;align-items:center;gap:8px"><label>Status</label>
-      <select onchange="resViewState.filterStatus=this.value;render()">
-        <option value="all">All</option><option value="pending" ${resViewState.filterStatus==='pending'?'selected':''}>Pending</option><option value="completed" ${resViewState.filterStatus==='completed'?'selected':''}>Completed</option>
-      </select>
-    </div>
-    <button class="apple-btn small" onclick="resViewState={filterSubject:'all',filterType:'all',filterStatus:'all',filterPriority:'all',resTab:'all'};render()">Reset</button>
-  </div>`;
-}
-
-// Resource Card
-function resourceCard(r) {
-  const isDone = r.status==='completed';
-  const isNotStarted = r.status==='not_started'||(r.startDate&&r.startDate>todayISO());
-  const statusText = isDone?'Completed':isNotStarted?`Plan: ${r.startDate||'Not set'}`:'In Progress';
-  const statusColor = isDone?'var(--green)':isNotStarted?'var(--orange)':'var(--ink-secondary)';
-  const statusBg = isDone?'rgba(48,209,88,0.1)':isNotStarted?'rgba(255,159,10,0.1)':'var(--bg-elev)';
-
-  return `<div class="res-card ${isDone?'completed':''}" data-id="${r.id}">
-    <div class="res-top">
-      <div class="res-title-wrap">
-        <span class="drag-handle">::</span>
-        <div class="res-check ${isDone?'checked':''}" onclick="toggleResourceStatus('${r.id}')">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5L19 7"/></svg>
-        </div>
-        <div class="res-title">${esc(r.title)}</div>
-      </div>
-      <div style="display:flex;gap:4px">
-        <button class="apple-btn small" onclick="openEditResourceModal('${r.id}')">Edit</button>
-        <button class="res-tool-btn delete" onclick="deleteResource('${r.id}')">Del</button>
-      </div>
-    </div>
-    <div class="res-path">${esc(r.path||'—')}</div>
-    <div style="display:flex;justify-content:space-between;align-items:center">
-      <span style="font-size:10px;font-weight:700;color:${statusColor};background:${statusBg};padding:2px 7px;border-radius:6px">${statusText}</span>
-      <div class="res-tags">${(r.tags||[]).map(t=>`<span class="pill-tag">${esc(t)}</span>`).join('')}</div>
-    </div>
-    <div class="res-bottom">
-      <span class="res-date">Added ${r.createdAt}</span>
-      <button class="apple-btn small" onclick="alert('Open: ${esc(r.path||'')}')">Open</button>
-    </div>
-  </div>`;
-}
-
-// Exercise Card
-function exerciseCard(e) {
-  const subtasks = e.subtasks||[];
-  const totalSt = subtasks.length;
-  const doneSt = subtasks.filter(st=>st.completed).length;
-  const checked = e.status==='completed';
-  const isOverdue = checkIsOverdue(e.dueDate, checked);
-
-  return `<div class="ex-card ${checked?'completed':''} ${e.pinned?'pinned':''}" data-id="${e.id}">
-    <div class="ex-row">
-      <span class="drag-handle">::</span>
-      <div class="ex-check ${checked?'checked':''}" onclick="toggleExerciseMain('${e.id}')">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5L19 7"/></svg>
-      </div>
-      <span class="ex-subject-tag" style="background:${customSubjects[e.subject]?.tint||'var(--bg-elev)'};color:${customSubjects[e.subject]?.color||'var(--ink)'}">${customSubjects[e.subject]?.label||e.subject}</span>
-      <div class="ex-body">
-        <div class="ex-title-row">
-          ${e.pinned?'<span style="font-size:10px;font-weight:700;color:var(--yellow);background:rgba(255,214,10,0.12);padding:2px 6px;border-radius:4px">Pinned</span>':''}
-          <span class="priority-tag priority-${e.priority||'medium'}">${(e.priority||'medium').charAt(0).toUpperCase()+(e.priority||'medium').slice(1)}</span>
-          <div class="ex-title">${esc(e.title)}</div>
-        </div>
-        <div class="ex-meta">
-          ${e.chapter?`<span>${esc(e.chapter)}</span>`:''}
-          ${e.dueDate?`<span style="${isOverdue?'color:var(--red);font-weight:700':''}">Due ${e.dueDate} ${isOverdue?'(Overdue!)':''}</span>`:''}
-          ${totalSt?`<span style="background:var(--bg-elev);padding:1px 6px;border-radius:4px;font-weight:600">${doneSt}/${totalSt} done</span>`:''}
-        </div>
-      </div>
-      <span class="ex-status ${e.status}">${e.status==='pending'?'Pending':'Done'}</span>
-      <div style="display:flex;align-items:center;gap:4px;flex-shrink:0">
-        <button class="ex-tool-btn pin ${e.pinned?'active':''}" onclick="togglePinExercise('${e.id}')">Pin</button>
-        <button class="apple-btn small" onclick="openEditExerciseModal('${e.id}')">Edit</button>
-        <button class="ex-tool-btn delete" onclick="deleteExercise('${e.id}')">Del</button>
-      </div>
-    </div>
-    <div class="subtasks-area">
-      ${subtasks.map(st=>{const stOverdue=checkIsOverdue(st.dueDate,st.completed);return `<div class="subtask-item"><div class="subtask-left" onclick="toggleSubtask('${e.id}','${st.id}')"><div class="st-check ${st.completed?'checked':''}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5L19 7"/></svg></div><span class="st-text ${st.completed?'checked':''}">${esc(st.title)}</span>${st.dueDate?`<span class="st-due ${stOverdue?'overdue':''}">Due ${st.dueDate}${stOverdue?' (Overdue)':''}</span>`:''}</div></div>`;}).join('')}
-    </div>
-  </div>`;
-}
-
-// ================================================================
-//  TASK MODULE & DRAG HANDLERS
-// ================================================================
 function taskCard(t) {
   const checked = t.status === 'completed';
   const isOverdue = checkIsOverdue(t.dueDate, checked);
@@ -3350,47 +3444,139 @@ function openEditTaskModal(id) {
   ]);
 }
 
-let draggedModId = null;
-function handleModDragStart(e) {
-  draggedModId = e.currentTarget.dataset.mod;
-  e.currentTarget.classList.add('dragging');
-  e.dataTransfer.effectAllowed = 'move';
-}
-function handleModDragOver(e) {
-  e.preventDefault();
-  e.dataTransfer.dropEffect = 'move';
-  const section = e.currentTarget.closest('.mod-section');
-  if (section && section.dataset.mod !== draggedModId) {
-    section.classList.add('drag-over');
+// ================================================================
+//  TOUCH LONG-PRESS POINTER DRAG & DROP FOR 3 MODULES
+// ================================================================
+let modDragTimer = null;
+let activeModDrag = null;
+
+function blockModContextMenu(e) {
+  if (activeModDrag || document.body.classList.contains('body-dragging-mod')) {
+    if (e.cancelable) try { e.preventDefault(); } catch(err) {}
+    e.stopPropagation();
+    return false;
   }
 }
-function handleModDrop(e) {
-  e.preventDefault();
-  const targetSection = e.currentTarget.closest('.mod-section');
-  if (targetSection) {
-    targetSection.classList.remove('drag-over');
-    const targetModId = targetSection.dataset.mod;
-    if (draggedModId && targetModId && draggedModId !== targetModId) {
-      const fromIdx = modOrder.indexOf(draggedModId);
-      const toIdx = modOrder.indexOf(targetModId);
-      if (fromIdx !== -1 && toIdx !== -1) {
-        modOrder.splice(fromIdx, 1);
-        modOrder.splice(toIdx, 0, draggedModId);
-        localStorage.setItem('study_mod_order_pro', JSON.stringify(modOrder));
-        render();
-        toast('Module order automatically saved!');
+
+function initModPointerDrag(e, modId) {
+  if (e.target.closest('button, input, select, textarea, .q-card, .list-item, .ex-card, .res-card, .mod-drag-handle button')) return;
+  const section = e.currentTarget;
+  const startY = e.clientY || (e.touches && e.touches[0] ? e.touches[0].clientY : 0);
+  
+  const isHandle = !!e.target.closest('.mod-drag-handle');
+  const delay = isHandle ? 120 : 380;
+
+  if (isHandle && e.cancelable && e.type === 'touchstart') {
+    try { e.preventDefault(); } catch(err) {}
+  }
+
+  window.addEventListener('contextmenu', blockModContextMenu, { capture: true });
+
+  clearTimeout(modDragTimer);
+  modDragTimer = setTimeout(() => {
+    startModPointerDrag(section, modId, startY);
+  }, delay);
+
+  function onMove(me) {
+    const curY = me.clientY || (me.touches && me.touches[0] ? me.touches[0].clientY : startY);
+    if (!activeModDrag && Math.abs(curY - startY) > 10) {
+      clearTimeout(modDragTimer);
+    }
+    if (activeModDrag) {
+      if (me.cancelable) try { me.preventDefault(); } catch(err) {}
+      handleModPointerMove(curY);
+    }
+  }
+  function onUp(ue) {
+    clearTimeout(modDragTimer);
+    window.removeEventListener('pointermove', onMove);
+    window.removeEventListener('pointerup', onUp);
+    window.removeEventListener('pointercancel', onUp);
+    window.removeEventListener('touchmove', onMove);
+    window.removeEventListener('touchend', onUp);
+    if (!activeModDrag) {
+      setTimeout(() => {
+        window.removeEventListener('contextmenu', blockModContextMenu, { capture: true });
+      }, 100);
+    } else {
+      endModPointerDrag();
+    }
+  }
+  window.addEventListener('pointermove', onMove, { passive: false });
+  window.addEventListener('pointerup', onUp);
+  window.addEventListener('pointercancel', onUp);
+  window.addEventListener('touchmove', onMove, { passive: false });
+  window.addEventListener('touchend', onUp);
+}
+
+function startModPointerDrag(section, modId, startY) {
+  if (window.getSelection) {
+    try { window.getSelection().removeAllRanges(); } catch(err) {}
+  }
+  document.body.classList.add('body-dragging-mod');
+  section.classList.add('mod-touch-dragging');
+  if (navigator.vibrate) try { navigator.vibrate(40); } catch(e) {}
+  activeModDrag = { section, modId, startY };
+  toast('⠿ 正在调整顺序：上下拖动以交换位置');
+}
+
+function handleModPointerMove(curY) {
+  if (!activeModDrag) return;
+  if (window.getSelection) {
+    try { window.getSelection().removeAllRanges(); } catch(err) {}
+  }
+  const deltaY = curY - activeModDrag.startY;
+  activeModDrag.section.style.transform = `scale(1.025) translateY(${deltaY}px)`;
+
+  if (Math.abs(deltaY) > 90) {
+    const dir = deltaY > 0 ? 1 : -1;
+    const idx = modOrder.indexOf(activeModDrag.modId);
+    const newIdx = idx + dir;
+    if (newIdx >= 0 && newIdx < modOrder.length) {
+      modOrder.splice(idx, 1);
+      modOrder.splice(newIdx, 0, activeModDrag.modId);
+      localStorage.setItem('study_mod_order_pro', JSON.stringify(modOrder));
+      activeModDrag.section.classList.remove('mod-touch-dragging');
+      activeModDrag.section.style.transform = '';
+      const oldModId = activeModDrag.modId;
+      activeModDrag = null;
+      render();
+      toast('✓ 排序已调整！');
+      
+      const newEl = document.querySelector(`.mod-section[data-mod="${oldModId}"]`);
+      if (newEl) {
+        startModPointerDrag(newEl, oldModId, curY);
       }
     }
   }
 }
-function handleModDragEnd(e) {
-  document.querySelectorAll('.mod-section').forEach(el => {
-    el.classList.remove('dragging');
-    el.classList.remove('drag-over');
-  });
+
+function endModPointerDrag() {
+  if (!activeModDrag) return;
+  activeModDrag.section.style.transform = '';
+  activeModDrag.section.classList.remove('mod-touch-dragging');
+  activeModDrag = null;
+  document.body.classList.remove('body-dragging-mod');
+  setTimeout(() => {
+    window.removeEventListener('contextmenu', blockModContextMenu, { capture: true });
+  }, 100);
+  render();
+  toast('✓ 排序已保存 (自动保持设置)');
 }
 
-// Resource Actions
+function moveModuleOrder(modId, dir) {
+  const idx = modOrder.indexOf(modId);
+  if (idx === -1) return;
+  const newIdx = idx + dir;
+  if (newIdx < 0 || newIdx >= modOrder.length) return;
+  modOrder.splice(idx, 1);
+  modOrder.splice(newIdx, 0, modId);
+  localStorage.setItem('study_mod_order_pro', JSON.stringify(modOrder));
+  render();
+  toast('✓ 模块次序已调整！(保持上次顺序)');
+}
+
+// Resource Actions// Resource Actions// Resource Actions
 function toggleResourceStatus(id) { const r=resources.find(x=>x.id===id);if(r)r.status=r.status==='completed'?'pending':'completed';saveResState();render(); }
 function deleteResource(id) { resources=resources.filter(x=>x.id!==id);saveResState();render(); }
 function togglePinExercise(id) { const e=exercises.find(x=>x.id===id);if(e)e.pinned=!e.pinned;saveResState();render(); }
@@ -3721,13 +3907,7 @@ function renderSuggestContent() {
       `).join('')}</div>
       ${!links.length?'<div class="empty-state">No links yet. Click "+ Add Link"</div>':''}
     `;
-  } else if (currentSuggestTab === 'highlights') {
-    const hls = quizState.highlights;
-    el.innerHTML = `<div style="font-size:12px;color:var(--ink-tertiary);margin-bottom:12px">${hls.length} highlights from Quiz Hub reading passages</div>
-      ${hls.length ? hls.map(h=>`<div class="list-item"><h4 style="font-size:12px">${esc(h.selectedText)}</h4><div class="meta" style="display:flex;gap:6px;align-items:center"><span class="chip" style="background:${h.highlightColor==='yellow'?'rgba(255,214,10,0.2)':h.highlightColor==='blue'?'rgba(100,210,255,0.2)':'rgba(255,55,95,0.2)'}">${h.highlightColor}</span>${h.note?`<span>${esc(h.note)}</span>`:''}</div></div>`).join('') : '<div class="empty-state">No highlights yet. Select text in reading passages to highlight.</div>'}
-    `;
-  }
-}
+  }}
 
 function autoSaveNotes() {
   const el = document.getElementById('notesEditor');
@@ -3828,6 +4008,19 @@ function downloadJSON(obj, filename) {
   URL.revokeObjectURL(a.href);
 }
 
+function refreshDashboard() {
+  toast('↻ Refreshing Dashboard...');
+  setTimeout(() => {
+    try {
+      window.location.reload();
+    } catch(e) {
+      loadAppState();
+      render();
+      toast('✓ Dashboard reloaded from LocalStorage');
+    }
+  }, 150);
+}
+
 // ================================================================
 //  SHEET MANAGEMENT
 // ================================================================
@@ -3855,10 +4048,120 @@ document.querySelectorAll('.sheet-overlay').forEach(ov => {
 });
 
 // ================================================================
+//  SIDEBAR TOGGLE & HIGHLIGHT TRANSFER FUNCTIONS
+// ================================================================
+let sidebarCollapsed = JSON.parse(localStorage.getItem('study_sidebar_collapsed_pro')) || false;
+
+function initSidebarState() {
+  const appEl = document.querySelector('.app');
+  if (appEl) {
+    if (sidebarCollapsed) appEl.classList.add('sidebar-collapsed');
+    else appEl.classList.remove('sidebar-collapsed');
+  }
+}
+
+function toggleSidebar() {
+  sidebarCollapsed = !sidebarCollapsed;
+  localStorage.setItem('study_sidebar_collapsed_pro', JSON.stringify(sidebarCollapsed));
+  initSidebarState();
+  toast(sidebarCollapsed ? '◀ 左侧导航栏已折叠' : '▶ 左侧导航栏已展开');
+}
+
+function deleteHighlight(hid) {
+  const h = (quizState.highlights || []).find(x => x.id === hid);
+  if (!h) return;
+  if (!confirm(`确定要删除 Highlight 摘录: "${h.selectedText}" 吗？`)) return;
+  quizState.highlights = quizState.highlights.filter(x => x.id !== hid);
+  saveQuiz();
+  renderSharedStats();
+  renderSuggestContent();
+  render();
+  toast('已删除 Highlight');
+}
+
+function transferHighlightToWordBook(hid) {
+  const h = quizState.highlights.find(x => x.id === hid);
+  if (!h) return;
+  quizState.wordBook = quizState.wordBook || [];
+  const textVal = (h.selectedText || '').trim();
+  if (!textVal) return;
+  
+  const exists = quizState.wordBook.find(w => w.text.toLowerCase() === textVal.toLowerCase());
+  if (exists) {
+    exists.highlight = true;
+    exists.example = exists.example || (h.note ? `Note: ${h.note}` : '');
+    toast(`"${textVal}" 已在生词本中，已为您更新为浅棕色高亮！`);
+  } else {
+    quizState.wordBook.push({
+      id: uid('wbk'), text: textVal, meaning: h.note || 'From reading passage highlight', example: `Highlighted in passage`,
+      source: 'Reading Highlight', subject: appState.currentSubject,
+      dateAdded: todayISO(), addedAt: Date.now(), highlight: true, starred: false,
+      srsBox: 0, srsNext: Date.now(), srsReviews: 0, srsLapses: 0
+    });
+    toast(`✓ 已转入 Word Book 生词本并设为高亮: "${textVal}"`);
+  }
+  saveQuiz();
+  renderSharedStats();
+  renderSuggestContent();
+  render();
+}
+
+function transferAllHighlightsToWordBook() {
+  const hls = quizState.highlights || [];
+  if (!hls.length) { toast('暂无任何 Highlights 记录'); return; }
+  let count = 0;
+  quizState.wordBook = quizState.wordBook || [];
+  hls.forEach(h => {
+    const textVal = (h.selectedText || '').trim();
+    if (!textVal) return;
+    const exists = quizState.wordBook.find(w => w.text.toLowerCase() === textVal.toLowerCase());
+    if (exists) {
+      exists.highlight = true;
+    } else {
+      quizState.wordBook.push({
+        id: uid('wbk'), text: textVal, meaning: h.note || 'From reading passage highlight', example: `Highlighted in passage`,
+        source: 'Reading Highlight', subject: appState.currentSubject,
+        dateAdded: todayISO(), addedAt: Date.now(), highlight: true, starred: false,
+        srsBox: 0, srsNext: Date.now(), srsReviews: 0, srsLapses: 0
+      });
+      count++;
+    }
+  });
+  saveQuiz();
+  renderSharedStats();
+  renderSuggestContent();
+  render();
+  toast(`✓ 成功将 ${count} 个 Highlights 转入生词本并开启高亮！`);
+}
+
+// ================================================================
 //  INIT
 // ================================================================
 loadAppState();
 loadQuiz();
+  // Auto-migrate legacy highlights into wordBook
+  if (quizState.highlights && quizState.highlights.length) {
+    quizState.wordBook = quizState.wordBook || [];
+    quizState.highlights.forEach(h => {
+      const textVal = (h.selectedText || '').trim();
+      if (!textVal) return;
+      const exists = quizState.wordBook.find(w => w.text.toLowerCase() === textVal.toLowerCase());
+      if (exists) {
+        exists.highlight = true;
+        if (h.note && !exists.example) exists.example = `Note: ${h.note}`;
+      } else {
+        quizState.wordBook.push({
+          id: h.id || uid('wbk'), text: textVal, meaning: h.note || 'Highlighted reading snippet', example: 'From reading passage highlight',
+          source: 'Reading Passage', subject: appState.currentSubject || 'english',
+          dateAdded: todayISO(), addedAt: h.timestamp || Date.now(), highlight: true, starred: false,
+          charStart: h.charStart, charEnd: h.charEnd, passageId: h.passageId,
+          srsBox: 0, srsNext: Date.now(), srsReviews: 0, srsLapses: 0
+        });
+      }
+    });
+    quizState.highlights = [];
+    saveQuiz();
+  }
 if(!quizState.passages.length) loadSeedData();
 exercises.forEach(ex => { if(!ex.priority) ex.priority='medium'; if(typeof ex.pinned!=='boolean') ex.pinned=false; (ex.subtasks||[]).forEach(st=>{if(!st.dueDate)st.dueDate='';}); });
 resources.forEach(r => { if(!r.status) r.status='pending'; if(!r.startDate) r.startDate=r.createdAt||'2026-07-01'; });
