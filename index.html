@@ -1375,6 +1375,559 @@ body.body-dragging-mod * {
   cursor: grabbing !important;
 }
 
+/* ============================================================
+   FULL RESPONSIVE LAYOUT FIX — MAC / IPAD / IPHONE
+   ============================================================ */
+html,
+body,
+.app,
+.sidebar,
+.topbar,
+.content,
+.sheet-overlay,
+.sheet,
+.sheet-body,
+.sheet-foot {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+body {
+  overflow-x: hidden;
+}
+
+.app > *,
+.topbar > *,
+.sidebar > *,
+.content > *,
+.sheet > *,
+.sheet-body > *,
+.res-section > *,
+.subject-banner > *,
+.q-card > *,
+.ex-card > *,
+.res-card > *,
+.link-card > * {
+  min-width: 0;
+}
+
+.content {
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+
+img, svg, video, canvas, iframe, table, pre, code {
+  max-width: 100%;
+}
+
+.q-card,
+.res-card,
+.score-card,
+.res-stat-card,
+.subject-banner,
+.list-item,
+.syn-group-card,
+.lr-item,
+.ex-card,
+.link-card,
+.empty-state,
+.score-note-box,
+.sheet,
+.word-pop,
+.sel-menu,
+.qs-float-menu {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.apple-btn,
+.q-actions button,
+.q-tool-btn,
+.res-tab-btn,
+.quiz-tab,
+.suggest-tab,
+.pill,
+.word-pop .pop-actions button,
+.list-item .actions button,
+.syn-group-card .actions button,
+.notes-toolbar button {
+  white-space: normal;
+  word-break: break-word;
+  min-width: 0;
+}
+
+.topbar-actions,
+.quiz-toolbar,
+.quizset-bar,
+.q-actions,
+.res-filter-bar,
+.res-section-head,
+.res-tab-bar,
+.suggest-tabs,
+.notes-toolbar,
+.word-pop .pop-actions,
+.list-item .actions,
+.syn-group-card .actions,
+.sb-scores,
+.sheet-foot,
+.explain-actions,
+.topbar,
+.sel-menu,
+.qs-float-menu {
+  flex-wrap: wrap;
+}
+
+.res-card,
+.ex-card,
+.lr-item,
+.q-card,
+.subject-banner,
+.score-card,
+.res-stat-card,
+.link-card,
+.list-item,
+.syn-group-card {
+  width: 100%;
+  max-width: 100%;
+}
+
+.resource-grid > *,
+.res-stats-row > *,
+.score-overview-grid > *,
+.quiz-toolbar > *,
+.topbar-actions > *,
+.sheet-foot > * {
+  min-width: 0;
+}
+
+.sel-menu,
+.qs-float-menu,
+.word-pop {
+  width: auto;
+  max-width: min(calc(100vw - 16px), 360px);
+  right: auto;
+}
+
+.sel-menu button,
+.qs-float-btn {
+  flex: 1 1 110px;
+  min-width: 0;
+  justify-content: center;
+  text-align: center;
+}
+
+.word-pop .pop-actions button {
+  flex: 1 1 96px;
+}
+
+.toast {
+  max-width: min(calc(100vw - 20px), 560px);
+  white-space: normal;
+  text-align: center;
+}
+
+@media (max-width: 1024px) {
+  :root {
+    --sidebar-w: 220px;
+  }
+
+  .app {
+    grid-template-columns: minmax(220px, var(--sidebar-w)) minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr);
+  }
+
+  .topbar {
+    padding: 12px 18px;
+    gap: 12px;
+    align-items: flex-start;
+  }
+
+  .topbar-search {
+    flex: 1 1 280px;
+    max-width: 100%;
+  }
+
+  .topbar-actions {
+    width: 100%;
+    justify-content: flex-start;
+    gap: 8px;
+  }
+
+  .topbar-actions .apple-btn,
+  .quiz-toolbar .apple-btn,
+  .q-actions button,
+  .sheet-foot .apple-btn {
+    flex: 1 1 140px;
+    min-width: 120px;
+  }
+
+  .content {
+    padding: 20px 20px 72px;
+  }
+
+  .res-stats-row,
+  .score-overview-grid,
+  .resource-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .sb-scores {
+    gap: 14px;
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .sheet {
+    width: min(92vw, 720px);
+  }
+
+  .sheet.wide {
+    width: min(94vw, 820px);
+  }
+
+  .module-edit-row,
+  .subtask-edit-row {
+    grid-template-columns: minmax(0, 1fr) minmax(100px, 0.7fr) auto;
+  }
+}
+
+@media (max-width: 768px) {
+  :root {
+    --topbar-h: auto;
+  }
+
+  html,
+  body {
+    overflow-x: hidden;
+  }
+
+  .app {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr);
+    grid-template-areas:
+      "topbar"
+      "content";
+    position: relative;
+  }
+
+  .app::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.28);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+    z-index: 1050;
+  }
+
+  .app:not(.sidebar-collapsed)::before {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: min(86vw, 320px);
+    max-width: 320px;
+    z-index: 1100;
+    background: var(--bg-elev);
+    box-shadow: var(--shadow-lg);
+    transform: translateX(-100%);
+    opacity: 1 !important;
+    pointer-events: auto !important;
+    transition: transform 0.24s ease, box-shadow 0.24s ease;
+    padding: 16px 12px !important;
+    border-right: 1px solid var(--line) !important;
+  }
+
+  .app:not(.sidebar-collapsed) .sidebar {
+    transform: translateX(0);
+  }
+
+  .app.sidebar-collapsed .sidebar {
+    transform: translateX(-100%);
+    border-right: 1px solid var(--line) !important;
+  }
+
+  .topbar {
+    padding: 12px 14px;
+    gap: 10px;
+    align-items: stretch;
+    position: sticky;
+    top: 0;
+    z-index: 1080;
+  }
+
+  .topbar-title {
+    order: 1;
+    flex: 1 1 120px;
+    white-space: normal;
+    font-size: 15px;
+  }
+
+  #topbarSidebarToggle {
+    order: 0;
+    margin-right: 0 !important;
+  }
+
+  .topbar-search {
+    order: 2;
+    flex: 1 1 100%;
+    max-width: 100%;
+  }
+
+  .topbar-actions {
+    order: 3;
+    width: 100%;
+    margin-left: 0;
+    justify-content: flex-start;
+  }
+
+  .content {
+    padding: 16px 14px 64px;
+  }
+
+  .quiz-tabs,
+  .suggest-tabs,
+  .res-tab-bar {
+    max-width: 100%;
+    width: 100%;
+  }
+
+  .quiz-tab,
+  .suggest-tab,
+  .res-tab-btn {
+    flex: 1 1 120px;
+    text-align: center;
+  }
+
+  .res-stats-row,
+  .score-overview-grid,
+  .resource-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .sb-top-row,
+  .res-top,
+  .res-bottom,
+  .ex-row,
+  .link-card,
+  .sheet-head,
+  .sheet-foot {
+    gap: 10px;
+  }
+
+  .ex-row,
+  .res-top,
+  .res-bottom,
+  .link-card {
+    flex-wrap: wrap;
+  }
+
+  .res-title-wrap,
+  .ex-body,
+  .link-card .link-info {
+    width: 100%;
+  }
+
+  .sheet-overlay {
+    padding: 12px;
+    align-items: flex-end;
+  }
+
+  .sheet,
+  .sheet.wide {
+    width: 100%;
+    max-width: 100%;
+    max-height: 88vh;
+    border-radius: 18px 18px 0 0;
+  }
+
+  .sheet-head,
+  .sheet-body,
+  .sheet-foot {
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+
+  #genericSheetBody [style*="grid-template-columns:1fr 1fr"],
+  #genericSheetBody [style*="grid-template-columns:1.5fr 1fr"],
+  #genericSheetBody [style*="grid-template-columns:repeat(3,1fr)"],
+  #genericSheetBody [style*="grid-template-columns:repeat(3, 1fr)"] {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  .module-edit-row,
+  .subtask-edit-row {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  .module-edit-row > *,
+  .subtask-edit-row > * {
+    width: 100%;
+  }
+
+  .sb-left > div[style*="width:260px"] {
+    width: 100% !important;
+  }
+
+  .sel-menu,
+  .qs-float-menu,
+  .word-pop {
+    max-width: calc(100vw - 16px);
+  }
+}
+
+@media (max-width: 480px) {
+  body {
+    font-size: 14px;
+  }
+
+  .topbar {
+    padding: 10px 12px;
+    gap: 8px;
+  }
+
+  .topbar-title {
+    font-size: 14px;
+  }
+
+  .topbar-search input,
+  input,
+  textarea,
+  select,
+  .field input,
+  .field select,
+  .field textarea {
+    font-size: 16px;
+  }
+
+  .content {
+    padding: 12px 10px 56px;
+  }
+
+  .sidebar {
+    width: min(92vw, 320px);
+  }
+
+  .apple-btn,
+  .q-actions button,
+  .q-tool-btn,
+  .sheet-foot .apple-btn,
+  .topbar-actions .apple-btn,
+  .quiz-toolbar .apple-btn,
+  .res-tab-btn,
+  .quiz-tab,
+  .suggest-tab,
+  .pill {
+    flex: 1 1 calc(50% - 6px);
+    min-width: 110px;
+    padding: 8px 12px;
+    font-size: 12px;
+  }
+
+  #topbarSidebarToggle,
+  .sidebar-brand .apple-btn,
+  .sidebar-section-title .apple-btn {
+    flex: 0 0 auto;
+    min-width: 0;
+  }
+
+  .quiz-toolbar,
+  .topbar-actions,
+  .q-actions,
+  .sheet-foot,
+  .notes-toolbar,
+  .res-filter-bar,
+  .res-section-head {
+    gap: 6px;
+  }
+
+  .quiz-toolbar,
+  .topbar-actions {
+    width: 100%;
+  }
+
+  .q-card,
+  .res-card,
+  .score-card,
+  .res-stat-card,
+  .subject-banner,
+  .link-card,
+  .list-item,
+  .syn-group-card,
+  .lr-item,
+  .ex-card {
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+  }
+
+  .q-text,
+  .reading-body {
+    font-size: 14px;
+    line-height: 1.8;
+  }
+
+  .res-stat-card .value,
+  .score-curr,
+  .sb-val {
+    font-size: 22px;
+  }
+
+  .notes-toolbar button,
+  .sel-menu button,
+  .qs-float-btn,
+  .word-pop .pop-actions button {
+    flex: 1 1 100%;
+  }
+
+  .sel-menu,
+  .qs-float-menu {
+    left: 8px !important;
+    right: 8px !important;
+    width: auto !important;
+    padding: 6px;
+    border-radius: 14px;
+  }
+
+  .word-pop {
+    min-width: 0;
+    max-width: calc(100vw - 16px);
+  }
+
+  .sheet-overlay {
+    padding: 0;
+  }
+
+  .sheet,
+  .sheet.wide {
+    width: 100vw;
+    max-width: 100vw;
+    max-height: 92vh;
+    border-radius: 16px 16px 0 0;
+  }
+
+  .sheet-head h3 {
+    font-size: 14px;
+    line-height: 1.4;
+  }
+
+  .res-filter-bar > *,
+  .quizset-bar > *,
+  .sb-scores > * {
+    flex: 1 1 100%;
+  }
+
+  #genericSheetBody [style*="min-width:160px"] {
+    min-width: 0 !important;
+  }
+}
+
 </style>
 </head>
 <body>
@@ -2457,15 +3010,12 @@ function qsShowFloatMenu(tokens) {
   const text = tokens.map(t => t.textContent).join(' ').trim();
   if (!text) return;
 
-  // Position above the first token
   const rect = tokens[0].getBoundingClientRect();
   const alreadyIn = (quizState.wordBook||[]).some(w => w.text.toLowerCase() === text.toLowerCase());
 
   const menu = document.createElement('div');
   menu.id = 'qsFloatMenu';
   menu.className = 'qs-float-menu';
-  menu.style.left = Math.max(8, rect.left) + 'px';
-  menu.style.top = (rect.top - 44 + window.scrollY) + 'px';
   menu.innerHTML = `
     <button class="qs-float-btn" onclick="qsHighlightWord('${text.replace(/'/g,"\\'")}')">Highlight</button>
     <button class="qs-float-btn${alreadyIn?' added':''}" id="qsAddBtn" onclick="qsAddToWordBook(this,'${text.replace(/'/g,"\\'")}')">
@@ -2476,7 +3026,20 @@ function qsShowFloatMenu(tokens) {
   `;
   document.body.appendChild(menu);
 
-  // Auto-close on outside click
+  requestAnimationFrame(() => {
+    const margin = 8;
+    const menuRect = menu.getBoundingClientRect();
+    let left = rect.left + window.scrollX;
+    left = Math.min(left, window.scrollX + window.innerWidth - menuRect.width - margin);
+    left = Math.max(window.scrollX + margin, left);
+
+    let top = rect.top + window.scrollY - menuRect.height - 10;
+    if (top < window.scrollY + margin) top = rect.bottom + window.scrollY + 10;
+
+    menu.style.left = left + 'px';
+    menu.style.top = top + 'px';
+  });
+
   setTimeout(() => {
     const handler = ev => {
       if (!menu.contains(ev.target) && !ev.target.closest('.q-word-token')) {
@@ -2658,7 +3221,22 @@ function showWordPopup(wordEl) {
   html+=`<div class="pop-actions"><button onclick="delete replacementMap['${wl}'];document.getElementById('wordPop').style.display='none';render();">Reset</button><button onclick="addToVocabBook('${esc(word)}');document.getElementById('wordPop').style.display='none';">${inVocab?'In Vocab':'+ Vocab'}</button></div>`;
   pop.innerHTML=html; pop.style.display='block';
   const rect=wordEl.getBoundingClientRect();
-  pop.style.left=rect.left+'px'; pop.style.top=(rect.bottom+6)+'px';
+  requestAnimationFrame(() => {
+    const margin = 8;
+    const popRect = pop.getBoundingClientRect();
+    let left = rect.left + window.scrollX;
+    left = Math.min(left, window.scrollX + window.innerWidth - popRect.width - margin);
+    left = Math.max(window.scrollX + margin, left);
+
+    let top = rect.bottom + window.scrollY + 6;
+    if (top + popRect.height > window.scrollY + window.innerHeight - margin) {
+      top = rect.top + window.scrollY - popRect.height - 6;
+    }
+    if (top < window.scrollY + margin) top = window.scrollY + margin;
+
+    pop.style.left = left + 'px';
+    pop.style.top = top + 'px';
+  });
 }
 function replaceWord(wl, rep) { replacementMap[wl]=rep; document.getElementById('wordPop').style.display='none'; render(); toast('Replaced with '+rep); }
 
@@ -2684,6 +3262,10 @@ function addToWordBook(text, extra={}) {
     srsBox: 0, srsNext: Date.now(), srsReviews: 0, srsLapses: 0
   });
   saveQuiz(); renderSharedStats(); render(); toast('已存入: ' + text); return true;
+}
+
+function addToVocabBook(text, extra={}) {
+  return addToWordBook(text, extra);
 }
 
 // ================================================================
@@ -4779,14 +5361,14 @@ document.querySelectorAll('.sheet-overlay').forEach(ov => {
 // ================================================================
 //  SIDEBAR TOGGLE & HIGHLIGHT TRANSFER FUNCTIONS
 // ================================================================
-let sidebarCollapsed = JSON.parse(localStorage.getItem('study_sidebar_collapsed_pro')) || false;
+const sidebarPref = localStorage.getItem('study_sidebar_collapsed_pro');
+let sidebarCollapsed = sidebarPref !== null ? JSON.parse(sidebarPref) : window.innerWidth <= 768;
 
 function initSidebarState() {
   const appEl = document.querySelector('.app');
-  if (appEl) {
-    if (sidebarCollapsed) appEl.classList.add('sidebar-collapsed');
-    else appEl.classList.remove('sidebar-collapsed');
-  }
+  if (!appEl) return;
+  if (sidebarCollapsed) appEl.classList.add('sidebar-collapsed');
+  else appEl.classList.remove('sidebar-collapsed');
 }
 
 function toggleSidebar() {
@@ -4899,6 +5481,9 @@ resources.forEach(r => { if(!r.status) r.status='pending'; if(!r.startDate) r.st
 document.querySelectorAll('.capsule-item').forEach(el => el.classList.toggle('active', el.dataset.module===appState.currentModule));
 document.getElementById('topbarTitle').textContent = appState.currentModule==='quiz'?'Quiz Hub':'Study Resources';
 
+initSidebarState();
+window.addEventListener('resize', initSidebarState);
+window.addEventListener('orientationchange', initSidebarState);
 render();
 </script>
 </body>
