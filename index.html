@@ -608,6 +608,17 @@ textarea { resize: vertical; }
   grid-template-columns: repeat(3, 1fr);
   gap: 14px;
 }
+.resource-grid.resource-library-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  align-items: stretch;
+  grid-auto-rows: 1fr;
+}
+@media (min-width: 1360px) {
+  .resource-grid.resource-library-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
 .res-card {
   position: relative;
   background: var(--bg-card);
@@ -649,9 +660,161 @@ textarea { resize: vertical; }
 .res-card::before {
   content: "";
   position: absolute;
-  left: 16px; top: 0;
-  width: 34px; height: 4px;
-  border-radius: 0 0 4px 4px;
+  left: 0;
+  top: 14px;
+  width: 3px;
+  height: 38px;
+  border-radius: 0 999px 999px 0;
+  background: var(--res-accent, var(--line));
+  opacity: 0.5;
+}
+.res-card.library-card {
+  height: 152px;
+  min-height: 152px;
+  padding: 12px 12px 12px 14px;
+  gap: 10px;
+  justify-content: space-between;
+  cursor: pointer;
+}
+.res-card.library-card.completed::before {
+  opacity: 0.3;
+}
+.res-library-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+.res-library-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  flex: 1;
+}
+.res-library-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--res-accent-soft, rgba(0,0,0,0.05));
+  color: var(--res-accent, var(--ink));
+  flex-shrink: 0;
+}
+.res-library-icon svg {
+  width: 20px;
+  height: 20px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.res-library-main {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+  flex: 1;
+}
+.res-card.library-card .res-title {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+  min-height: calc(1.35em * 2);
+  word-break: break-word;
+}
+.res-library-type {
+  font-size: 11px;
+  color: var(--ink-tertiary);
+  font-weight: 600;
+  line-height: 1.35;
+}
+.res-library-tools {
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+  flex-shrink: 0;
+}
+.res-overflow-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ink-tertiary);
+  background: transparent;
+  border: 1px solid transparent;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+.res-overflow-btn svg {
+  width: 16px;
+  height: 16px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.res-overflow-btn:hover {
+  background: var(--bg-card-hover);
+  border-color: var(--line-light);
+  color: var(--ink);
+}
+.res-overflow-btn:active {
+  transform: scale(0.96);
+}
+.res-library-actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: auto;
+}
+.res-library-open {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--res-accent, var(--ink-secondary));
+  letter-spacing: 0.01em;
+}
+.res-quick-menu {
+  position: fixed;
+  z-index: 9800;
+  min-width: 160px;
+  background: var(--bg-popover);
+  backdrop-filter: var(--blur);
+  -webkit-backdrop-filter: var(--blur);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  box-shadow: var(--shadow-lg);
+  padding: 6px;
+}
+.res-quick-menu button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 9px 10px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink);
+  background: transparent;
+  text-align: left;
+}
+.res-quick-menu button:hover {
+  background: var(--bg-card-hover);
+}
+.res-quick-menu button.delete {
+  color: #7D3D3D;
+}
+.res-quick-menu button.delete:hover {
+  background: rgba(179,107,107,0.10);
 }
 .res-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
 .res-title-wrap { display: flex; align-items: flex-start; gap: 8px; flex: 1; }
@@ -1686,6 +1849,11 @@ img, svg, video, canvas, iframe, table, pre, code {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
+  .resource-grid.resource-library-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 12px;
+  }
+
   .sb-scores {
     gap: 14px;
     width: 100%;
@@ -1890,6 +2058,11 @@ img, svg, video, canvas, iframe, table, pre, code {
     grid-template-columns: minmax(0, 1fr);
   }
 
+  .resource-grid.resource-library-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 12px;
+  }
+
   .sb-top-row,
   .res-top,
   .res-bottom,
@@ -2029,6 +2202,32 @@ img, svg, video, canvas, iframe, table, pre, code {
   .quiz-toolbar,
   .topbar-actions {
     width: 100%;
+  }
+
+  .resource-grid.resource-library-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 10px;
+  }
+
+  .res-card.library-card {
+    height: 140px;
+    min-height: 140px;
+    padding: 10px 10px 10px 12px;
+  }
+
+  .res-library-icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+  }
+
+  .res-library-icon svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .res-quick-menu {
+    min-width: 148px;
   }
 
   .q-card,
@@ -4488,7 +4687,7 @@ function renderModResources(subj) {
       </div>
       <button class="apple-btn primary" onclick="openResourceModal('${subj}')">+ Add Resource</button>
     </div>
-    ${displayed.length ? `<div class="resource-grid resource-list-compact" id="resDragList_${subj||'all'}">${displayed.map(r => resourceCard(r)).join('')}</div>` : `<div class="empty-state">No resources</div>`}
+    ${displayed.length ? `<div class="resource-grid resource-library-grid" id="resDragList_${subj||'all'}">${displayed.map(r => resourceCard(r)).join('')}</div>` : `<div class="empty-state">No resources</div>`}
   </div>`;
 }
 // ================================================================
@@ -4803,44 +5002,72 @@ function renderResFilterBar() {
 }
 
 // Resource Card
+function getResourceTypeMeta(r) {
+  const path = String(r.path || '').trim();
+  const lowerPath = path.toLowerCase();
+  const tags = (r.tags || []).map(t => String(t).toLowerCase());
+  const fileName = lowerPath.split('/').pop() || '';
+  const ext = fileName.includes('.') ? fileName.split('.').pop() : '';
+  const isLink = /^https?:\/\//.test(lowerPath) || lowerPath.startsWith('www.');
+  const isVideo = /youtube|youtu\.be|vimeo/.test(lowerPath) || ['mp4','mov','m4v','webm'].includes(ext) || tags.some(t => ['video','youtube'].includes(t));
+  const isFolder = lowerPath.endsWith('/') || tags.includes('folder') || (!!path && !isLink && !fileName.includes('.'));
+
+  if (isVideo) return { key: 'video', label: 'Video' };
+  if (isLink) return { key: 'link', label: 'Website' };
+  if (isFolder) return { key: 'folder', label: 'Folder' };
+  if (ext === 'pdf') return { key: 'pdf', label: 'PDF' };
+  if (['doc','docx'].includes(ext)) return { key: 'word', label: 'Word' };
+  if (['txt','md','rtf','pages'].includes(ext)) return { key: 'doc-text', label: 'Document' };
+  return { key: 'doc-text', label: ext ? ext.toUpperCase() : 'Document' };
+}
+
+function getResourceTypeTint(key) {
+  const tints = {
+    'pdf': { accent: '#B36B6B', soft: 'rgba(179,107,107,0.12)' },
+    'link': { accent: '#6F8FB3', soft: 'rgba(111,143,179,0.12)' },
+    'folder': { accent: '#A89A6A', soft: 'rgba(168,154,106,0.12)' },
+    'word': { accent: '#7B899A', soft: 'rgba(123,137,154,0.12)' },
+    'doc-text': { accent: '#7B899A', soft: 'rgba(123,137,154,0.10)' },
+    'video': { accent: '#7C7AA8', soft: 'rgba(124,122,168,0.12)' }
+  };
+  return tints[key] || tints['doc-text'];
+}
+
+function getResourceTypeIcon(key) {
+  const icons = {
+    'pdf': `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"></path><path d="M14 3v5h5"></path><path d="M8.5 13.5h7"></path><path d="M8.5 16.5h5"></path></svg>`,
+    'word': `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"></path><path d="M14 3v5h5"></path></svg>`,
+    'doc-text': `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"></path><path d="M14 3v5h5"></path><path d="M8.5 13h7"></path><path d="M8.5 16h7"></path></svg>`,
+    'link': `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 13a5 5 0 0 1 0-7l1.5-1.5a5 5 0 0 1 7 7L17 13"></path><path d="M14 11a5 5 0 0 1 0 7L12.5 19.5a5 5 0 0 1-7-7L7 11"></path></svg>`,
+    'video': `<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5.5" width="17" height="13" rx="2.5"></rect><path d="M10 9.2v5.6l5-2.8z"></path></svg>`,
+    'folder': `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 8.5a2 2 0 0 1 2-2h4l2 2h7a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2z"></path></svg>`
+  };
+  return icons[key] || icons['doc-text'];
+}
+
 function resourceCard(r) {
   const isDone = r.status==='completed';
-  const isNotStarted = r.status==='not_started'||(r.startDate&&r.startDate>todayISO());
-  const statusText = isDone?'Completed':isNotStarted?`Plan: ${r.startDate||'Not set'}`:'In Progress';
-  const statusColor = isDone?'var(--green)':isNotStarted?'var(--orange)':'var(--ink-secondary)';
-  const statusBg = isDone?'rgba(48,209,88,0.1)':isNotStarted?'rgba(255,159,10,0.1)':'var(--bg-elev)';
-  const subj = customSubjects[r.subject];
-  const ext = (r.path || '').split('.').pop().toUpperCase();
-  const typeLabel = (ext && ext !== (r.path || '')) ? ext : ((r.tags && r.tags[0]) || 'Resource');
+  const meta = getResourceTypeMeta(r);
+  const tint = getResourceTypeTint(meta.key);
 
-  return `<div class="res-card compact subtask-draggable ${isDone?'completed':''}" data-resid="${r.id}" style="background:var(--bg-elev);border:1px solid var(--line);border-radius:var(--radius-sm);">
-    <div class="res-top">
-      <div class="res-title-wrap" style="align-items:flex-start;">
-        <div class="st-drag-grip" title="长按拖拽手柄排序"><span></span><span></span><span></span></div>
-        <div class="res-check ${isDone?'checked':''}" onclick="toggleResourceStatus('${r.id}')">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5L19 7"/></svg>
-        </div>
-        <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:6px;">
-          <div class="res-title" style="font-size:15px;font-weight:700;color:var(--ink);">${esc(r.title)}</div>
-          <div class="res-path">${esc(r.path||'—')}</div>
+  return `<div class="res-card library-card subtask-draggable ${isDone?'completed':''}" data-resid="${r.id}" style="--res-accent:${tint.accent};--res-accent-soft:${tint.soft};" onclick="openResourceItem('${r.id}')">
+    <div class="res-library-top">
+      <div class="res-library-head">
+        <div class="res-library-icon">${getResourceTypeIcon(meta.key)}</div>
+        <div class="res-library-main">
+          <div class="res-title" style="font-size:14px;font-weight:700;color:var(--ink);" title="${esc(r.title)}">${esc(r.title)}</div>
+          <div class="res-library-type">${esc(meta.label)}</div>
         </div>
       </div>
-      <div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end;">
-        <button class="apple-btn small" onclick="openEditResourceModal('${r.id}')">Edit</button>
-        <button class="res-tool-btn delete" onclick="deleteResource('${r.id}')">Del</button>
+      <div class="res-library-tools">
+        <button class="res-overflow-btn" aria-label="More actions" onclick="event.stopPropagation(); toggleResourceMenu('${r.id}', this)">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="12" r="1.5"></circle><circle cx="12" cy="12" r="1.5"></circle><circle cx="18" cy="12" r="1.5"></circle></svg>
+        </button>
+        <div class="st-drag-grip" title="长按拖拽手柄排序" onclick="event.stopPropagation();"><span></span><span></span><span></span></div>
       </div>
     </div>
-    <div class="res-meta-row">
-      <div class="res-tags">
-        ${subj ? `<span class="pill-tag" style="background:${subj.tint};color:${subj.color};">${esc(subj.label)}</span>` : ''}
-        <span class="pill-tag">${esc(typeLabel)}</span>
-        <span style="font-size:11px;font-weight:700;color:${statusColor};background:${statusBg};padding:2px 8px;border-radius:6px">${statusText}</span>
-      </div>
-      <div class="res-tags">${(r.tags||[]).slice(0,3).map(t=>`<span class="pill-tag">${esc(t)}</span>`).join('')}</div>
-    </div>
-    <div class="res-bottom" style="border-top:1px dashed var(--line);font-size:11px;color:var(--ink-tertiary);">
-      <span class="res-date">Added ${r.createdAt}</span>
-      <button class="apple-btn small" onclick="alert('Open: ${esc(r.path||'')}')">Open</button>
+    <div class="res-library-actions">
+      <span class="res-library-open">Open</span>
     </div>
   </div>`;
 }
@@ -5114,6 +5341,84 @@ function moveModuleOrder(modId, dir) {
 }
 
 // Resource Actions// Resource Actions// Resource Actions
+let activeResourceMenu = null;
+
+function closeResourceMenu() {
+  if (activeResourceMenu?.el) activeResourceMenu.el.remove();
+  activeResourceMenu = null;
+}
+
+function openResourceItem(id) {
+  const r = resources.find(x => x.id === id);
+  if (!r) return;
+  const path = String(r.path || '').trim();
+  if (/^https?:\/\//i.test(path)) {
+    window.open(path, '_blank', 'noopener');
+    return;
+  }
+  if (path) {
+    alert('Open: ' + path);
+  } else {
+    toast('No resource path available');
+  }
+}
+
+function toggleResourceMenu(id, anchor) {
+  const r = resources.find(x => x.id === id);
+  if (!r || !anchor) return;
+  if (activeResourceMenu?.id === id) {
+    closeResourceMenu();
+    return;
+  }
+  closeResourceMenu();
+
+  const menu = document.createElement('div');
+  menu.className = 'res-quick-menu';
+  menu.innerHTML = `
+    <button onclick="openResourceItem('${id}'); closeResourceMenu();">
+      <span>Open</span>
+    </button>
+    <button onclick="openEditResourceModal('${id}'); closeResourceMenu();">
+      <span>Edit</span>
+    </button>
+    <button class="delete" onclick="deleteResource('${id}'); closeResourceMenu();">
+      <span>Delete</span>
+    </button>
+  `;
+  document.body.appendChild(menu);
+
+  const rect = anchor.getBoundingClientRect();
+  const menuRect = menu.getBoundingClientRect();
+  const margin = 8;
+  let left = rect.right - menuRect.width;
+  let top = rect.bottom + 8;
+  if (left < margin) left = margin;
+  if (left + menuRect.width > window.innerWidth - margin) left = window.innerWidth - menuRect.width - margin;
+  if (top + menuRect.height > window.innerHeight - margin) top = rect.top - menuRect.height - 8;
+  if (top < margin) top = margin;
+  menu.style.left = left + 'px';
+  menu.style.top = top + 'px';
+
+  const outsideHandler = ev => {
+    if (!menu.contains(ev.target) && !anchor.contains(ev.target)) {
+      closeResourceMenu();
+      document.removeEventListener('pointerdown', outsideHandler);
+      window.removeEventListener('resize', onClose);
+      window.removeEventListener('scroll', onClose, true);
+    }
+  };
+  const onClose = () => {
+    closeResourceMenu();
+    document.removeEventListener('pointerdown', outsideHandler);
+    window.removeEventListener('resize', onClose);
+    window.removeEventListener('scroll', onClose, true);
+  };
+  setTimeout(() => document.addEventListener('pointerdown', outsideHandler), 0);
+  window.addEventListener('resize', onClose);
+  window.addEventListener('scroll', onClose, true);
+  activeResourceMenu = { id, el: menu };
+}
+
 function toggleResourceStatus(id) { const r=resources.find(x=>x.id===id);if(r)r.status=r.status==='completed'?'pending':'completed';saveResState();render(); }
 function deleteResource(id) { resources=resources.filter(x=>x.id!==id);saveResState();render(); }
 function togglePinExercise(id) { const e=exercises.find(x=>x.id===id);if(e)e.pinned=!e.pinned;saveResState();render(); }
@@ -5741,5 +6046,5 @@ window.addEventListener('resize', handleResponsiveViewportChange);
 window.addEventListener('orientationchange', handleResponsiveViewportChange);
 render();
 </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a15eac78aab49d95',t:'MTc4MzE3MzgxMA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</body>
 </html>
