@@ -453,6 +453,23 @@ textarea { resize: vertical; }
 .qs-float-btn { background:transparent;border:1px solid rgba(255,255,255,0.18);color:#fff;border-radius:14px;padding:5px 13px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;transition:background 0.12s ease;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',sans-serif; }
 .qs-float-btn:hover { background:rgba(255,255,255,0.14); }
 .qs-float-btn.added { background:rgba(162,132,94,0.5);border-color:#A2845E; }
+.q-word-token.qs-hl-persist { background:rgba(162,132,94,0.32);border-radius:3px; }
+
+/* ======= MOBILE RESPONSIVE — Quiz Hub (#8) ======= */
+@media (max-width: 640px) {
+  .quiz-toolbar { gap:6px;padding:8px 10px;flex-wrap:wrap; }
+  .quiz-toolbar .apple-btn { font-size:11px;padding:5px 9px;height:30px; }
+  .section-pills { gap:4px; }
+  .section-pills .pill { font-size:11px;padding:5px 9px; }
+  .q-card { padding:12px 10px; }
+  .q-text { font-size:14px !important; }
+  .q-opt { font-size:13px;padding:10px 10px; }
+  .q-actions button { font-size:12px;padding:8px 10px; }
+  .qs-float-menu { left:8px !important;right:8px;width:auto;flex-wrap:wrap;border-radius:14px; }
+  .qs-float-btn { font-size:11px;padding:5px 10px; }
+  .quiz-tabs { gap:4px; }
+  .quiz-tab { font-size:12px;padding:7px 12px; }
+}
 
 /* ========== STUDY RESOURCES STYLES ========== */
 .res-stats-row {
@@ -1131,6 +1148,8 @@ textarea { resize: vertical; }
 /* ---- Stat card scroll — no outline, clean Apple anchor feel ---- */
 .mod-section, .res-section { outline: none !important; }
 *:focus { outline: none !important; box-shadow: none !important; }
+.subtask-draggable:focus, .ex-unified-item:focus, .res-card:focus { outline: none !important; box-shadow: none !important; border-color: var(--line) !important; }
+.subtask-draggable.st-is-dragging { box-shadow: 0 8px 30px rgba(0,0,0,0.16) !important; outline: none !important; }
 
 /* ---- Sub-task drag & drop ---- */
 .subtask-draggable {
@@ -1843,10 +1862,10 @@ function renderQuizHub(container) {
   // Section Pills
   html += `<div class="quiz-toolbar">
     <div class="section-pills" id="sectionPills">${renderSectionPillsHTML()}</div>
-    <button class="apple-btn" style="font-weight:600;" onclick="openQuizWordBook()">📖 Word Book (${quizState.wordBook.length})</button>
-    <button class="apple-btn" onclick="openQuizSynonyms()">Syn Synonyms (${quizState.synonymLibrary.length})</button>
-    <button class="apple-btn" onclick="openQuizWrongBook()">X Wrong Book (${quizState.wrongBook.length})</button>
-    <button class="apple-btn" onclick="openQuizSettings()">Set Settings</button>
+    <button class="apple-btn" style="font-weight:600;" onclick="openQuizWordBook()">Word Book (${quizState.wordBook.length})</button>
+    <button class="apple-btn" onclick="openQuizSynonyms()">Synonyms (${quizState.synonymLibrary.length})</button>
+    <button class="apple-btn" onclick="openQuizWrongBook()">Wrong Book (${quizState.wrongBook.length})</button>
+    <button class="apple-btn" onclick="openQuizSettings()">Settings</button>
   </div>`;
 
   // Topic Introductory text removed as required (Requirement 8)
@@ -2094,7 +2113,7 @@ function renderQuestionCard(q, num, qType) {
     <div class="q-meta">Q${num} · ${qType.toUpperCase()}${q.synonymGroup?' · '+esc(q.synonymGroup):''}</div>
     <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap;align-items:center;">
       <button class="q-tool-btn ${inWb ? 'active' : ''}" style="${inWb ? 'background:rgba(255,59,48,0.12);color:var(--red);font-weight:700;' : ''}" onclick="toggleQuestionWrongBook('${q.id}', '${qType}')">
-        ${inWb ? '★ In Wrong Book (取消)' : '+ Add to Wrong Book (加入错题)'}
+        ${inWb ? 'In Wrong Book (取消)' : '+ Wrong Book'}
       </button>
       <button class="q-tool-btn" onclick="openAddVocabDialog('${esc(q.question).replace(/'/g,"\'")}', '', '${esc(q.question).replace(/'/g,"\'")}', '${appState.currentSubject}')">+ Vocabulary</button>
       <button class="q-tool-btn" onclick="openAddPhraseDialog('${esc(q.question).replace(/'/g,"\'")}', '', '${esc(q.question).replace(/'/g,"\'")}', '${appState.currentSubject}')">+ Phrase</button>
@@ -2117,7 +2136,7 @@ function renderQuestionCard(q, num, qType) {
       <div style="font-weight:700;margin-bottom:6px;font-size:13px;">Explanation (答案解析):</div>
       <div class="q-selectable" style="line-height:1.8;">${tokenise(q.explanation||'No explanation provided.', 'exp_'+q.id)}</div>
       <div class="explain-actions" style="margin-top:10px;padding-top:8px;border-top:1px dashed var(--line);display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-        <span style="font-size:11px;color:var(--ink-tertiary);font-weight:600;">💡 点击或长按单词加入生词本</span>
+        <span style="font-size:11px;color:var(--ink-tertiary);font-weight:600;">点击或长按单词加入生词本</span>
         <button class="apple-btn small" onclick="openAddWordBookDialog('', '', 'Quiz Hub Q#${q.id}', '${appState.currentSubject}')">+ Manual Add</button>
       </div>
     </div>`;
@@ -2448,9 +2467,11 @@ function qsShowFloatMenu(tokens) {
   menu.style.left = Math.max(8, rect.left) + 'px';
   menu.style.top = (rect.top - 44 + window.scrollY) + 'px';
   menu.innerHTML = `
+    <button class="qs-float-btn" onclick="qsHighlightWord('${text.replace(/'/g,"\\'")}')">Highlight</button>
     <button class="qs-float-btn${alreadyIn?' added':''}" id="qsAddBtn" onclick="qsAddToWordBook(this,'${text.replace(/'/g,"\\'")}')">
-      ${alreadyIn ? '✓ Added' : '+ Add to Word Book'}
+      ${alreadyIn ? '✓ Added' : '+ Word Book'}
     </button>
+    <button class="qs-float-btn" onclick="qsAddToSynGroup('${text.replace(/'/g,"\\'")}')">+ Synonym</button>
     <button class="qs-float-btn" onclick="qsClearSelection()" style="padding:5px 8px;font-size:12px;opacity:0.6;">✕</button>
   `;
   document.body.appendChild(menu);
@@ -2469,11 +2490,60 @@ function qsShowFloatMenu(tokens) {
 
 function qsAddToWordBook(btn, text) {
   const alreadyIn = (quizState.wordBook||[]).some(w => w.text.toLowerCase() === text.toLowerCase());
-  if (alreadyIn) { toast('已在生词本中: ' + text); qsClearSelection(); return; }
+  if (alreadyIn) { toast('已在生词本: ' + text); qsClearSelection(); return; }
   addToWordBook(text, { source: 'Quiz Hub', subject: appState.currentSubject, highlight: true });
   btn.textContent = '✓ Added';
   btn.classList.add('added');
   setTimeout(() => qsClearSelection(), 900);
+}
+
+function qsHighlightWord(text) {
+  // Persist highlight to quizState.highlights
+  const p = currentPassage();
+  const hl = { id: uid('hl'), text, passageId: p?.id || '', ts: Date.now() };
+  if (!quizState.highlights.some(h => h.text === text)) {
+    quizState.highlights.push(hl);
+    saveQuiz();
+  }
+  // Visual: mark all matching tokens with persistent class
+  document.querySelectorAll('.q-word-token').forEach(t => {
+    if (t.textContent === text) t.classList.add('qs-hl-persist');
+  });
+  toast('Highlighted: ' + text);
+  qsClearSelection();
+}
+
+function qsAddToSynGroup(text) {
+  qsClearSelection();
+  // Open syn group picker
+  const existing = (quizState.synonymLibrary||[]).map((g,i) =>
+    `<div onclick="qsSynAddToGroup(${i},'${text.replace(/'/g,"\\'")}',this)" style="cursor:pointer;padding:10px 14px;border:1px solid var(--line);border-radius:var(--radius-sm);background:var(--bg-card);margin-bottom:6px;transition:all 0.12s ease;" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--line)'">
+      <div style="font-size:12px;font-weight:700;color:var(--ink-secondary);margin-bottom:3px;">${esc(g.groupName||'Group '+(i+1))}</div>
+      <div style="font-size:13px;color:var(--ink);">${(g.words||[]).slice(0,4).map(w=>esc(w)).join(' · ')}</div>
+    </div>`
+  ).join('') || `<div style="color:var(--ink-tertiary);font-size:13px;padding:8px 0;">No existing groups yet</div>`;
+
+  openGenericSheet(`Add "${esc(text)}" to Synonym Group`, `
+    <div style="margin-bottom:12px;">${existing}</div>
+    <button class="apple-btn primary" style="width:100%;" onclick="qsSynCreateGroup('${text.replace(/'/g,"\\'")}')">+ Create New Group</button>
+  `, [{ text: 'Cancel', onclick: () => closeSheet('genericSheet') }]);
+}
+
+function qsSynAddToGroup(idx, text, el) {
+  const g = quizState.synonymLibrary[idx]; if (!g) return;
+  if (!(g.words||[]).includes(text)) { g.words = [...(g.words||[]), text]; saveQuiz(); }
+  toast(`Added "${text}" to "${g.groupName}"`);
+  closeSheet('genericSheet');
+}
+
+function qsSynCreateGroup(text) {
+  closeSheet('genericSheet');
+  const name = prompt('New group name (e.g. "depend on"):', text);
+  if (!name) return;
+  quizState.synonymLibrary = quizState.synonymLibrary || [];
+  quizState.synonymLibrary.push({ id: uid('sg'), groupName: name.trim(), words: [text], createdAt: Date.now() });
+  saveQuiz();
+  toast(`Created group "${name}" with "${text}"`);
 }
 
 function bindReadingEvents() {
@@ -2613,7 +2683,7 @@ function addToWordBook(text, extra={}) {
     dateAdded: todayISO(), addedAt: Date.now(), highlight: !!extra.highlight, starred: !!extra.starred,
     srsBox: 0, srsNext: Date.now(), srsReviews: 0, srsLapses: 0
   });
-  saveQuiz(); renderSharedStats(); render(); toast('✓ 已存入 Word Book 生词本: ' + text); return true;
+  saveQuiz(); renderSharedStats(); render(); toast('已存入: ' + text); return true;
 }
 
 // ================================================================
@@ -2660,11 +2730,11 @@ function openQuizWordBook(searchQ = wbkSearchQ, filterSubj = wbkFilterSubj, filt
 
   const topBanner = `<div style="padding:16px;background:var(--bg-elev);border:1px solid var(--line);border-radius:var(--radius);margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;box-shadow:var(--shadow-sm);">
     <div>
-      <div style="font-size:16px;font-weight:800;color:var(--ink);display:flex;align-items:center;gap:6px;">📖 Word Book Review Mode (生词本复习系统)</div>
+      <div style="font-size:16px;font-weight:800;color:var(--ink);display:flex;align-items:center;gap:6px;">Word Book Review (生词本复习系统)</div>
       <div style="font-size:12px;color:var(--ink-secondary);margin-top:3px;">今日待复习: <b style="color:var(--orange);">${dueCount} 词</b> · 浅棕高亮: <b style="color:#A2845E;">${hlCount}</b> · 重点收藏: <b style="color:var(--yellow);">${stCount}</b></div>
     </div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;">
-      <button class="apple-btn primary" style="font-weight:700;padding:8px 16px;background:var(--accent);color:#fff;" onclick="startWordBookReview('due')">★ 开始复习待记词 (${dueCount})</button>
+      <button class="apple-btn primary" style="font-weight:700;padding:8px 16px;background:var(--accent);color:#fff;" onclick="startWordBookReview('due')">开始复习待记词 (${dueCount})</button>
       <button class="apple-btn" style="font-weight:600;" onclick="startWordBookReview('random')">🔀 随机抽词复习</button>
       <button class="apple-btn" style="font-weight:600;" onclick="startWordBookReview('all')">全量复习 (${totalCount})</button>
     </div>
@@ -2674,11 +2744,11 @@ function openQuizWordBook(searchQ = wbkSearchQ, filterSubj = wbkFilterSubj, filt
     <div style="display:flex;gap:4px;flex-wrap:wrap;background:var(--bg-elev);border:1px solid var(--line);border-radius:var(--radius-sm);padding:3px;">
       <button class="res-tab-btn ${wbkTab === 'all' ? 'active' : ''}" onclick="openQuizWordBook(wbkSearchQ, wbkFilterSubj, wbkSort, 'all')">全部 (${totalCount})</button>
       <button class="res-tab-btn ${wbkTab === 'due' ? 'active' : ''}" style="${wbkTab === 'due' ? '' : 'color:var(--ink-tertiary);'}" onclick="openQuizWordBook(wbkSearchQ, wbkFilterSubj, wbkSort, 'due')">待复习 (${dueCount})</button>
-      <button class="res-tab-btn ${wbkTab === 'highlight' ? 'active' : ''}" style="${wbkTab === 'highlight' ? 'background:#A2845E;color:#fff;' : 'color:#A2845E;'}" onclick="openQuizWordBook(wbkSearchQ, wbkFilterSubj, wbkSort, 'highlight')">🖌 高亮 (${hlCount})</button>
-      <button class="res-tab-btn ${wbkTab === 'starred' ? 'active' : ''}" onclick="openQuizWordBook(wbkSearchQ, wbkFilterSubj, wbkSort, 'starred')">★ 收藏 (${stCount})</button>
+      <button class="res-tab-btn ${wbkTab === 'highlight' ? 'active' : ''}" style="${wbkTab === 'highlight' ? 'background:#A2845E;color:#fff;' : 'color:#A2845E;'}" onclick="openQuizWordBook(wbkSearchQ, wbkFilterSubj, wbkSort, 'highlight')">高亮 (${hlCount})</button>
+      <button class="res-tab-btn ${wbkTab === 'starred' ? 'active' : ''}" onclick="openQuizWordBook(wbkSearchQ, wbkFilterSubj, wbkSort, 'starred')">收藏 (${stCount})</button>
     </div>
     <div style="flex:1;min-width:160px;display:flex;align-items:center;gap:6px;background:var(--bg-card);border:1px solid var(--line);border-radius:var(--radius-sm);padding:6px 10px;">
-      <span style="font-size:13px;color:var(--ink-tertiary);">🔍</span>
+      <span style="font-size:13px;color:var(--ink-tertiary);">⌕</span>
       <input type="text" placeholder="搜索生词、释义、来源…" value="${esc(wbkSearchQ)}" style="flex:1;border:none;background:transparent;font-size:13px;font-weight:500;color:var(--ink);outline:none;" oninput="openQuizWordBook(this.value, wbkFilterSubj, wbkSort, wbkTab)"/>
     </div>
     <select style="height:34px;padding:0 10px;font-size:13px;font-weight:600;border:1px solid var(--line);border-radius:var(--radius-sm);background:var(--bg-card);color:var(--ink);" onchange="openQuizWordBook(wbkSearchQ, this.value, wbkSort, wbkTab)">${subjOpts}</select>
@@ -2703,7 +2773,7 @@ function openQuizWordBook(searchQ = wbkSearchQ, filterSubj = wbkFilterSubj, filt
           <h4 style="font-size:17px;font-weight:800;margin:0;color:var(--ink);">${esc(w.text)}</h4>
           <span style="font-size:11px;padding:2px 8px;border-radius:4px;background:${sColor}18;color:${sColor};font-weight:600;">${esc(sLabel)}</span>
           ${w.source ? `<span style="font-size:11px;color:var(--ink-tertiary);background:var(--bg-card);padding:2px 6px;border-radius:4px;border:1px solid var(--line-light);">Src: ${esc(w.source)}</span>` : ''}
-          ${isHl ? `<span style="font-size:11px;background:#A2845E;color:#fff;padding:2px 8px;border-radius:12px;font-weight:700;">🖌 Highlighted</span>` : ''}
+          ${isHl ? `<span style="font-size:11px;background:#A2845E;color:#fff;padding:2px 8px;border-radius:12px;font-weight:700;">Highlighted</span>` : ''}
           ${isDue ? `<span style="font-size:11px;background:var(--orange);color:#fff;padding:2px 8px;border-radius:12px;font-weight:700;">待复习</span>` : `<span style="font-size:11px;color:var(--green);font-weight:600;">已复习 (Box ${w.srsBox||0})</span>`}
           <span style="font-size:11px;color:var(--ink-tertiary);margin-left:auto;">Added: ${w.dateAdded || new Date(w.addedAt||Date.now()).toLocaleDateString()}</span>
         </div>
@@ -2711,15 +2781,15 @@ function openQuizWordBook(searchQ = wbkSearchQ, filterSubj = wbkFilterSubj, filt
         ${w.example ? `<div style="font-size:13px;color:var(--ink-secondary);font-style:italic;line-height:1.4;">"${esc(w.example)}"</div>` : ''}
       </div>
       <div class="actions" style="display:flex;gap:6px;margin-left:14px;flex-shrink:0;align-items:center;">
-        <button class="apple-btn small" style="${isHl ? 'background:#A2845E;color:#fff;font-weight:700;border-color:#A2845E;' : 'color:#A2845E;font-weight:600;'}" onclick="toggleWordBookHighlight('${w.id}')">🖌 Highlight</button>
-        <button class="apple-btn small ${w.starred ? 'active' : ''}" style="${w.starred ? 'color:var(--yellow);font-weight:700;' : ''}" onclick="toggleWordBookStar('${w.id}')">★</button>
+        <button class="apple-btn small" style="${isHl ? 'background:#A2845E;color:#fff;font-weight:700;border-color:#A2845E;' : 'color:#A2845E;font-weight:600;'}" onclick="toggleWordBookHighlight('${w.id}')">Highlight</button>
+        <button class="apple-btn small ${w.starred ? 'active' : ''}" style="${w.starred ? 'color:var(--yellow);font-weight:700;' : ''}" onclick="toggleWordBookStar('${w.id}')"></button>
         <button class="apple-btn small" onclick="openEditWordBookDialog('${w.id}')">Edit</button>
         <button class="apple-btn small danger" onclick="deleteWordBookItem('${w.id}')">Delete</button>
       </div>
     </div>`;
   }).join('') : `<div class="empty-state">在当前筛选下暂无生词记录！</div>`;
 
-  openGenericSheet(`📖 Word Book 生词本 (${quizState.wordBook.length})`, topBanner + filterBar + `<div style="max-height:430px;overflow-y:auto;">${listHTML}</div>`, [
+  openGenericSheet(`Word Book 生词本 (${quizState.wordBook.length})`, topBanner + filterBar + `<div style="max-height:430px;overflow-y:auto;">${listHTML}</div>`, [
     { text: 'Close', cls: 'primary', onclick: () => { closeSheet('genericSheet'); render(); } }
   ]);
 }
@@ -2730,7 +2800,7 @@ function toggleWordBookHighlight(id) {
     w.highlight = !w.highlight;
     saveQuiz();
     openQuizWordBook();
-    toast(w.highlight ? '🖌 已设为浅棕色高亮 (Highlighted)' : '已取消高亮');
+    toast(w.highlight ? '已设为高亮' : '已取消高亮');
   }
 }
 
@@ -2740,7 +2810,7 @@ function toggleWordBookStar(id) {
     w.starred = !w.starred;
     saveQuiz();
     openQuizWordBook();
-    toast(w.starred ? '★ 已加入重点收藏' : '已取消收藏');
+    toast(w.starred ? '已加入收藏' : '已取消收藏');
   }
 }
 
@@ -2772,7 +2842,7 @@ function startWordBookReview(mode = 'due') {
   let queue = [];
   if (mode === 'due') {
     queue = quizState.wordBook.filter(w => (w.srsNext || 0) <= now);
-    if (!queue.length) { toast('🎉 今日所有生词已复习完毕！已为您转为全量随机复习'); queue = [...quizState.wordBook]; mode = 'random'; }
+    if (!queue.length) { toast('今日所有生词已复习完毕，转为全量随机复习'); queue = [...quizState.wordBook]; mode = 'random'; }
   } else if (mode === 'random') {
     queue = [...quizState.wordBook].sort(() => Math.random() - 0.5);
   } else {
@@ -2789,7 +2859,7 @@ function renderWordBookReviewCard() {
   if (!wbkReviewSession || !wbkReviewSession.queue.length) return;
   const cur = wbkReviewSession.queue[wbkReviewSession.index];
   if (!cur) {
-    openGenericSheet('🎉 复习完成 (Review Completed)', `<div style="text-align:center;padding:30px;">
+    openGenericSheet('复习完成', `<div style="text-align:center;padding:30px;">
       <h3 style="font-size:22px;color:var(--green);margin-bottom:10px;">太棒了！本组共 ${wbkReviewSession.total} 个单词/短语已全部复习！</h3>
       <p style="color:var(--ink-secondary);font-size:14px;">继续保持每日复习，提升词汇记忆持久度与阅读速度！</p>
     </div>`, [{ text: '返回生词本', cls: 'primary', onclick: () => openQuizWordBook() }]);
@@ -2816,7 +2886,7 @@ function renderWordBookReviewCard() {
     <div style="display:flex;justify-content:center;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
       <span style="font-size:11px;padding:3px 10px;border-radius:4px;background:${sColor}18;color:${sColor};font-weight:700;">${esc(sLabel)}</span>
       ${cur.source ? `<span style="font-size:11px;color:var(--ink-secondary);background:var(--bg-card);padding:3px 10px;border-radius:4px;border:1px solid var(--line);">Src: ${esc(cur.source)}</span>` : ''}
-      ${isHl ? `<span style="font-size:11px;background:#A2845E;color:#fff;padding:3px 10px;border-radius:12px;font-weight:700;">🖌 Highlighted (浅棕高亮)</span>` : ''}
+      ${isHl ? `<span style="font-size:11px;background:#A2845E;color:#fff;padding:3px 10px;border-radius:12px;font-weight:700;">Highlighted (浅棕高亮)</span>` : ''}
     </div>
     <div style="font-size:32px;font-weight:800;color:var(--ink);margin:24px 0;letter-spacing:-0.5px;">${esc(cur.text)}</div>`;
 
@@ -2832,7 +2902,7 @@ function renderWordBookReviewCard() {
       <div style="font-size:15px;color:var(--ink-secondary);font-style:italic;line-height:1.5;">"${esc(cur.example)}"</div>` : ''}
     </div>
     <div style="display:flex;gap:12px;margin-top:20px;">
-      <button class="apple-btn danger" style="flex:1;padding:12px;font-size:15px;font-weight:700;" onclick="markWordBookReviewItem('${cur.id}', 'forgot')">❌ 不会 (忘了 / 重复复习)</button>
+      <button class="apple-btn danger" style="flex:1;padding:12px;font-size:15px;font-weight:700;" onclick="markWordBookReviewItem('${cur.id}', 'forgot')">不会 (重复复习)</button>
       <button class="apple-btn primary" style="flex:1;padding:12px;font-size:15px;font-weight:700;background:var(--green);border-color:var(--green);" onclick="markWordBookReviewItem('${cur.id}', 'remembered')">✓ 记住了 (完成 / 增加间隔)</button>
     </div>`;
   }
@@ -2841,13 +2911,13 @@ function renderWordBookReviewCard() {
   const footerBar = `<div style="display:flex;justify-content:space-between;align-items:center;margin-top:14px;">
     <button class="apple-btn" onclick="wbkReviewStep(-1)" ${idx === 0 ? 'disabled' : ''}>← 上一词 (Prev)</button>
     <div style="display:flex;gap:8px;">
-      <button class="apple-btn small" style="${isHl ? 'background:#A2845E;color:#fff;font-weight:700;border-color:#A2845E;' : 'color:#A2845E;font-weight:600;'}" onclick="toggleWordBookHighlight('${cur.id}'); renderWordBookReviewCard();">🖌 切换高亮</button>
-      <button class="apple-btn small ${cur.starred ? 'active' : ''}" style="${cur.starred ? 'color:var(--yellow);font-weight:700;' : ''}" onclick="toggleWordBookStar('${cur.id}'); renderWordBookReviewCard();">★ 收藏</button>
+      <button class="apple-btn small" style="${isHl ? 'background:#A2845E;color:#fff;font-weight:700;border-color:#A2845E;' : 'color:#A2845E;font-weight:600;'}" onclick="toggleWordBookHighlight('${cur.id}'); renderWordBookReviewCard();">切换高亮</button>
+      <button class="apple-btn small ${cur.starred ? 'active' : ''}" style="${cur.starred ? 'color:var(--yellow);font-weight:700;' : ''}" onclick="toggleWordBookStar('${cur.id}'); renderWordBookReviewCard();">收藏</button>
     </div>
     <button class="apple-btn" onclick="wbkReviewStep(1)" ${idx >= total - 1 ? 'disabled' : ''}>下一词 (Next) →</button>
   </div>`;
 
-  openGenericSheet(`📖 Word Book 卡片复习 (${idx + 1}/${total})`, headerBar + mainContent + footerBar, [
+  openGenericSheet(`Word Book 卡片复习 (${idx + 1}/${total})`, headerBar + mainContent + footerBar, [
     { text: '结束复习返回列表', cls: 'primary', onclick: () => openQuizWordBook() }
   ]);
 }
@@ -2885,7 +2955,7 @@ function markWordBookReviewItem(id, result) {
   if (wbkReviewSession.index < wbkReviewSession.total - 1) {
     wbkReviewStep(1);
   } else {
-    toast('🎉 当前卡片队列已刷完！');
+    toast('当前队列已刷完');
     openQuizWordBook();
   }
 }
@@ -2897,7 +2967,7 @@ function openAddWordBookDialog(defaultText = '', defaultExample = '', defaultSou
   const subjOpts = Object.keys(customSubjects).map(k => `<option value="${k}" ${k === (defaultSubj || appState.currentSubject) ? 'selected' : ''}>${esc(customSubjects[k].label)}</option>`).join('');
   const item = editId ? quizState.wordBook.find(x => x.id === editId) : null;
   
-  openGenericSheet(editId ? 'Edit Word Book Item (编辑生词)' : '📖 Add to Word Book (录入生词/短语)', `
+  openGenericSheet(editId ? 'Edit Word Book Item (编辑生词)' : 'Add to Word Book (录入生词/短语)', `
     <div class="field"><label style="font-weight:700;">Word / Phrase (单词或短语，自动识别)</label><input id="add_wbk_text" value="${esc(item ? item.text : defaultText)}" placeholder="e.g. abandon 或 depends on careful planning"/></div>
     <div class="field"><label style="font-weight:700;">Meaning (中文/释义)</label><input id="add_wbk_mean" value="${esc(item ? item.meaning : '')}" placeholder="e.g. 放弃；取决于周密的计划"/></div>
     <div class="field"><label style="font-weight:700;">Example (上下文例句)</label><textarea id="add_wbk_ex" rows="2" placeholder="e.g. The success of the project depends on careful planning.">${esc(item ? item.example : defaultExample)}</textarea></div>
@@ -2907,15 +2977,15 @@ function openAddWordBookDialog(defaultText = '', defaultExample = '', defaultSou
     </div>
     <div style="display:flex;gap:14px;margin-top:8px;padding:10px;background:var(--bg-elev);border-radius:var(--radius-sm);align-items:center;">
       <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-weight:600;font-size:13px;color:#A2845E;">
-        <input type="checkbox" id="add_wbk_hl" ${item && item.highlight ? 'checked' : (!item && defaultText ? 'checked' : '')}/> 🖌 设为浅棕色高亮 (Light Brown Highlight)
+        <input type="checkbox" id="add_wbk_hl" ${item && item.highlight ? 'checked' : (!item && defaultText ? 'checked' : '')}/> 设为浅棕色高亮
       </label>
       <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-weight:600;font-size:13px;color:var(--yellow);">
-        <input type="checkbox" id="add_wbk_st" ${item && item.starred ? 'checked' : ''}/> ★ 加入重点收藏
+        <input type="checkbox" id="add_wbk_st" ${item && item.starred ? 'checked' : ''}/> 加入重点收藏
       </label>
     </div>
   `, [
     { text: 'Cancel', onclick: () => closeSheet('genericSheet') },
-    { text: editId ? 'Save Changes' : '✓ Save to Word Book', cls: 'primary', onclick: () => {
+    { text: editId ? 'Save Changes' : 'Save to Word Book', cls: 'primary', onclick: () => {
       const textVal = document.getElementById('add_wbk_text').value.trim();
       if (!textVal) { toast('请填写单词或短语！'); return; }
       const meaning = document.getElementById('add_wbk_mean').value.trim();
@@ -2950,7 +3020,7 @@ function openAddWordBookDialog(defaultText = '', defaultExample = '', defaultSou
             dateAdded: todayISO(), addedAt: Date.now(), highlight, starred,
             srsBox: 0, srsNext: Date.now(), srsReviews: 0, srsLapses: 0
           });
-          toast('✓ 已存入 Word Book 生词本: ' + textVal);
+          toast('已存入: ' + textVal);
         }
       }
       saveQuiz();
@@ -2976,7 +3046,7 @@ function addSelectedToWordBook(qId) {
     if (defaultExample.length > 160) defaultExample = defaultExample.slice(0, 160) + '...';
   }
   if (!selText) {
-    toast('💡 请先用鼠标或手指拖选/划选需要记忆的生词或词组，再点击存入！已为您打开手动录入框。');
+    toast('请先划选生词，再点击存入。已打开手动录入框。');
   } else {
     toast(`✓ 已捕获选中生词/短语: "${selText}"`);
   }
@@ -3132,7 +3202,7 @@ function openQuizWrongBook(idx = 0, filter = wbFilter) {
       <div style="font-size:14px;color:var(--ink-secondary);line-height:1.5;">${esc(w.explanation || 'No explanation provided.')}</div>
       <div class="explain-actions" style="margin-top:12px;padding-top:10px;border-top:1px dashed var(--line);display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
         <span style="font-size:11px;color:var(--ink-tertiary);font-weight:600;">Answer Collections (解析收藏):</span>
-        <button class="apple-btn small primary" style="font-weight:700;" onclick="addSelectedToWordBook('${w.qId || w.id}')">📖 + Add Selection (选中加入生词本)</button>
+        <button class="apple-btn small primary" style="font-weight:700;" onclick="addSelectedToWordBook('${w.qId || w.id}')">+ Add Selection (选中加入生词本)</button>
         <button class="apple-btn small" onclick="openAddWordBookDialog('', '', 'Wrong Book Q#${w.qId || w.id}', '${appState.currentSubject}')">+ Manual Add</button>
       </div>
     </div>`;
@@ -3525,8 +3595,7 @@ function renderStudyResources(container) {
   html += renderModResources(subj);
 
   container.innerHTML = html;
-  // Initialize subtask drag after DOM is ready
-  requestAnimationFrame(() => { initExDrag(); });
+  requestAnimationFrame(() => { initExDrag(); initResDrag(); });
 }
 
 function renderModExercises(subj) {
@@ -3554,7 +3623,7 @@ function renderModExercises(subj) {
           </div>
           <div style="flex:1;min-width:0;">
             <div style="font-size:13px;font-weight:600;${item.completed?'text-decoration:line-through;color:var(--ink-tertiary);':''}">${esc(item.title)}</div>
-            <div style="font-size:11px;color:var(--ink-tertiary);margin-top:2px;">📖 Progress</div>
+            <div style="font-size:11px;color:var(--ink-tertiary);margin-top:2px;">Progress</div>
           </div>
           <span class="lr-pct-badge">${pct}%</span>
           <button class="apple-btn small" onclick="deleteLearningItem('${item.id}')" style="padding:2px 6px;font-size:11px;">Del</button>
@@ -3635,7 +3704,7 @@ function renderModResources(subj) {
       </div>
       <button class="apple-btn primary" onclick="openResourceModal('${subj}')">+ Add Resource</button>
     </div>
-    ${displayed.length ? `<div class="resource-grid">${displayed.map(r => resourceCard(r)).join('')}</div>` : `<div class="empty-state">No resources</div>`}
+    ${displayed.length ? `<div class="resource-grid" id="resDragList_${subj||'all'}" style="display:flex;flex-direction:column;gap:0;">${displayed.map(r => resourceCard(r)).join('')}</div>` : `<div class="empty-state">No resources</div>`}
   </div>`;
 }
 // ================================================================
@@ -3838,6 +3907,74 @@ function exDragEnd() {
   exDragState = null;
 }
 
+// ================================================================
+//  RESOURCES DRAG & DROP (#2)
+// ================================================================
+let resDragState = null;
+function initResDrag() {
+  document.querySelectorAll('[id^="resDragList_"]').forEach(list => {
+    list.querySelectorAll('.res-card.subtask-draggable').forEach(item => {
+      item.addEventListener('pointerdown', resPointerDown, { passive: false });
+    });
+  });
+}
+function resPointerDown(e) {
+  if (e.target.closest('button,input,select,.res-check')) return;
+  const item = e.currentTarget;
+  const startX = e.clientX, startY = e.clientY;
+  let timer = setTimeout(() => resDragStart(item), 380);
+  const onMove = me => {
+    if (!resDragState && (Math.abs(me.clientX-startX)>8||Math.abs(me.clientY-startY)>8)) clearTimeout(timer);
+    if (resDragState) { if(me.cancelable) try{me.preventDefault();}catch(_){} resDragMove(me); }
+  };
+  const onUp = () => {
+    clearTimeout(timer);
+    window.removeEventListener('pointermove', onMove);
+    window.removeEventListener('pointerup', onUp);
+    if (resDragState) resDragEnd();
+  };
+  window.addEventListener('pointermove', onMove, { passive: false });
+  window.addEventListener('pointerup', onUp);
+}
+function resDragStart(item) {
+  if (window.getSelection) try{window.getSelection().removeAllRanges();}catch(_){}
+  if (navigator.vibrate) try{navigator.vibrate(40);}catch(_){}
+  document.body.style.userSelect='none'; document.body.style.webkitUserSelect='none';
+  resDragState = { item };
+  item.classList.add('st-is-dragging');
+  toast('⠿ 长按拖拽排序');
+}
+function resDragMove(e) {
+  if (!resDragState) return;
+  const { item } = resDragState;
+  const list = item.closest('[id^="resDragList_"]'); if (!list) return;
+  list.querySelectorAll('.res-card.subtask-draggable').forEach(sib => {
+    if (sib === item) return;
+    const r = sib.getBoundingClientRect();
+    if (e.clientY >= r.top && e.clientY <= r.bottom) {
+      sib.classList.add('st-drag-over');
+      resDragState.overItem = { el: sib, above: e.clientY < r.top + r.height / 2 };
+    } else sib.classList.remove('st-drag-over');
+  });
+}
+function resDragEnd() {
+  if (!resDragState) return;
+  const { item, overItem } = resDragState;
+  item.classList.remove('st-is-dragging');
+  if (overItem) {
+    overItem.el.classList.remove('st-drag-over');
+    const list = item.closest('[id^="resDragList_"]');
+    if (list) { if (overItem.above) list.insertBefore(item, overItem.el); else overItem.el.after(item); }
+    Array.from(list.querySelectorAll('.res-card[data-resid]')).forEach((el, idx) => {
+      const res = resources.find(x => x.id === el.dataset.resid); if (res) res.resOrder = idx;
+    });
+    saveResState();
+  }
+  document.body.style.userSelect=''; document.body.style.webkitUserSelect='';
+  resDragState = null;
+}
+
+// RES FILTER BAR
 function renderResFilterBar() {
   return `<div class="res-filter-bar" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:18px;padding:12px 16px;background:var(--bg-elev);border:1px solid var(--line);border-radius:var(--radius);">
     <div style="display:flex;align-items:center;gap:6px;"><label style="font-size:12px;font-weight:700;color:var(--ink-secondary);">Subject</label>
@@ -3873,9 +4010,10 @@ function resourceCard(r) {
   const statusColor = isDone?'var(--green)':isNotStarted?'var(--orange)':'var(--ink-secondary)';
   const statusBg = isDone?'rgba(48,209,88,0.1)':isNotStarted?'rgba(255,159,10,0.1)':'var(--bg-elev)';
 
-  return `<div class="res-card ${isDone?'completed':''}" data-id="${r.id}" style="margin-bottom:8px;padding:14px;background:var(--bg-elev);border:1px solid var(--line);border-radius:var(--radius-sm);">
+  return `<div class="res-card subtask-draggable ${isDone?'completed':''}" data-resid="${r.id}" style="margin-bottom:8px;padding:14px;background:var(--bg-elev);border:1px solid var(--line);border-radius:var(--radius-sm);touch-action:none;">
     <div class="res-top" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
       <div class="res-title-wrap" style="display:flex;align-items:center;gap:10px;">
+        <div class="st-drag-grip" title="长按拖拽排序"><span></span><span></span><span></span></div>
         <div class="res-check ${isDone?'checked':''}" onclick="toggleResourceStatus('${r.id}')">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5L19 7"/></svg>
         </div>
@@ -4689,7 +4827,7 @@ function transferHighlightToWordBook(hid) {
       dateAdded: todayISO(), addedAt: Date.now(), highlight: true, starred: false,
       srsBox: 0, srsNext: Date.now(), srsReviews: 0, srsLapses: 0
     });
-    toast(`✓ 已转入 Word Book 生词本并设为高亮: "${textVal}"`);
+    toast(`已高亮并存入生词本: "${textVal}"`);
   }
   saveQuiz();
   renderSharedStats();
