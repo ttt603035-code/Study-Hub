@@ -258,11 +258,45 @@ textarea { resize: vertical; }
   flex-wrap: wrap;
   margin-bottom: 16px;
 }
+.section-pills-wrap {
+  position: relative;
+  flex: 1 1 100%;
+  min-width: 0;
+}
+.section-pills-wrap::before,
+.section-pills-wrap::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 22px;
+  pointer-events: none;
+  z-index: 2;
+  opacity: 0;
+  transition: opacity 0.18s ease;
+}
+.section-pills-wrap::before {
+  left: 0;
+  background: linear-gradient(to right, var(--bg), rgba(255,255,255,0));
+}
+.section-pills-wrap::after {
+  right: 0;
+  background: linear-gradient(to left, var(--bg), rgba(255,255,255,0));
+}
+.section-pills-wrap.show-left::before,
+.section-pills-wrap.show-right::after {
+  opacity: 1;
+}
+.section-pills-wrap.has-overflow .pill:not(.active) {
+  opacity: 0.92;
+}
 .section-pills {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
   flex: 1;
+  min-width: 0;
+  scroll-padding-inline: 6px;
 }
 .pill {
   display: inline-flex;
@@ -278,9 +312,17 @@ textarea { resize: vertical; }
   cursor: pointer;
   user-select: none;
   transition: all 0.12s ease;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
 }
 .pill:hover { background: var(--bg-card-hover); color: var(--ink); }
-.pill.active { background: var(--accent); color: #FFFFFF; border-color: var(--accent); }
+.pill.active {
+  background: var(--accent);
+  color: #FFFFFF;
+  border-color: var(--accent);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+}
 .pill .pill-act { opacity: 0.5; font-size: 10px; padding: 0 3px; border-radius: 4px; }
 .pill .pill-act:hover { opacity: 1; }
 .pill.add { background: transparent; border: 1px dashed var(--ink-faint); color: var(--ink-tertiary); }
@@ -571,13 +613,37 @@ textarea { resize: vertical; }
   background: var(--bg-card);
   border: 1px solid var(--line);
   border-radius: var(--radius);
-  padding: 16px;
-  transition: all 0.15s ease;
+  padding: 13px 14px;
+  transition: transform 0.18s cubic-bezier(0.25, 1, 0.5, 1), box-shadow 0.18s ease, background-color 0.18s ease, border-color 0.18s ease;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
+  height: auto;
+  min-height: 0;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+  will-change: transform, box-shadow, background-color;
 }
-.res-card:hover { border-color: var(--ink-faint); transform: translateY(-1px); }
+.res-card:active {
+  transform: scale(0.985);
+  background: var(--bg-card-hover);
+  box-shadow: 0 1px 10px rgba(0,0,0,0.08);
+  border-color: var(--ink-faint);
+}
+@media (hover: hover) and (pointer: fine) {
+  .res-card:hover {
+    border-color: var(--ink-faint);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+  }
+}
+.resource-list-compact {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.resource-list-compact .res-card {
+  margin-bottom: 0;
+}
 .res-card.completed { opacity: 0.7; }
 .res-card.completed .res-title { text-decoration: line-through; color: var(--ink-tertiary); }
 .res-card::before {
@@ -603,7 +669,14 @@ textarea { resize: vertical; }
 .res-check.checked { background: var(--green); border-color: var(--green); }
 .res-check svg { width: 11px; height: 11px; color: #1D1D1F; opacity: 0; }
 .res-check.checked svg { opacity: 1; }
-.res-title { font-size: 13px; font-weight: 600; line-height: 1.4; flex: 1; }
+.res-title { font-size: 13px; font-weight: 650; line-height: 1.35; flex: 1; }
+.res-meta-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
 .res-tool-btn { background: none; border: none; cursor: pointer; color: var(--ink-tertiary); font-size: 12px; padding: 2px 6px; border-radius: 4px; }
 .res-tool-btn:hover { color: var(--ink); background: var(--bg-card-hover); }
 .res-tool-btn.delete:hover { color: #1D1D1F; }
@@ -611,11 +684,11 @@ textarea { resize: vertical; }
   font-size: 11px;
   color: var(--ink-tertiary);
   background: var(--bg-elev);
-  padding: 6px 8px;
+  padding: 5px 8px;
   border-radius: 6px;
   font-family: 'SF Mono', monospace;
   word-break: break-all;
-  line-height: 1.4;
+  line-height: 1.35;
 }
 .res-tags { display: flex; flex-wrap: wrap; gap: 4px; }
 .pill-tag {
@@ -630,9 +703,11 @@ textarea { resize: vertical; }
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-top: 4px;
-  padding-top: 10px;
+  margin-top: 2px;
+  padding-top: 8px;
   border-top: 1px solid var(--line);
+  gap: 8px;
+  flex-wrap: wrap;
 }
 .res-date { font-size: 10px; color: var(--ink-tertiary); }
 
@@ -647,7 +722,7 @@ textarea { resize: vertical; }
 }
 .ex-card:hover { border-color: var(--ink-faint); }
 .ex-card.pinned { border-color: #999; }
-.ex-row { display: flex; align-items: center; gap: 10px; padding: 14px 16px; }
+.ex-row { display: flex; align-items: center; gap: 10px; padding: 12px 14px; }
 .ex-check {
   width: 18px; height: 18px;
   border-radius: 5px;
@@ -699,7 +774,7 @@ textarea { resize: vertical; }
 .subtasks-area {
   background: var(--bg-elev);
   border-top: 1px solid var(--line);
-  padding: 10px 16px 12px 46px;
+  padding: 8px 14px 10px 42px;
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -1157,7 +1232,7 @@ textarea { resize: vertical; }
   user-select: none;
   -webkit-user-select: none;
   -webkit-touch-callout: none;
-  touch-action: none;
+  touch-action: pan-y;
   border-radius: var(--radius-sm);
   transition: box-shadow 0.18s ease, transform 0.18s cubic-bezier(0.25,1,0.5,1);
   position: relative;
@@ -1185,6 +1260,7 @@ textarea { resize: vertical; }
   flex-shrink: 0;
   opacity: 0.35;
   cursor: grab;
+  touch-action: none;
   transition: opacity 0.15s ease;
 }
 .st-drag-grip:hover { opacity: 0.7; }
@@ -1209,10 +1285,10 @@ textarea { resize: vertical; }
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 12px 14px;
+  padding: 11px 13px;
 }
 .lr-item-body {
-  padding: 10px 14px 13px 14px;
+  padding: 9px 13px 11px 13px;
   border-top: 1px solid var(--line-light);
   background: var(--bg-elev);
   display: flex;
@@ -1566,6 +1642,44 @@ img, svg, video, canvas, iframe, table, pre, code {
     padding: 20px 20px 72px;
   }
 
+  .section-pills-wrap {
+    width: 100%;
+    flex: 0 0 100%;
+  }
+
+  .section-pills {
+    width: 100%;
+    flex: 0 0 100%;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 0 6px 4px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    scroll-snap-type: x mandatory;
+    overscroll-behavior-x: contain;
+  }
+
+  .section-pills::-webkit-scrollbar {
+    display: none;
+  }
+
+  .section-pills .pill {
+    flex: 0 0 auto;
+    max-width: min(46vw, 280px);
+    white-space: normal;
+    line-height: 1.35;
+    align-items: flex-start;
+  }
+
+  .section-pills .pill > span:first-child {
+    word-break: break-word;
+  }
+
+  .section-pills .pill.add {
+    min-width: max-content;
+  }
+
   .res-stats-row,
   .score-overview-grid,
   .resource-grid {
@@ -1709,6 +1823,51 @@ img, svg, video, canvas, iframe, table, pre, code {
 
   .content {
     padding: 16px 14px 64px;
+  }
+
+  .quiz-toolbar {
+    align-items: flex-start;
+  }
+
+  .section-pills-wrap {
+    width: 100%;
+    flex: 0 0 100%;
+  }
+
+  .section-pills-wrap::before,
+  .section-pills-wrap::after {
+    width: 26px;
+  }
+
+  .section-pills {
+    width: 100%;
+    flex: 0 0 100%;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 0 6px 4px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .section-pills::-webkit-scrollbar {
+    display: none;
+  }
+
+  .section-pills .pill {
+    flex: 0 0 auto !important;
+    max-width: min(78vw, 280px);
+    white-space: normal;
+    line-height: 1.35;
+    align-items: flex-start;
+  }
+
+  .section-pills .pill > span:first-child {
+    word-break: break-word;
+  }
+
+  .section-pills .pill.add {
+    min-width: max-content;
   }
 
   .quiz-tabs,
@@ -2437,7 +2596,7 @@ function renderQuizHub(container) {
 
   // Section Pills
   html += `<div class="quiz-toolbar">
-    <div class="section-pills" id="sectionPills">${renderSectionPillsHTML()}</div>
+    <div class="section-pills-wrap" id="sectionPillsWrap"><div class="section-pills" id="sectionPills">${renderSectionPillsHTML()}</div></div>
     <button class="apple-btn" style="font-weight:600;" onclick="openQuizWordBook()">Word Book (${quizState.wordBook.length})</button>
     <button class="apple-btn" onclick="openQuizSynonyms()">Synonyms (${quizState.synonymLibrary.length})</button>
     <button class="apple-btn" onclick="openQuizWrongBook()">Wrong Book (${quizState.wrongBook.length})</button>
@@ -2471,6 +2630,8 @@ function renderQuizHub(container) {
 
   container.innerHTML = html;
 
+  initSectionPillsMask();
+
   // Bind reading events
   bindReadingEvents();
 }
@@ -2496,6 +2657,24 @@ function renderSectionPillsHTML() {
       <span class="pill-act" onclick="event.stopPropagation();deletePassage('${p.id}')">×</span>
     </div>`;
   }).join('') + `<div class="pill add" onclick="addPassage()">+ New Section</div>`;
+}
+
+function initSectionPillsMask() {
+  const wrap = document.getElementById('sectionPillsWrap');
+  const pills = document.getElementById('sectionPills');
+  if (!wrap || !pills) return;
+
+  const updateMask = () => {
+    const maxScroll = Math.max(0, pills.scrollWidth - pills.clientWidth);
+    wrap.classList.toggle('show-left', pills.scrollLeft > 4);
+    wrap.classList.toggle('show-right', pills.scrollLeft < maxScroll - 4);
+    wrap.classList.toggle('has-overflow', maxScroll > 6);
+  };
+
+  pills.removeEventListener('scroll', pills._maskHandler || (() => {}));
+  pills._maskHandler = updateMask;
+  pills.addEventListener('scroll', updateMask, { passive: true });
+  requestAnimationFrame(updateMask);
 }
 
 function switchSection(id) { quizState.currentPassageId = id; saveQuiz(); render(); }
@@ -4309,7 +4488,7 @@ function renderModResources(subj) {
       </div>
       <button class="apple-btn primary" onclick="openResourceModal('${subj}')">+ Add Resource</button>
     </div>
-    ${displayed.length ? `<div class="resource-grid" id="resDragList_${subj||'all'}" style="display:flex;flex-direction:column;gap:0;">${displayed.map(r => resourceCard(r)).join('')}</div>` : `<div class="empty-state">No resources</div>`}
+    ${displayed.length ? `<div class="resource-grid resource-list-compact" id="resDragList_${subj||'all'}">${displayed.map(r => resourceCard(r)).join('')}</div>` : `<div class="empty-state">No resources</div>`}
   </div>`;
 }
 // ================================================================
@@ -4433,22 +4612,31 @@ let exDragState = null;
 function initExDrag() {
   const lists = document.querySelectorAll('[id^="exUnifiedList_"]');
   lists.forEach(list => {
-    list.querySelectorAll('.ex-unified-item').forEach(item => {
-      item.addEventListener('pointerdown', exPointerDown, { passive: false });
+    list.querySelectorAll('.st-drag-grip').forEach(grip => {
+      grip.onpointerdown = exPointerDown;
     });
   });
 }
 
 function exPointerDown(e) {
-  if (e.target.closest('button,input,select,.st-check,.ex-check')) return;
-  const item = e.currentTarget;
+  if (!e.currentTarget.classList.contains('st-drag-grip')) return;
+  const item = e.currentTarget.closest('.ex-unified-item');
+  if (!item) return;
   const startX = e.clientX, startY = e.clientY;
-  let timer = setTimeout(() => exDragStart(item), 380);
+  let timer = setTimeout(() => exDragStart(item), 460);
 
   const onMove = me => {
     const dx = Math.abs(me.clientX - startX), dy = Math.abs(me.clientY - startY);
-    if (!exDragState && (dx > 8 || dy > 8)) { clearTimeout(timer); return; }
-    if (exDragState) { if (me.cancelable) try { me.preventDefault(); } catch(_){} exDragMove(me); }
+    if (!exDragState && (dx > 6 || dy > 6)) {
+      clearTimeout(timer);
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', onUp);
+      return;
+    }
+    if (exDragState) {
+      if (me.cancelable) try { me.preventDefault(); } catch(_){}
+      exDragMove(me);
+    }
   };
   const onUp = () => {
     clearTimeout(timer);
@@ -4518,18 +4706,25 @@ function exDragEnd() {
 let resDragState = null;
 function initResDrag() {
   document.querySelectorAll('[id^="resDragList_"]').forEach(list => {
-    list.querySelectorAll('.res-card.subtask-draggable').forEach(item => {
-      item.addEventListener('pointerdown', resPointerDown, { passive: false });
+    list.querySelectorAll('.st-drag-grip').forEach(grip => {
+      grip.onpointerdown = resPointerDown;
     });
   });
 }
 function resPointerDown(e) {
-  if (e.target.closest('button,input,select,.res-check')) return;
-  const item = e.currentTarget;
+  if (!e.currentTarget.classList.contains('st-drag-grip')) return;
+  const item = e.currentTarget.closest('.res-card.subtask-draggable');
+  if (!item) return;
   const startX = e.clientX, startY = e.clientY;
-  let timer = setTimeout(() => resDragStart(item), 380);
+  let timer = setTimeout(() => resDragStart(item), 460);
   const onMove = me => {
-    if (!resDragState && (Math.abs(me.clientX-startX)>8||Math.abs(me.clientY-startY)>8)) clearTimeout(timer);
+    const dx = Math.abs(me.clientX - startX), dy = Math.abs(me.clientY - startY);
+    if (!resDragState && (dx > 6 || dy > 6)) {
+      clearTimeout(timer);
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', onUp);
+      return;
+    }
     if (resDragState) { if(me.cancelable) try{me.preventDefault();}catch(_){} resDragMove(me); }
   };
   const onUp = () => {
@@ -4614,27 +4809,36 @@ function resourceCard(r) {
   const statusText = isDone?'Completed':isNotStarted?`Plan: ${r.startDate||'Not set'}`:'In Progress';
   const statusColor = isDone?'var(--green)':isNotStarted?'var(--orange)':'var(--ink-secondary)';
   const statusBg = isDone?'rgba(48,209,88,0.1)':isNotStarted?'rgba(255,159,10,0.1)':'var(--bg-elev)';
+  const subj = customSubjects[r.subject];
+  const ext = (r.path || '').split('.').pop().toUpperCase();
+  const typeLabel = (ext && ext !== (r.path || '')) ? ext : ((r.tags && r.tags[0]) || 'Resource');
 
-  return `<div class="res-card subtask-draggable ${isDone?'completed':''}" data-resid="${r.id}" style="margin-bottom:8px;padding:14px;background:var(--bg-elev);border:1px solid var(--line);border-radius:var(--radius-sm);touch-action:none;">
-    <div class="res-top" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-      <div class="res-title-wrap" style="display:flex;align-items:center;gap:10px;">
-        <div class="st-drag-grip" title="长按拖拽排序"><span></span><span></span><span></span></div>
+  return `<div class="res-card compact subtask-draggable ${isDone?'completed':''}" data-resid="${r.id}" style="background:var(--bg-elev);border:1px solid var(--line);border-radius:var(--radius-sm);">
+    <div class="res-top">
+      <div class="res-title-wrap" style="align-items:flex-start;">
+        <div class="st-drag-grip" title="长按拖拽手柄排序"><span></span><span></span><span></span></div>
         <div class="res-check ${isDone?'checked':''}" onclick="toggleResourceStatus('${r.id}')">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5L19 7"/></svg>
         </div>
-        <div class="res-title" style="font-size:16px;font-weight:700;color:var(--ink);">${esc(r.title)}</div>
+        <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:6px;">
+          <div class="res-title" style="font-size:15px;font-weight:700;color:var(--ink);">${esc(r.title)}</div>
+          <div class="res-path">${esc(r.path||'—')}</div>
+        </div>
       </div>
-      <div style="display:flex;gap:4px">
+      <div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end;">
         <button class="apple-btn small" onclick="openEditResourceModal('${r.id}')">Edit</button>
         <button class="res-tool-btn delete" onclick="deleteResource('${r.id}')">Del</button>
       </div>
     </div>
-    <div class="res-path" style="font-size:12px;color:var(--ink-tertiary);margin-bottom:8px;">${esc(r.path||'—')}</div>
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-      <span style="font-size:11px;font-weight:700;color:${statusColor};background:${statusBg};padding:2px 8px;border-radius:6px">${statusText}</span>
-      <div class="res-tags">${(r.tags||[]).map(t=>`<span class="pill-tag">${esc(t)}</span>`).join('')}</div>
+    <div class="res-meta-row">
+      <div class="res-tags">
+        ${subj ? `<span class="pill-tag" style="background:${subj.tint};color:${subj.color};">${esc(subj.label)}</span>` : ''}
+        <span class="pill-tag">${esc(typeLabel)}</span>
+        <span style="font-size:11px;font-weight:700;color:${statusColor};background:${statusBg};padding:2px 8px;border-radius:6px">${statusText}</span>
+      </div>
+      <div class="res-tags">${(r.tags||[]).slice(0,3).map(t=>`<span class="pill-tag">${esc(t)}</span>`).join('')}</div>
     </div>
-    <div class="res-bottom" style="display:flex;justify-content:space-between;align-items:center;border-top:1px dashed var(--line);padding-top:8px;font-size:11px;color:var(--ink-tertiary);">
+    <div class="res-bottom" style="border-top:1px dashed var(--line);font-size:11px;color:var(--ink-tertiary);">
       <span class="res-date">Added ${r.createdAt}</span>
       <button class="apple-btn small" onclick="alert('Open: ${esc(r.path||'')}')">Open</button>
     </div>
@@ -5420,11 +5624,13 @@ function handleResponsiveViewportChange() {
   if (isMobileViewport()) {
     sidebarCollapsed = true;
     initSidebarState(true);
+    initSectionPillsMask();
     return;
   }
   const stored = localStorage.getItem('study_sidebar_collapsed_pro');
   sidebarCollapsed = stored !== null ? JSON.parse(stored) : false;
   initSidebarState();
+  initSectionPillsMask();
 }
 
 function deleteHighlight(hid) {
@@ -5535,5 +5741,5 @@ window.addEventListener('resize', handleResponsiveViewportChange);
 window.addEventListener('orientationchange', handleResponsiveViewportChange);
 render();
 </script>
-</body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a15eac78aab49d95',t:'MTc4MzE3MzgxMA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
