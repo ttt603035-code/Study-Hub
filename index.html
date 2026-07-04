@@ -444,6 +444,16 @@ textarea { resize: vertical; }
 .sel-menu button:hover { background: rgba(255,255,255,0.1); }
 .sel-menu .swatch { display: inline-block; width: 10px; height: 10px; border-radius: 50%; }
 
+/* ====== QUIZ WORD SELECTION — Apple Books style ====== */
+.q-selectable { user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;cursor:text; }
+.q-word-token { display:inline;border-radius:3px;transition:background 0.1s ease;padding:0 1px;cursor:pointer; }
+.q-word-token.qs-selected { background:rgba(162,132,94,0.28);border-radius:3px; }
+.qs-float-menu { position:fixed;z-index:8000;background:#1D1D1F;border-radius:20px;padding:5px 6px;display:flex;gap:4px;box-shadow:0 6px 24px rgba(0,0,0,0.22);animation:floatMenuIn 0.14s cubic-bezier(0.25,1,0.5,1);pointer-events:all; }
+@keyframes floatMenuIn { from{opacity:0;transform:scale(0.88) translateY(4px)}to{opacity:1;transform:scale(1) translateY(0)} }
+.qs-float-btn { background:transparent;border:1px solid rgba(255,255,255,0.18);color:#fff;border-radius:14px;padding:5px 13px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;transition:background 0.12s ease;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',sans-serif; }
+.qs-float-btn:hover { background:rgba(255,255,255,0.14); }
+.qs-float-btn.added { background:rgba(162,132,94,0.5);border-color:#A2845E; }
+
 /* ========== STUDY RESOURCES STYLES ========== */
 .res-stats-row {
   display: grid;
@@ -1118,16 +1128,9 @@ textarea { resize: vertical; }
 }
 .mod-drag-handle { display: none !important; }
 
-/* ---- Stat card scroll-highlight ---- */
-@keyframes sectionFlash {
-  0%   { background: var(--bg-elev); box-shadow: 0 0 0 2px var(--accent); }
-  60%  { background: rgba(0,0,0,0.05); box-shadow: 0 0 0 3px var(--accent); }
-  100% { background: transparent; box-shadow: none; }
-}
-.section-highlight-flash {
-  animation: sectionFlash 1s ease forwards;
-  border-radius: var(--radius);
-}
+/* ---- Stat card scroll — no outline, clean Apple anchor feel ---- */
+.mod-section, .res-section { outline: none !important; }
+*:focus { outline: none !important; box-shadow: none !important; }
 
 /* ---- Sub-task drag & drop ---- */
 .subtask-draggable {
@@ -2079,7 +2082,14 @@ function renderQuestionsHTML() {
 function renderQuestionCard(q, num, qType) {
   const log = quizState.answerLog[q.id];
   const inWb = quizState.wrongBook.some(w => w.qId === q.id || (w.question && w.question === q.question));
-  
+
+  // Tokenise text for word selection
+  function tokenise(text, areaId) {
+    return text.replace(/([^\s\p{P}]+)/gu, (m) =>
+      `<span class="q-word-token" data-area="${areaId}" onpointerdown="qsWordDown(event,this)">${esc(m)}</span>`
+    );
+  }
+
   let html = `<div class="q-card" data-qid="${q.id}">
     <div class="q-meta">Q${num} · ${qType.toUpperCase()}${q.synonymGroup?' · '+esc(q.synonymGroup):''}</div>
     <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap;align-items:center;">
@@ -2090,7 +2100,7 @@ function renderQuestionCard(q, num, qType) {
       <button class="q-tool-btn" onclick="openAddPhraseDialog('${esc(q.question).replace(/'/g,"\'")}', '', '${esc(q.question).replace(/'/g,"\'")}', '${appState.currentSubject}')">+ Phrase</button>
       <button class="q-tool-btn" onclick="openAddSynonymDialog('${q.id}')">Syn Synonyms</button>
     </div>
-    <div class="q-text" style="font-size:15px;font-weight:600;color:var(--ink);margin-bottom:8px;">${esc(q.question)}</div>
+    <div class="q-text q-selectable" style="font-size:15px;font-weight:600;color:var(--ink);margin-bottom:8px;line-height:1.7;">${tokenise(q.question, 'q_'+q.id)}</div>
     <div class="q-options">`;
 
   q.options.forEach(opt => {
@@ -2104,11 +2114,10 @@ function renderQuestionCard(q, num, qType) {
   if (log) {
     html += `<div class="q-status ${log.correct?'ok':'err'}">${log.correct?'OK Correct':'X Wrong · Answer: '+esc(q.answer)}</div>`;
     html += `<div class="q-explain show" style="margin-top:8px;padding:12px;background:var(--bg-elev);border:1px solid var(--line);border-radius:var(--radius-sm);">
-      <div style="font-weight:700;margin-bottom:4px;font-size:13px;">Explanation (答案解析):</div>
-      <div>${esc(q.explanation||'No explanation provided.')}</div>
+      <div style="font-weight:700;margin-bottom:6px;font-size:13px;">Explanation (答案解析):</div>
+      <div class="q-selectable" style="line-height:1.8;">${tokenise(q.explanation||'No explanation provided.', 'exp_'+q.id)}</div>
       <div class="explain-actions" style="margin-top:10px;padding-top:8px;border-top:1px dashed var(--line);display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-        <span style="font-size:11px;color:var(--ink-tertiary);font-weight:600;">Answer Collections (解析收藏):</span>
-        <button class="apple-btn small primary" style="font-weight:700;" onclick="addSelectedToWordBook('${q.id}')">📖 + Add Selection (选中加入生词本)</button>
+        <span style="font-size:11px;color:var(--ink-tertiary);font-weight:600;">💡 点击或长按单词加入生词本</span>
         <button class="apple-btn small" onclick="openAddWordBookDialog('', '', 'Quiz Hub Q#${q.id}', '${appState.currentSubject}')">+ Manual Add</button>
       </div>
     </div>`;
@@ -2354,6 +2363,119 @@ function buildReadingHTML(content, hls) {
   return html;
 }
 
+// ================================================================
+//  QUIZ WORD SELECTION ENGINE (Apple Books style)
+// ================================================================
+let qsSelection = { tokens: [], anchorToken: null, floatMenu: null };
+
+function qsWordDown(e, token) {
+  if (e.button !== undefined && e.button !== 0) return;
+  e.stopPropagation();
+  if (e.cancelable) try { e.preventDefault(); } catch(_) {}
+
+  // Long press for phrase, single click for word
+  let pressTimer = null;
+  let didLong = false;
+
+  const startToken = token;
+  const area = token.dataset.area;
+  let endToken = token;
+
+  // Clear previous
+  qsClearSelection();
+
+  const onMove = me => {
+    const el = document.elementFromPoint(me.clientX, me.clientY);
+    const t = el?.closest('.q-word-token');
+    if (t && t.dataset.area === area) {
+      endToken = t;
+      qsHighlightRange(area, startToken, endToken);
+    }
+  };
+
+  const onUp = () => {
+    clearTimeout(pressTimer);
+    window.removeEventListener('pointermove', onMove);
+    window.removeEventListener('pointerup', onUp);
+    if (!didLong) {
+      qsHighlightRange(area, startToken, endToken);
+    }
+    const tokens = Array.from(document.querySelectorAll(`.q-word-token.qs-selected`));
+    if (tokens.length) qsShowFloatMenu(tokens);
+  };
+
+  pressTimer = setTimeout(() => {
+    didLong = true;
+    if (navigator.vibrate) try { navigator.vibrate(30); } catch(_) {}
+    window.addEventListener('pointermove', onMove, { passive: true });
+  }, 300);
+
+  window.addEventListener('pointerup', onUp);
+}
+
+function qsHighlightRange(area, a, b) {
+  const allTokens = Array.from(document.querySelectorAll(`.q-word-token[data-area="${area}"]`));
+  const iA = allTokens.indexOf(a), iB = allTokens.indexOf(b);
+  const lo = Math.min(iA, iB), hi = Math.max(iA, iB);
+  allTokens.forEach((t, i) => {
+    if (i >= lo && i <= hi) t.classList.add('qs-selected');
+    else t.classList.remove('qs-selected');
+  });
+}
+
+function qsClearSelection() {
+  document.querySelectorAll('.q-word-token.qs-selected').forEach(t => t.classList.remove('qs-selected'));
+  qsRemoveFloatMenu();
+}
+
+function qsRemoveFloatMenu() {
+  const old = document.getElementById('qsFloatMenu');
+  if (old) old.remove();
+}
+
+function qsShowFloatMenu(tokens) {
+  qsRemoveFloatMenu();
+  const text = tokens.map(t => t.textContent).join(' ').trim();
+  if (!text) return;
+
+  // Position above the first token
+  const rect = tokens[0].getBoundingClientRect();
+  const alreadyIn = (quizState.wordBook||[]).some(w => w.text.toLowerCase() === text.toLowerCase());
+
+  const menu = document.createElement('div');
+  menu.id = 'qsFloatMenu';
+  menu.className = 'qs-float-menu';
+  menu.style.left = Math.max(8, rect.left) + 'px';
+  menu.style.top = (rect.top - 44 + window.scrollY) + 'px';
+  menu.innerHTML = `
+    <button class="qs-float-btn${alreadyIn?' added':''}" id="qsAddBtn" onclick="qsAddToWordBook(this,'${text.replace(/'/g,"\\'")}')">
+      ${alreadyIn ? '✓ Added' : '+ Add to Word Book'}
+    </button>
+    <button class="qs-float-btn" onclick="qsClearSelection()" style="padding:5px 8px;font-size:12px;opacity:0.6;">✕</button>
+  `;
+  document.body.appendChild(menu);
+
+  // Auto-close on outside click
+  setTimeout(() => {
+    const handler = ev => {
+      if (!menu.contains(ev.target) && !ev.target.closest('.q-word-token')) {
+        qsClearSelection();
+        document.removeEventListener('pointerdown', handler);
+      }
+    };
+    document.addEventListener('pointerdown', handler);
+  }, 10);
+}
+
+function qsAddToWordBook(btn, text) {
+  const alreadyIn = (quizState.wordBook||[]).some(w => w.text.toLowerCase() === text.toLowerCase());
+  if (alreadyIn) { toast('已在生词本中: ' + text); qsClearSelection(); return; }
+  addToWordBook(text, { source: 'Quiz Hub', subject: appState.currentSubject, highlight: true });
+  btn.textContent = '✓ Added';
+  btn.classList.add('added');
+  setTimeout(() => qsClearSelection(), 900);
+}
+
 function bindReadingEvents() {
   const body = document.getElementById('readingBody');
   if (!body) return;
@@ -2549,20 +2671,23 @@ function openQuizWordBook(searchQ = wbkSearchQ, filterSubj = wbkFilterSubj, filt
   </div>`;
 
   const filterBar = `<div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center;">
-    <div style="display:flex;gap:6px;flex-wrap:wrap;">
-      <button class="apple-btn small ${wbkTab === 'all' ? 'active' : ''}" onclick="openQuizWordBook(wbkSearchQ, wbkFilterSubj, wbkSort, 'all')">全部 (${totalCount})</button>
-      <button class="apple-btn small ${wbkTab === 'due' ? 'active' : ''}" style="${wbkTab === 'due' ? 'background:var(--orange);color:#fff;font-weight:700;' : ''}" onclick="openQuizWordBook(wbkSearchQ, wbkFilterSubj, wbkSort, 'due')">今日待复习 (${dueCount})</button>
-      <button class="apple-btn small ${wbkTab === 'highlight' ? 'active' : ''}" style="${wbkTab === 'highlight' ? 'background:#A2845E;color:#fff;font-weight:700;' : ''}" onclick="openQuizWordBook(wbkSearchQ, wbkFilterSubj, wbkSort, 'highlight')">🖌 浅棕高亮 (${hlCount})</button>
-      <button class="apple-btn small ${wbkTab === 'starred' ? 'active' : ''}" style="${wbkTab === 'starred' ? 'background:var(--yellow);color:#000;font-weight:700;' : ''}" onclick="openQuizWordBook(wbkSearchQ, wbkFilterSubj, wbkSort, 'starred')">★ 收藏 (${stCount})</button>
+    <div style="display:flex;gap:4px;flex-wrap:wrap;background:var(--bg-elev);border:1px solid var(--line);border-radius:var(--radius-sm);padding:3px;">
+      <button class="res-tab-btn ${wbkTab === 'all' ? 'active' : ''}" onclick="openQuizWordBook(wbkSearchQ, wbkFilterSubj, wbkSort, 'all')">全部 (${totalCount})</button>
+      <button class="res-tab-btn ${wbkTab === 'due' ? 'active' : ''}" style="${wbkTab === 'due' ? '' : 'color:var(--ink-tertiary);'}" onclick="openQuizWordBook(wbkSearchQ, wbkFilterSubj, wbkSort, 'due')">待复习 (${dueCount})</button>
+      <button class="res-tab-btn ${wbkTab === 'highlight' ? 'active' : ''}" style="${wbkTab === 'highlight' ? 'background:#A2845E;color:#fff;' : 'color:#A2845E;'}" onclick="openQuizWordBook(wbkSearchQ, wbkFilterSubj, wbkSort, 'highlight')">🖌 高亮 (${hlCount})</button>
+      <button class="res-tab-btn ${wbkTab === 'starred' ? 'active' : ''}" onclick="openQuizWordBook(wbkSearchQ, wbkFilterSubj, wbkSort, 'starred')">★ 收藏 (${stCount})</button>
     </div>
-    <input type="text" placeholder="搜索生词/短语、释义、来源..." value="${esc(wbkSearchQ)}" style="flex:1;min-width:160px;padding:6px 10px;" oninput="openQuizWordBook(this.value, wbkFilterSubj, wbkSort, wbkTab)"/>
-    <select style="padding:6px 10px;" onchange="openQuizWordBook(wbkSearchQ, this.value, wbkSort, wbkTab)">${subjOpts}</select>
-    <select style="padding:6px 10px;" onchange="openQuizWordBook(wbkSearchQ, wbkFilterSubj, this.value, wbkTab)">
-      <option value="dateDesc" ${wbkSort==='dateDesc'?'selected':''}>按时间排序 (新→旧)</option>
-      <option value="alpha" ${wbkSort==='alpha'?'selected':''}>按字母排序 (A→Z)</option>
-      <option value="highlight" ${wbkSort==='highlight'?'selected':''}>高亮词置顶</option>
+    <div style="flex:1;min-width:160px;display:flex;align-items:center;gap:6px;background:var(--bg-card);border:1px solid var(--line);border-radius:var(--radius-sm);padding:6px 10px;">
+      <span style="font-size:13px;color:var(--ink-tertiary);">🔍</span>
+      <input type="text" placeholder="搜索生词、释义、来源…" value="${esc(wbkSearchQ)}" style="flex:1;border:none;background:transparent;font-size:13px;font-weight:500;color:var(--ink);outline:none;" oninput="openQuizWordBook(this.value, wbkFilterSubj, wbkSort, wbkTab)"/>
+    </div>
+    <select style="height:34px;padding:0 10px;font-size:13px;font-weight:600;border:1px solid var(--line);border-radius:var(--radius-sm);background:var(--bg-card);color:var(--ink);" onchange="openQuizWordBook(wbkSearchQ, this.value, wbkSort, wbkTab)">${subjOpts}</select>
+    <select style="height:34px;padding:0 10px;font-size:13px;font-weight:600;border:1px solid var(--line);border-radius:var(--radius-sm);background:var(--bg-card);color:var(--ink);" onchange="openQuizWordBook(wbkSearchQ, wbkFilterSubj, this.value, wbkTab)">
+      <option value="dateDesc" ${wbkSort==='dateDesc'?'selected':''}>最新添加</option>
+      <option value="alpha" ${wbkSort==='alpha'?'selected':''}>A → Z</option>
+      <option value="highlight" ${wbkSort==='highlight'?'selected':''}>高亮置顶</option>
     </select>
-    <button class="apple-btn primary small" style="font-weight:700;" onclick="openAddWordBookDialog('', '', '', appState.currentSubject)">+ 录入生词/短语</button>
+    <button class="apple-btn primary" style="height:34px;padding:0 14px;font-size:13px;font-weight:700;" onclick="openAddWordBookDialog('', '', '', appState.currentSubject)">+ 录入</button>
   </div>`;
 
   const listHTML = items.length ? items.map(w => {
@@ -3330,21 +3455,22 @@ function renderStudyResources(container) {
   let html = '';
 
   // Stats Row
+  const exAll = [...exercises, ...learningItems.filter(lr => !subj || lr.subject === subj)];
   html += `<div class="res-stats-row">
-    <div class="res-stat-card" style="cursor:pointer" onclick="smoothScrollToSection('mod_learning')">
-      <div class="label">Total Resources</div>
-      <div class="value">${resources.length + learningItems.length}</div>
-      <div class="sub">点击直达 Learning Resources</div>
+    <div class="res-stat-card" style="cursor:pointer" onclick="smoothScrollToSection('mod_exercises')">
+      <div class="label">Exercise Bank</div>
+      <div class="value">${exercises.filter(e=>!subj||e.subject===subj).length + learningItems.filter(lr=>!subj||lr.subject===subj).length}</div>
+      <div class="sub">点击直达 Exercise Bank</div>
     </div>
-    <div class="res-stat-card" style="cursor:pointer" onclick="smoothScrollToSection('mod_tasks')">
-      <div class="label">Pending Tasks</div>
-      <div class="value" style="color:var(--pink)">${studyTasks.filter(t=>t.status==='pending').length + exercises.filter(e=>e.status==='pending').length}</div>
-      <div class="sub">点击直达待办任务</div>
+    <div class="res-stat-card" style="cursor:pointer" onclick="smoothScrollToSection('mod_exercises')">
+      <div class="label">Pending</div>
+      <div class="value" style="color:var(--pink)">${exercises.filter(e=>(!subj||e.subject===subj)&&e.status==='pending').length + learningItems.filter(lr=>(!subj||lr.subject===subj)&&!lr.completed).length}</div>
+      <div class="sub">点击直达待办</div>
     </div>
     <div class="res-stat-card" style="cursor:pointer" onclick="smoothScrollToSection('mod_exercises')">
       <div class="label">Completed</div>
-      <div class="value" style="color:var(--green)">${studyTasks.filter(t=>t.status==='completed').length + exercises.filter(e=>e.status==='completed').length}</div>
-      <div class="sub">点击直达完成进度</div>
+      <div class="value" style="color:var(--green)">${exercises.filter(e=>(!subj||e.subject===subj)&&e.status==='completed').length + learningItems.filter(lr=>(!subj||lr.subject===subj)&&lr.completed).length}</div>
+      <div class="sub">点击直达已完成</div>
     </div>
     <div class="res-stat-card countdown">
       <div class="label" style="display:flex;justify-content:space-between;align-items:center">Countdown <button class="apple-btn small" style="font-size:10px;padding:2px 6px" onclick="openCountdownEdit()">Edit</button></div>
@@ -3394,61 +3520,92 @@ function renderStudyResources(container) {
   // Filter Bar
   html += renderResFilterBar();
 
-  // Modular Rendering: Tasks, Learning Resources, Exercise Bank, Resources
-  html += renderModLearning(subj);
-
-  const modMap = {
-    tasks: renderModTasks(subj),
-    exercises: renderModExercises(subj),
-    resources: renderModResources(subj)
-  };
-
-  modOrder.forEach(mKey => {
-    if (modMap[mKey]) html += modMap[mKey];
-  });
+  // Modular Rendering: Exercise Bank (with progress items + tasks), Resources
+  html += renderModExercises(subj);
+  html += renderModResources(subj);
 
   container.innerHTML = html;
   // Initialize subtask drag after DOM is ready
-  requestAnimationFrame(() => { initLearningDrag(); });
-}
-
-function renderModTasks(subj) {
-  let tList = studyTasks.filter(t => !subj || t.subject === subj);
-  if (resViewState.filterSubject !== 'all') tList = tList.filter(t => t.subject === resViewState.filterSubject);
-  if (resViewState.filterPriority !== 'all') tList = tList.filter(t => t.priority === resViewState.filterPriority);
-  if (resViewState.filterStatus !== 'all') tList = tList.filter(t => t.status === resViewState.filterStatus);
-  if (resViewState.filterType !== 'all' && resViewState.filterType !== 'tasks') return '';
-
-  const overdueCount = tList.filter(t => t.status !== 'completed' && checkIsOverdue(t.dueDate, false)).length;
-  return `<div class="res-section mod-section" id="mod_tasks" data-mod="tasks">
-    <div class="res-section-head" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-      <div style="display:flex;align-items:center;gap:10px">
-        <h3>Tasks <span class="count-pill">${tList.length}</span></h3>
-        ${overdueCount > 0 ? `<button class="apple-btn small danger" onclick="openOverdueModal()">! Overdue (${overdueCount})</button>` : `<span style="font-size:11px;color:var(--green);font-weight:600">OK All on track</span>`}
-      </div>
-      <button class="apple-btn primary" onclick="openTaskModal('${subj}')">+ Add Task</button>
-    </div>
-    ${tList.length ? `<div class="exercise-list">${tList.map(t => taskCard(t)).join('')}</div>` : `<div class="empty-state">No tasks in this view</div>`}
-  </div>`;
+  requestAnimationFrame(() => { initExDrag(); });
 }
 
 function renderModExercises(subj) {
-  let ex = exercises.filter(e => !subj || e.subject === subj);
-  if (resViewState.filterSubject !== 'all') ex = ex.filter(e => e.subject === resViewState.filterSubject);
-  if (resViewState.filterPriority !== 'all') ex = ex.filter(e => e.priority === resViewState.filterPriority);
-  if (resViewState.filterStatus !== 'all') ex = ex.filter(e => e.status === resViewState.filterStatus);
-  if (resViewState.filterType !== 'all' && resViewState.filterType !== 'exercises') return '';
+  // Combine Exercise Tasks + Progress Items (from learningItems), sorted by order
+  let exTasks = exercises.filter(e => !subj || e.subject === subj);
+  let lrItems = learningItems.filter(lr => !subj || lr.subject === subj);
 
-  const overdueCount = getOverdueCount();
+  // Build unified list with type tags
+  let unified = [
+    ...lrItems.map(lr => ({ ...lr, _type: 'progress' })),
+    ...exTasks.map(e => ({ ...e, _type: 'task' }))
+  ].sort((a,b) => (a.exOrder||0) - (b.exOrder||0));
+
+  const total = unified.length;
+
+  const itemsHTML = unified.map(item => {
+    if (item._type === 'progress') {
+      // Progress card (formerly learningItems)
+      const pct = item.totalPages > 0 ? Math.min(100, Math.round((item.currentPage / item.totalPages)*100)) : 0;
+      return `<div class="lr-item subtask-draggable ex-unified-item" id="exu_${item.id}" data-exuid="${item.id}" data-exutype="progress">
+        <div class="lr-item-header">
+          <div class="st-drag-grip" title="长按拖拽排序"><span></span><span></span><span></span></div>
+          <div class="st-check ${item.completed?'checked':''}" onclick="toggleLearningItem('${item.id}')" style="cursor:pointer;flex-shrink:0;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5L19 7"/></svg>
+          </div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:13px;font-weight:600;${item.completed?'text-decoration:line-through;color:var(--ink-tertiary);':''}">${esc(item.title)}</div>
+            <div style="font-size:11px;color:var(--ink-tertiary);margin-top:2px;">📖 Progress</div>
+          </div>
+          <span class="lr-pct-badge">${pct}%</span>
+          <button class="apple-btn small" onclick="deleteLearningItem('${item.id}')" style="padding:2px 6px;font-size:11px;">Del</button>
+        </div>
+        <div class="lr-item-body">
+          <div class="progress-bar"><div class="progress-fill" style="width:${pct}%;background:var(--accent)"></div></div>
+          <div class="lr-progress-row">
+            <span style="font-size:11px;font-weight:600;color:var(--ink-tertiary);white-space:nowrap;">Current page</span>
+            <div class="lr-page-ctrl">
+              <button onclick="lrAdjustPage('${item.id}',-1)">−</button>
+              <input type="number" value="${item.currentPage}" min="0" max="${item.totalPages}" onchange="lrSetPage('${item.id}',this.value)" style="width:52px;text-align:center;padding:4px 6px;border:1px solid var(--line);border-radius:6px;font-size:13px;font-weight:600;background:var(--bg-card);color:var(--ink);" />
+              <button onclick="lrAdjustPage('${item.id}',1)">＋</button>
+            </div>
+            <span style="font-size:12px;color:var(--ink-secondary);font-weight:600;">${item.currentPage} / ${item.totalPages}</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--ink-tertiary);">
+            <span>Total pages</span>
+            <input type="number" value="${item.totalPages}" min="1" onchange="lrSetTotal('${item.id}',this.value)" style="width:60px;text-align:center;padding:3px 6px;border:1px solid var(--line);border-radius:6px;font-size:12px;background:var(--bg-card);color:var(--ink);" />
+          </div>
+        </div>
+      </div>`;
+    } else {
+      // Exercise Task card
+      const e = item;
+      const sColor = customSubjects[e.subject]?.color || 'var(--ink-tertiary)';
+      return `<div class="ex-card subtask-draggable ex-unified-item ${e.status==='completed'?'completed':''}" id="exu_${e.id}" data-exuid="${e.id}" data-exutype="task" style="overflow:hidden;">
+        <div class="ex-row">
+          <div class="st-drag-grip" title="长按拖拽排序"><span></span><span></span><span></span></div>
+          <div class="ex-check ${e.status==='completed'?'checked':''}" onclick="toggleExerciseMain('${e.id}')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5L19 7"/></svg>
+          </div>
+          <div class="ex-body">
+            <div class="ex-title-row">
+              <span class="ex-title">${esc(e.name)}</span>
+              <span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:99px;background:${sColor}18;color:${sColor};">✓ Task</span>
+              ${e.dueDate?`<span class="st-due ${checkIsOverdue(e.dueDate,e.status==='completed')?'overdue':''}">${e.dueDate}</span>`:''}
+            </div>
+            ${e.note?`<div class="ex-meta">${esc(e.note)}</div>`:''}
+          </div>
+          <button class="ex-tool-btn delete" onclick="deleteExercise('${e.id}')">✕</button>
+        </div>
+      </div>`;
+    }
+  }).join('') || `<div class="empty-state">No items yet — click "+ Add" to get started</div>`;
+
   return `<div class="res-section mod-section" id="mod_exercises" data-mod="exercises">
     <div class="res-section-head" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-      <div style="display:flex;align-items:center;gap:10px">
-        <h3>Exercise Bank <span class="count-pill">${ex.length}</span></h3>
-        ${overdueCount > 0 ? `<button class="apple-btn small danger" onclick="openOverdueModal()">! Overdue (${overdueCount})</button>` : `<span style="font-size:11px;color:var(--green);font-weight:600">OK All on track</span>`}
-      </div>
-      <button class="apple-btn primary" onclick="openExerciseModal('${subj}')">+ Add Exercise</button>
+      <h3>Exercise Bank <span class="count-pill">${total}</span></h3>
+      <button class="apple-btn primary" onclick="openExercisePicker('${subj||''}')">+ Add</button>
     </div>
-    ${ex.length ? `<div class="exercise-list">${ex.map(e => exerciseCard(e)).join('')}</div>` : `<div class="empty-state">No exercises</div>`}
+    <div class="ex-unified-list" id="exUnifiedList_${subj||'all'}" style="display:flex;flex-direction:column;gap:8px;">${itemsHTML}</div>
   </div>`;
 }
 
@@ -3488,81 +3645,28 @@ function smoothScrollToSection(sectionId) {
   const el = document.getElementById(sectionId);
   if (!el) return;
   el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  setTimeout(() => {
-    el.classList.add('section-highlight-flash');
-    setTimeout(() => el.classList.remove('section-highlight-flash'), 1100);
-  }, 350);
 }
 
 // ================================================================
-//  LEARNING RESOURCES MODULE
+//  LEARNING ITEM HELPERS (now inside Exercise Bank)
 // ================================================================
-function renderModLearning(subj) {
-  let items = learningItems.filter(lr => !subj || lr.subject === subj);
-  items = items.slice().sort((a,b) => (a.order||0)-(b.order||0));
-
-  const itemsHTML = items.length ? items.map(lr => {
-    const pct = lr.totalPages > 0 ? Math.min(100, Math.round((lr.currentPage / lr.totalPages) * 100)) : 0;
-    return `<div class="lr-item subtask-draggable" id="lr_${lr.id}" data-lrid="${lr.id}">
-      <div class="lr-item-header">
-        <div class="st-drag-grip" title="长按拖拽排序">
-          <span></span><span></span><span></span>
-        </div>
-        <div class="st-check ${lr.completed?'checked':''}" onclick="toggleLearningItem('${lr.id}')" style="cursor:pointer;flex-shrink:0;">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5L19 7"/></svg>
-        </div>
-        <span style="flex:1;font-size:13px;font-weight:600;color:var(--ink);${lr.completed?'text-decoration:line-through;color:var(--ink-tertiary);':''}">${esc(lr.title)}</span>
-        <span class="lr-pct-badge">${pct}%</span>
-        <button class="apple-btn small" onclick="deleteLearningItem('${lr.id}')" style="padding:2px 6px;font-size:11px;">Del</button>
-      </div>
-      <div class="lr-item-body">
-        <div class="progress-bar"><div class="progress-fill" style="width:${pct}%;background:var(--accent)"></div></div>
-        <div class="lr-progress-row">
-          <span style="font-size:11px;font-weight:600;color:var(--ink-tertiary);white-space:nowrap;">Current page</span>
-          <div class="lr-page-ctrl">
-            <button onclick="lrAdjustPage('${lr.id}',-1)">−</button>
-            <input type="number" value="${lr.currentPage}" min="0" max="${lr.totalPages}" onchange="lrSetPage('${lr.id}',this.value)" style="width:52px;text-align:center;padding:4px 6px;border:1px solid var(--line);border-radius:6px;font-size:13px;font-weight:600;background:var(--bg-card);color:var(--ink);" />
-            <button onclick="lrAdjustPage('${lr.id}',1)">＋</button>
-          </div>
-          <span style="font-size:12px;color:var(--ink-secondary);font-weight:600;">${lr.currentPage} / ${lr.totalPages}</span>
-        </div>
-        <div class="lr-total-row">
-          <span>Total pages</span>
-          <input type="number" value="${lr.totalPages}" min="1" onchange="lrSetTotal('${lr.id}',this.value)" style="width:60px;text-align:center;padding:3px 6px;border:1px solid var(--line);border-radius:6px;font-size:12px;background:var(--bg-card);color:var(--ink);" />
-        </div>
-      </div>
-    </div>`;
-  }).join('') : `<div class="empty-state">No learning resources. Click "+ Add" to get started.</div>`;
-
-  return `<div class="res-section mod-section" id="mod_learning">
-    <div class="res-section-head" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-      <h3>Learning Resources <span class="count-pill">${items.length}</span></h3>
-      <button class="apple-btn primary" onclick="openAddLearningModal('${subj}')">+ Add</button>
-    </div>
-    <div class="lr-list" id="lrList_${subj||'all'}" style="display:flex;flex-direction:column;gap:8px;">${itemsHTML}</div>
-  </div>`;
-}
-
 function toggleLearningItem(id) {
   const lr = learningItems.find(x=>x.id===id); if(!lr) return;
   lr.completed = !lr.completed;
   if (lr.completed && lr.totalPages > 0) lr.currentPage = lr.totalPages;
   saveLearning(); render();
 }
-
 function deleteLearningItem(id) {
-  if (!confirm('Delete this learning resource?')) return;
+  if (!confirm('Delete this item?')) return;
   learningItems = learningItems.filter(x=>x.id!==id);
   saveLearning(); render();
 }
-
 function lrAdjustPage(id, delta) {
   const lr = learningItems.find(x=>x.id===id); if(!lr) return;
-  lr.currentPage = Math.max(0, Math.min(lr.totalPages||9999, (lr.currentPage||0) + delta));
+  lr.currentPage = Math.max(0, Math.min(lr.totalPages||9999, (lr.currentPage||0)+delta));
   if (lr.totalPages > 0 && lr.currentPage >= lr.totalPages) lr.completed = true;
   saveLearning(); render();
 }
-
 function lrSetPage(id, val) {
   const lr = learningItems.find(x=>x.id===id); if(!lr) return;
   const n = Math.max(0, Math.min(lr.totalPages||9999, parseInt(val)||0));
@@ -3570,18 +3674,37 @@ function lrSetPage(id, val) {
   if (lr.totalPages > 0 && n >= lr.totalPages) lr.completed = true;
   saveLearning(); render();
 }
-
 function lrSetTotal(id, val) {
   const lr = learningItems.find(x=>x.id===id); if(!lr) return;
-  const n = Math.max(1, parseInt(val)||1);
-  lr.totalPages = n;
-  lr.currentPage = Math.min(lr.currentPage, n);
+  lr.totalPages = Math.max(1, parseInt(val)||1);
+  lr.currentPage = Math.min(lr.currentPage, lr.totalPages);
   saveLearning(); render();
 }
 
-function openAddLearningModal(subject) {
+// ================================================================
+//  EXERCISE PICKER — Apple Popover style
+// ================================================================
+function openExercisePicker(subject) {
+  openGenericSheet('Add to Exercise Bank', `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:4px 0;">
+      <div onclick="openAddProgressItem('${subject}')" style="cursor:pointer;background:var(--bg-elev);border:1px solid var(--line);border-radius:var(--radius);padding:20px 16px;text-align:center;transition:all 0.15s ease;" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--line)'">
+        <div style="font-size:28px;margin-bottom:8px;">📖</div>
+        <div style="font-size:14px;font-weight:700;color:var(--ink);margin-bottom:4px;">Exercise Progress</div>
+        <div style="font-size:11px;color:var(--ink-tertiary);line-height:1.5;">Grammar Book · Reading Book<br>Workbook · Textbook · PDF<br><em>带进度条 + 页数管理</em></div>
+      </div>
+      <div onclick="openAddExerciseTask('${subject}')" style="cursor:pointer;background:var(--bg-elev);border:1px solid var(--line);border-radius:var(--radius);padding:20px 16px;text-align:center;transition:all 0.15s ease;" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--line)'">
+        <div style="font-size:28px;margin-bottom:8px;">✅</div>
+        <div style="font-size:14px;font-weight:700;color:var(--ink);margin-bottom:4px;">Exercise Task</div>
+        <div style="font-size:11px;color:var(--ink-tertiary);line-height:1.5;">Unit · Mock Test · Practice<br>Exercise Set · 普通任务<br><em>勾选完成即可</em></div>
+      </div>
+    </div>
+  `, [{ text:'Cancel', onclick:()=>closeSheet('genericSheet') }]);
+}
+
+function openAddProgressItem(subject) {
+  closeSheet('genericSheet');
   const subjOpts = Object.keys(customSubjects).map(k=>`<option value="${k}" ${k===(subject||appState.currentSubject)?'selected':''}>${esc(customSubjects[k].label)}</option>`).join('');
-  openGenericSheet('Add Learning Resource', `
+  openGenericSheet('Add Exercise Progress', `
     <div class="field"><label>Subject</label><select id="lr_subj">${subjOpts}</select></div>
     <div class="field"><label>Title</label><input id="lr_title" placeholder="e.g. Grammar Book"/></div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
@@ -3596,118 +3719,123 @@ function openAddLearningModal(subject) {
       const total = Math.max(1, parseInt(document.getElementById('lr_total').value)||1);
       const current = Math.max(0, Math.min(total, parseInt(document.getElementById('lr_current').value)||0));
       const subjKey = document.getElementById('lr_subj').value;
-      const maxOrder = learningItems.filter(x=>x.subject===subjKey).reduce((m,x)=>Math.max(m,x.order||0), -1)+1;
-      learningItems.push({id:'lr'+Date.now(), title, subject:subjKey, completed:current>=total, currentPage:current, totalPages:total, order:maxOrder});
+      const allOrders = [...learningItems, ...exercises].map(x=>x.exOrder||0);
+      const maxOrder = allOrders.length ? Math.max(...allOrders)+1 : 0;
+      learningItems.push({id:'lr'+Date.now(), title, subject:subjKey, completed:current>=total, currentPage:current, totalPages:total, exOrder:maxOrder});
       saveLearning(); closeSheet('genericSheet'); render();
-      toast('✓ Learning resource added');
+      toast('✓ Progress item added');
+    }}
+  ]);
+}
+
+function openAddExerciseTask(subject) {
+  closeSheet('genericSheet');
+  const subjOpts = Object.keys(customSubjects).map(k=>`<option value="${k}" ${k===(subject||appState.currentSubject)?'selected':''}>${esc(customSubjects[k].label)}</option>`).join('');
+  openGenericSheet('Add Exercise Task', `
+    <div class="field"><label>Subject</label><select id="et_subj">${subjOpts}</select></div>
+    <div class="field"><label>Name</label><input id="et_name" placeholder="e.g. Unit 1, Mock Test 2"/></div>
+    <div class="field"><label>Note (optional)</label><input id="et_note" placeholder="Optional note"/></div>
+  `, [
+    {text:'Cancel', onclick:()=>closeSheet('genericSheet')},
+    {text:'Add', cls:'primary', onclick:()=>{
+      const name = document.getElementById('et_name').value.trim();
+      if (!name) { toast('Name required'); return; }
+      const subjKey = document.getElementById('et_subj').value;
+      const note = document.getElementById('et_note').value.trim();
+      const allOrders = [...learningItems, ...exercises].map(x=>x.exOrder||0);
+      const maxOrder = allOrders.length ? Math.max(...allOrders)+1 : 0;
+      exercises.push({id:'ex'+Date.now(), subject:subjKey, name, note, status:'pending', pinned:false, dueDate:'', priority:'medium', subtasks:[], exOrder:maxOrder});
+      saveResState(); closeSheet('genericSheet'); render();
+      toast('✓ Task added');
     }}
   ]);
 }
 
 // ================================================================
-//  LEARNING ITEMS SUBTASK DRAG & DROP
+//  EXERCISE BANK UNIFIED DRAG & DROP
 // ================================================================
-let lrDragState = null;
+let exDragState = null;
 
-function initLearningDrag() {
-  const lists = document.querySelectorAll('[id^="lrList_"]');
+function initExDrag() {
+  const lists = document.querySelectorAll('[id^="exUnifiedList_"]');
   lists.forEach(list => {
-    const items = list.querySelectorAll('.subtask-draggable');
-    items.forEach(item => {
-      item.addEventListener('pointerdown', lrPointerDown, { passive: false });
+    list.querySelectorAll('.ex-unified-item').forEach(item => {
+      item.addEventListener('pointerdown', exPointerDown, { passive: false });
     });
   });
 }
 
-function lrPointerDown(e) {
-  if (e.target.closest('button, input, select, .st-check')) return;
+function exPointerDown(e) {
+  if (e.target.closest('button,input,select,.st-check,.ex-check')) return;
   const item = e.currentTarget;
-  let moved = false;
-  let longPressTimer = null;
-
   const startX = e.clientX, startY = e.clientY;
+  let timer = setTimeout(() => exDragStart(item), 380);
 
-  const onMove = (me) => {
+  const onMove = me => {
     const dx = Math.abs(me.clientX - startX), dy = Math.abs(me.clientY - startY);
-    if (!lrDragState && (dx > 8 || dy > 8)) {
-      clearTimeout(longPressTimer);
-    }
-    if (lrDragState) {
-      if (me.cancelable) try { me.preventDefault(); } catch(err) {}
-      moved = true;
-      lrDragMove(me);
-    }
+    if (!exDragState && (dx > 8 || dy > 8)) { clearTimeout(timer); return; }
+    if (exDragState) { if (me.cancelable) try { me.preventDefault(); } catch(_){} exDragMove(me); }
   };
   const onUp = () => {
-    clearTimeout(longPressTimer);
+    clearTimeout(timer);
     window.removeEventListener('pointermove', onMove);
     window.removeEventListener('pointerup', onUp);
-    if (lrDragState) lrDragEnd();
+    if (exDragState) exDragEnd();
   };
-
-  longPressTimer = setTimeout(() => {
-    lrDragStart(item);
-  }, 380);
-
   window.addEventListener('pointermove', onMove, { passive: false });
   window.addEventListener('pointerup', onUp);
 }
 
-function lrDragStart(item) {
-  if (window.getSelection) try { window.getSelection().removeAllRanges(); } catch(e) {}
-  if (navigator.vibrate) try { navigator.vibrate(40); } catch(e) {}
+function exDragStart(item) {
+  if (window.getSelection) try { window.getSelection().removeAllRanges(); } catch(_){}
+  if (navigator.vibrate) try { navigator.vibrate(40); } catch(_){}
   document.body.style.userSelect = 'none';
   document.body.style.webkitUserSelect = 'none';
-  lrDragState = { item, id: item.dataset.lrid, startRect: item.getBoundingClientRect(), clone: null, overItem: null };
+  exDragState = { item };
   item.classList.add('st-is-dragging');
-  toast('⠿ 长按拖拽：上下移动排序');
+  toast('⠿ 长按拖拽排序');
 }
 
-function lrDragMove(e) {
-  if (!lrDragState) return;
-  const { item } = lrDragState;
-  const list = item.closest('[id^="lrList_"]');
+function exDragMove(e) {
+  if (!exDragState) return;
+  const { item } = exDragState;
+  const list = item.closest('[id^="exUnifiedList_"]');
   if (!list) return;
-  const siblings = Array.from(list.querySelectorAll('.subtask-draggable')).filter(el => el !== item);
-  let overItem = null;
-  siblings.forEach(sib => {
+  list.querySelectorAll('.ex-unified-item').forEach(sib => {
+    if (sib === item) return;
     const r = sib.getBoundingClientRect();
-    const mid = r.top + r.height / 2;
     if (e.clientY >= r.top && e.clientY <= r.bottom) {
-      overItem = { el: sib, above: e.clientY < mid };
       sib.classList.add('st-drag-over');
+      exDragState.overItem = { el: sib, above: e.clientY < r.top + r.height / 2 };
     } else {
       sib.classList.remove('st-drag-over');
     }
   });
-  lrDragState.overItem = overItem;
 }
 
-function lrDragEnd() {
-  if (!lrDragState) return;
-  const { item, id, overItem } = lrDragState;
+function exDragEnd() {
+  if (!exDragState) return;
+  const { item, overItem } = exDragState;
   item.classList.remove('st-is-dragging');
   if (overItem) {
     overItem.el.classList.remove('st-drag-over');
-    const list = item.closest('[id^="lrList_"]');
+    const list = item.closest('[id^="exUnifiedList_"]');
     if (list) {
       if (overItem.above) list.insertBefore(item, overItem.el);
-      else {
-        if (overItem.el.nextSibling) list.insertBefore(item, overItem.el.nextSibling);
-        else list.appendChild(item);
-      }
+      else overItem.el.after(item);
     }
-    // Persist new order
-    const allItems = Array.from(list.querySelectorAll('.subtask-draggable'));
+    // Persist new order to both arrays
+    const allItems = Array.from(list.querySelectorAll('.ex-unified-item'));
     allItems.forEach((el, idx) => {
-      const lr = learningItems.find(x => x.id === el.dataset.lrid);
-      if (lr) lr.order = idx;
+      const id = el.dataset.exuid, type = el.dataset.exutype;
+      if (type === 'progress') { const lr = learningItems.find(x=>x.id===id); if(lr) lr.exOrder = idx; }
+      else { const ex = exercises.find(x=>x.id===id); if(ex) ex.exOrder = idx; }
     });
-    saveLearning();
+    saveLearning(); saveResState();
   }
   document.body.style.userSelect = '';
   document.body.style.webkitUserSelect = '';
-  lrDragState = null;
+  exDragState = null;
 }
 
 function renderResFilterBar() {
