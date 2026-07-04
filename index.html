@@ -1602,13 +1602,24 @@ img, svg, video, canvas, iframe, table, pre, code {
     overflow-x: hidden;
   }
 
-  .app {
-    grid-template-columns: minmax(0, 1fr);
+  .app,
+  .app.sidebar-collapsed,
+  .app:not(.sidebar-collapsed) {
+    grid-template-columns: minmax(0, 1fr) !important;
     grid-template-rows: auto minmax(0, 1fr);
     grid-template-areas:
       "topbar"
-      "content";
+      "content" !important;
     position: relative;
+    width: 100%;
+    max-width: 100vw;
+  }
+
+  .topbar,
+  .content {
+    grid-column: 1 / -1;
+    width: 100%;
+    max-width: 100%;
   }
 
   .app::before {
@@ -1628,6 +1639,7 @@ img, svg, video, canvas, iframe, table, pre, code {
   }
 
   .sidebar {
+    display: none;
     position: fixed;
     top: 0;
     left: 0;
@@ -1646,43 +1658,50 @@ img, svg, video, canvas, iframe, table, pre, code {
   }
 
   .app:not(.sidebar-collapsed) .sidebar {
+    display: flex !important;
     transform: translateX(0);
   }
 
   .app.sidebar-collapsed .sidebar {
+    display: none !important;
     transform: translateX(-100%);
     border-right: 1px solid var(--line) !important;
   }
 
   .topbar {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
     padding: 12px 14px;
     gap: 10px;
-    align-items: stretch;
     position: sticky;
     top: 0;
     z-index: 1080;
   }
 
   .topbar-title {
-    order: 1;
-    flex: 1 1 120px;
+    grid-column: 2;
     white-space: normal;
     font-size: 15px;
   }
 
   #topbarSidebarToggle {
-    order: 0;
+    grid-column: 1;
     margin-right: 0 !important;
   }
 
   .topbar-search {
-    order: 2;
-    flex: 1 1 100%;
+    grid-column: 1 / -1;
     max-width: 100%;
   }
 
+  .topbar-search input {
+    width: 100%;
+    min-width: 0;
+  }
+
   .topbar-actions {
-    order: 3;
+    grid-column: 1 / -1;
     width: 100%;
     margin-left: 0;
     justify-content: flex-start;
@@ -2271,14 +2290,18 @@ function switchModule(mod) {
   appState.currentModule = mod;
   document.querySelectorAll('.capsule-item').forEach(el => el.classList.toggle('active', el.dataset.module === mod));
   document.getElementById('topbarTitle').textContent = mod === 'quiz' ? 'Quiz Hub' : 'Study Resources';
+  if (isMobileViewport()) sidebarCollapsed = true;
   saveAppState();
   render();
+  initSidebarState();
 }
 
 function switchSubject(subj) {
   appState.currentSubject = subj;
+  if (isMobileViewport()) sidebarCollapsed = true;
   saveAppState();
   render();
+  initSidebarState();
 }
 
 // ================================================================
@@ -5358,15 +5381,30 @@ document.querySelectorAll('.sheet-overlay').forEach(ov => {
   ov.addEventListener('click', e => { if(e.target===ov) ov.classList.remove('open'); });
 });
 
+document.addEventListener('click', e => {
+  if (!isMobileViewport() || sidebarCollapsed) return;
+  if (e.target.closest('.sidebar') || e.target.closest('#topbarSidebarToggle')) return;
+  sidebarCollapsed = true;
+  localStorage.setItem('study_sidebar_collapsed_pro', JSON.stringify(sidebarCollapsed));
+  initSidebarState();
+});
+
 // ================================================================
 //  SIDEBAR TOGGLE & HIGHLIGHT TRANSFER FUNCTIONS
 // ================================================================
 const sidebarPref = localStorage.getItem('study_sidebar_collapsed_pro');
-let sidebarCollapsed = sidebarPref !== null ? JSON.parse(sidebarPref) : window.innerWidth <= 768;
+let sidebarCollapsed = window.innerWidth <= 768 ? true : (sidebarPref !== null ? JSON.parse(sidebarPref) : false);
 
-function initSidebarState() {
+function isMobileViewport() {
+  return window.innerWidth <= 768;
+}
+
+function initSidebarState(forceMobileCollapsed = false) {
   const appEl = document.querySelector('.app');
   if (!appEl) return;
+  if (isMobileViewport() && forceMobileCollapsed) {
+    sidebarCollapsed = true;
+  }
   if (sidebarCollapsed) appEl.classList.add('sidebar-collapsed');
   else appEl.classList.remove('sidebar-collapsed');
 }
@@ -5376,6 +5414,17 @@ function toggleSidebar() {
   localStorage.setItem('study_sidebar_collapsed_pro', JSON.stringify(sidebarCollapsed));
   initSidebarState();
   toast(sidebarCollapsed ? '◀ 左侧导航栏已折叠' : '▶ 左侧导航栏已展开');
+}
+
+function handleResponsiveViewportChange() {
+  if (isMobileViewport()) {
+    sidebarCollapsed = true;
+    initSidebarState(true);
+    return;
+  }
+  const stored = localStorage.getItem('study_sidebar_collapsed_pro');
+  sidebarCollapsed = stored !== null ? JSON.parse(stored) : false;
+  initSidebarState();
 }
 
 function deleteHighlight(hid) {
@@ -5481,9 +5530,9 @@ resources.forEach(r => { if(!r.status) r.status='pending'; if(!r.startDate) r.st
 document.querySelectorAll('.capsule-item').forEach(el => el.classList.toggle('active', el.dataset.module===appState.currentModule));
 document.getElementById('topbarTitle').textContent = appState.currentModule==='quiz'?'Quiz Hub':'Study Resources';
 
-initSidebarState();
-window.addEventListener('resize', initSidebarState);
-window.addEventListener('orientationchange', initSidebarState);
+initSidebarState(true);
+window.addEventListener('resize', handleResponsiveViewportChange);
+window.addEventListener('orientationchange', handleResponsiveViewportChange);
 render();
 </script>
 </body>
