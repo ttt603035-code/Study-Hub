@@ -285,6 +285,152 @@ textarea { resize: vertical; }
 .apple-btn.small { padding: 5px 10px; font-size: 11px; }
 .apple-btn.active { background: var(--accent); color: #FFFFFF; border-color: var(--accent); }
 
+/* AI Studio — shared Apple HIG module import surface */
+.ai-studio-panel {
+  padding: 16px;
+  background: var(--bg-card);
+  background: color-mix(in srgb, var(--bg-card) 88%, transparent);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  backdrop-filter: var(--blur);
+  -webkit-backdrop-filter: var(--blur);
+}
+.ai-studio-title {
+  font-weight: 800;
+  font-size: 17px;
+  margin-bottom: 4px;
+  letter-spacing: -0.02em;
+}
+.ai-studio-module-row {
+  display: grid;
+  grid-template-columns: 88px minmax(180px, 320px);
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 14px;
+}
+.ai-studio-module-row > label,
+.ai-studio-kicker {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--ink-tertiary);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+.ai-studio-select-wrap { position: relative; }
+.ai-studio-select-wrap::after {
+  content: "⌄";
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-54%);
+  pointer-events: none;
+  font-size: 16px;
+  color: var(--ink-secondary);
+}
+.ai-studio-select {
+  width: 100%;
+  appearance: none;
+  -webkit-appearance: none;
+  border-radius: 14px;
+  padding: 10px 36px 10px 14px;
+  border: 1px solid var(--line);
+  background: var(--bg-input);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--bg-input) 92%, white 8%), var(--bg-input));
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 700;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.18), var(--shadow);
+  transition: border-color .14s ease, box-shadow .14s ease, background .14s ease;
+}
+.ai-studio-select:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(0,0,0,0.06), var(--shadow);
+}
+.ai-studio-divider {
+  height: 1px;
+  background: var(--line-light);
+  margin: 14px 0;
+}
+.ai-studio-section { display: flex; flex-direction: column; gap: 10px; }
+.ai-studio-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.ai-studio-section-title {
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  margin-top: 2px;
+}
+.ai-studio-prompt-box {
+  background: var(--bg-elev);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 12px;
+  font-size: 11px;
+  color: var(--ink-secondary);
+  line-height: 1.6;
+  white-space: pre-wrap;
+  max-height: 180px;
+  overflow-y: auto;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  cursor: text;
+  user-select: text;
+  -webkit-user-select: text;
+}
+.ai-studio-import-mode {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+  font-size: 12px;
+  color: var(--ink-secondary);
+}
+.ai-studio-import-mode label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+}
+.ai-studio-import-mode > label:first-child {
+  font-weight: 800;
+  color: var(--ink-secondary);
+  cursor: default;
+}
+.ai-studio-import-textarea {
+  width: 100%;
+  min-height: 190px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 12px;
+  line-height: 1.55;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--bg-elev);
+  color: var(--ink);
+  resize: vertical;
+}
+.ai-studio-actions { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+.ai-studio-status {
+  min-height: 38px;
+  background: var(--bg-elev);
+  border: 1px solid var(--line-light);
+  border-radius: 14px;
+  padding: 10px 12px;
+  font-size: 12px;
+  color: var(--ink-tertiary);
+  line-height: 1.5;
+}
+@media (max-width: 720px) {
+  .ai-studio-module-row { grid-template-columns: 1fr; }
+  .ai-studio-select { min-height: 42px; }
+}
+
 /* ========== CONTENT AREA ========== */
 .content {
   grid-area: content;
@@ -2559,42 +2705,42 @@ let quizMeta = { lastExportTs:0, lastBackupTs:0, gist:{token:'',gistId:'',filena
 
 // === STUDY RESOURCES STATE (from dashboard.html) ===
 let customSubjects = JSON.parse(localStorage.getItem('study_subjects_pro')) || {
-  english: { label:'English', color:'#FFFFFF', tint:'rgba(0,0,0,0.04)', text:'#FFFFFF', tagline:'Academic Vocab · Grammar · Reading & Writing' },
-  chinese: { label:'Chinese', color:'#AAAAAA', tint:'rgba(0,0,0,0.03)', text:'#AAAAAA', tagline:'文言文120实词 · 议论文高分结构 · 诗词鉴赏' },
-  politic: { label:'Politics', color:'#777777', tint:'rgba(0,0,0,0.02)', text:'#777777', tagline:'马哲核心 · 政经公式 · 2026时政热点' }
+  english: { label:'English', color:'#FFFFFF', tint:'rgba(0,0,0,0.04)', text:'#FFFFFF', tagline:'Academic Vocab · Grammar · Reading & Writing', isSample: true },
+  chinese: { label:'Chinese', color:'#AAAAAA', tint:'rgba(0,0,0,0.03)', text:'#AAAAAA', tagline:'文言文120实词 · 议论文高分结构 · 诗词鉴赏', isSample: true },
+  politic: { label:'Politics', color:'#777777', tint:'rgba(0,0,0,0.02)', text:'#777777', tagline:'马哲核心 · 政经公式 · 2026时政热点', isSample: true }
 };
 
 const sampleResources = [
-  {id:'r1',subject:'english',title:'IELTS Core Academic Vocabulary 5000',path:'D:/Study/English/IELTS_Vocab.pdf',status:'pending',startDate:'2026-06-25',tags:['Vocabulary','High-Freq'],createdAt:'2026-06-25'},
-  {id:'r2',subject:'english',title:'Advanced Grammar & Passive Voice',path:'D:/Study/English/Grammar.docx',status:'completed',startDate:'2026-06-20',tags:['Grammar','Writing'],createdAt:'2026-06-28'},
-  {id:'r3',subject:'english',title:'Essay Structure & Templates',path:'D:/Study/English/Essays.pdf',status:'not_started',startDate:'2026-07-15',tags:['Writing'],createdAt:'2026-06-30'},
-  {id:'r5',subject:'chinese',title:'文言文120个实词虚词全解',path:'D:/Study/Chinese/文言文实词.pdf',status:'pending',startDate:'2026-06-20',tags:['文言文','考点'],createdAt:'2026-06-20'},
-  {id:'r6',subject:'chinese',title:'议论文8大核心架构与论据素材库',path:'D:/Study/Chinese/议论文素材.docx',status:'not_started',startDate:'2026-07-20',tags:['作文','素材'],createdAt:'2026-06-26'},
-  {id:'r9',subject:'politic',title:'2026上半年时政要闻精编',path:'D:/Study/Politic/时政精编.pdf',status:'pending',startDate:'2026-06-30',tags:['时政','热点'],createdAt:'2026-06-30'},
-  {id:'r10',subject:'politic',title:'马哲唯物论与辩证法思维框架',path:'D:/Study/Politic/马哲导图.pdf',status:'completed',startDate:'2026-06-10',tags:['哲学','原理'],createdAt:'2026-06-18'},
+  {isSample: true, id:'r1',subject:'english',title:'IELTS Core Academic Vocabulary 5000',path:'D:/Study/English/IELTS_Vocab.pdf',status:'pending',startDate:'2026-06-25',tags:['Vocabulary','High-Freq'],createdAt:'2026-06-25'},
+  {isSample: true, id:'r2',subject:'english',title:'Advanced Grammar & Passive Voice',path:'D:/Study/English/Grammar.docx',status:'completed',startDate:'2026-06-20',tags:['Grammar','Writing'],createdAt:'2026-06-28'},
+  {isSample: true, id:'r3',subject:'english',title:'Essay Structure & Templates',path:'D:/Study/English/Essays.pdf',status:'not_started',startDate:'2026-07-15',tags:['Writing'],createdAt:'2026-06-30'},
+  {isSample: true, id:'r5',subject:'chinese',title:'文言文120个实词虚词全解',path:'D:/Study/Chinese/文言文实词.pdf',status:'pending',startDate:'2026-06-20',tags:['文言文','考点'],createdAt:'2026-06-20'},
+  {isSample: true, id:'r6',subject:'chinese',title:'议论文8大核心架构与论据素材库',path:'D:/Study/Chinese/议论文素材.docx',status:'not_started',startDate:'2026-07-20',tags:['作文','素材'],createdAt:'2026-06-26'},
+  {isSample: true, id:'r9',subject:'politic',title:'2026上半年时政要闻精编',path:'D:/Study/Politic/时政精编.pdf',status:'pending',startDate:'2026-06-30',tags:['时政','热点'],createdAt:'2026-06-30'},
+  {isSample: true, id:'r10',subject:'politic',title:'马哲唯物论与辩证法思维框架',path:'D:/Study/Politic/马哲导图.pdf',status:'completed',startDate:'2026-06-10',tags:['哲学','原理'],createdAt:'2026-06-18'},
 ];
 
 const sampleExercises = [
-  {id:'e1',subject:'english',title:'Grammar & Cloze Test Simulation',priority:'high',pinned:true,chapter:'Unit 6',dueDate:'2026-07-02',status:'pending',
+  {isSample: true, id:'e1',subject:'english',title:'Grammar & Cloze Test Simulation',priority:'high',pinned:true,chapter:'Unit 6',dueDate:'2026-07-02',status:'pending',
     subtasks:[{id:'st1',title:'Review Non-finite Verbs',completed:true,dueDate:'2026-07-01'},{id:'st2',title:'Complete timed Cloze (20min)',completed:false,dueDate:'2026-07-02'}]},
-  {id:'e2',subject:'english',title:'IELTS Reading Passages Set 3',priority:'medium',pinned:false,chapter:'Reading',dueDate:'2026-07-05',status:'pending',
+  {isSample: true, id:'e2',subject:'english',title:'IELTS Reading Passages Set 3',priority:'medium',pinned:false,chapter:'Reading',dueDate:'2026-07-05',status:'pending',
     subtasks:[{id:'st4',title:'Passage 1: Climate Change',completed:true,dueDate:'2026-07-04'},{id:'st5',title:'Passage 2: AI in Medicine',completed:false,dueDate:'2026-07-05'}]},
-  {id:'e4',subject:'chinese',title:'文言文《苏轼传》精译',priority:'high',pinned:true,chapter:'文言文强化',dueDate:'2026-07-03',status:'pending',
+  {isSample: true, id:'e4',subject:'chinese',title:'文言文《苏轼传》精译',priority:'high',pinned:true,chapter:'文言文强化',dueDate:'2026-07-03',status:'pending',
     subtasks:[{id:'st11',title:'标注虚词语法用法',completed:true,dueDate:'2026-07-02'},{id:'st12',title:'笔译第三段',completed:false,dueDate:'2026-07-03'}]},
-  {id:'e6',subject:'politic',title:'唯物辩证法四大规律真题强化',priority:'high',pinned:true,chapter:'哲学必考',dueDate:'2026-07-02',status:'pending',
+  {isSample: true, id:'e6',subject:'politic',title:'唯物辩证法四大规律真题强化',priority:'high',pinned:true,chapter:'哲学必考',dueDate:'2026-07-02',status:'pending',
     subtasks:[{id:'st19',title:'熟记对立统一规律模板',completed:true,dueDate:'2026-07-01'},{id:'st20',title:'全真模拟第38题',completed:false,dueDate:'2026-07-02'}]},
 ];
 
 const sampleSubjectScores = {
-  english:{maxScore:150,currentScore:138,targetScore:145,note:'听力重点抓 ==Section 3 选项陷阱==，写作务必 ==逻辑分层==！',
+  english:{isSample: true, maxScore:150,currentScore:138,targetScore:145,note:'听力重点抓 ==Section 3 选项陷阱==，写作务必 ==逻辑分层==！',
     modules:[{name:'Listening',score:30,duration:'45min'},{name:'Reading',score:45,duration:'60min'},{name:'Cloze',score:25,duration:'25min'},{name:'Writing',score:50,duration:'50min'}]},
-  chinese:{maxScore:150,currentScore:132,targetScore:140,note:'大作文 ==首尾呼应==，文言文 ==实词踩点给分==！',
+  chinese:{isSample: true, maxScore:150,currentScore:132,targetScore:140,note:'大作文 ==首尾呼应==，文言文 ==实词踩点给分==！',
     modules:[{name:'语言基础与诗词',score:35,duration:'30min'},{name:'文言文阅读',score:25,duration:'30min'},{name:'现代文阅读',score:30,duration:'35min'},{name:'大作文',score:60,duration:'55min'}]},
-  politic:{maxScore:100,currentScore:88,targetScore:94,note:'选择题保持 ==2道以内== 错误，大题 ==哲学原理结合材料==！',
+  politic:{isSample: true, maxScore:100,currentScore:88,targetScore:94,note:'选择题保持 ==2道以内== 错误，大题 ==哲学原理结合材料==！',
     modules:[{name:'选择题',score:50,duration:'35min'},{name:'材料分析大题',score:30,duration:'60min'},{name:'时政',score:20,duration:'25min'}]}
 };
 
-const sampleCountdown = { title:'2026 National Exam Target', targetDate:'2026-12-25' };
+const sampleCountdown = { isSample: true, title:'2026 National Exam Target', targetDate:'2026-12-25' };
 
 let resources = JSON.parse(localStorage.getItem('study_resources_pro')) || sampleResources;
 let exercises = JSON.parse(localStorage.getItem('study_exercises_pro')) || sampleExercises;
@@ -2603,27 +2749,27 @@ let countdownConfig = JSON.parse(localStorage.getItem('study_countdown_pro')) ||
 let modOrder = JSON.parse(localStorage.getItem('study_mod_order_pro')) || ['tasks', 'exercises', 'resources'];
 
 const sampleLearningItems = [
-  {id:'lr1', title:'Grammar Book', subject:'english', completed:false, currentPage:36, totalPages:120, order:0},
-  {id:'lr2', title:'Reading Book', subject:'english', completed:false, currentPage:0, totalPages:200, order:1},
-  {id:'lr3', title:'Unit 1', subject:'english', completed:true, currentPage:40, totalPages:40, order:2},
-  {id:'lr4', title:'Unit 2', subject:'english', completed:false, currentPage:12, totalPages:40, order:3},
-  {id:'lr5', title:'Exercise Set 1', subject:'english', completed:true, currentPage:30, totalPages:30, order:4},
-  {id:'lr6', title:'Exercise Set 2', subject:'english', completed:false, currentPage:5, totalPages:30, order:5},
-  {id:'lr7', title:'文言文实词精讲', subject:'chinese', completed:false, currentPage:20, totalPages:80, order:0},
-  {id:'lr8', title:'作文素材本', subject:'chinese', completed:false, currentPage:0, totalPages:60, order:1},
-  {id:'lr9', title:'马哲核心笔记', subject:'politic', completed:false, currentPage:15, totalPages:50, order:0},
+  {isSample: true, id:'lr1', title:'Grammar Book', subject:'english', completed:false, currentPage:36, totalPages:120, order:0},
+  {isSample: true, id:'lr2', title:'Reading Book', subject:'english', completed:false, currentPage:0, totalPages:200, order:1},
+  {isSample: true, id:'lr3', title:'Unit 1', subject:'english', completed:true, currentPage:40, totalPages:40, order:2},
+  {isSample: true, id:'lr4', title:'Unit 2', subject:'english', completed:false, currentPage:12, totalPages:40, order:3},
+  {isSample: true, id:'lr5', title:'Exercise Set 1', subject:'english', completed:true, currentPage:30, totalPages:30, order:4},
+  {isSample: true, id:'lr6', title:'Exercise Set 2', subject:'english', completed:false, currentPage:5, totalPages:30, order:5},
+  {isSample: true, id:'lr7', title:'文言文实词精讲', subject:'chinese', completed:false, currentPage:20, totalPages:80, order:0},
+  {isSample: true, id:'lr8', title:'作文素材本', subject:'chinese', completed:false, currentPage:0, totalPages:60, order:1},
+  {isSample: true, id:'lr9', title:'马哲核心笔记', subject:'politic', completed:false, currentPage:15, totalPages:50, order:0},
 ];
 let learningItems = JSON.parse(localStorage.getItem('study_learning_pro')) || sampleLearningItems;
 function saveLearning() { localStorage.setItem('study_learning_pro', JSON.stringify(learningItems)); }
 
 const sampleStudyTasks = [
-  {id:'st_1', subject:'english', title:'Review Non-finite Verbs grammar rules', priority:'high', status:'completed', dueDate:'2026-07-01'},
-  {id:'st_2', subject:'english', title:'Complete timed Cloze test practice (20min)', priority:'high', status:'pending', dueDate:'2026-07-02'},
-  {id:'st_3', subject:'english', title:'Read IELTS Academic Passage Set 3 & summarize', priority:'medium', status:'pending', dueDate:'2026-07-05'},
-  {id:'st_4', subject:'chinese', title:'标注文言文经典120个实词与虚词用法', priority:'high', status:'completed', dueDate:'2026-07-02'},
-  {id:'st_5', subject:'chinese', title:'笔译苏轼传第三段并整理译文笔记', priority:'high', status:'pending', dueDate:'2026-07-03'},
-  {id:'st_6', subject:'politic', title:'熟记唯物辩证法对立统一规律答题模板', priority:'high', status:'completed', dueDate:'2026-07-01'},
-  {id:'st_7', subject:'politic', title:'全真模拟真题第38题大题限时自测', priority:'medium', status:'pending', dueDate:'2026-07-02'}
+  {isSample: true, id:'st_1', subject:'english', title:'Review Non-finite Verbs grammar rules', priority:'high', status:'completed', dueDate:'2026-07-01'},
+  {isSample: true, id:'st_2', subject:'english', title:'Complete timed Cloze test practice (20min)', priority:'high', status:'pending', dueDate:'2026-07-02'},
+  {isSample: true, id:'st_3', subject:'english', title:'Read IELTS Academic Passage Set 3 & summarize', priority:'medium', status:'pending', dueDate:'2026-07-05'},
+  {isSample: true, id:'st_4', subject:'chinese', title:'标注文言文经典120个实词与虚词用法', priority:'high', status:'completed', dueDate:'2026-07-02'},
+  {isSample: true, id:'st_5', subject:'chinese', title:'笔译苏轼传第三段并整理译文笔记', priority:'high', status:'pending', dueDate:'2026-07-03'},
+  {isSample: true, id:'st_6', subject:'politic', title:'熟记唯物辩证法对立统一规律答题模板', priority:'high', status:'completed', dueDate:'2026-07-01'},
+  {isSample: true, id:'st_7', subject:'politic', title:'全真模拟真题第38题大题限时自测', priority:'medium', status:'pending', dueDate:'2026-07-02'}
 ];
 let studyTasks = JSON.parse(localStorage.getItem('study_tasks_pro')) || sampleStudyTasks;
 
@@ -2640,13 +2786,13 @@ let resViewState = { filterSubject:'all', filterType:'all', filterStatus:'all', 
 // === FIXED SIDEBAR SUBJECT ORDER ===
 const FIXED_SUBJECT_ORDER = ['english', 'chinese', 'politic', 'collegeEnglish'];
 const FIXED_SUBJECT_DEFAULTS = {
-  english: { label:'English', color:'#FFFFFF', tint:'rgba(0,0,0,0.04)', text:'#FFFFFF', tagline:'Academic Vocab · Grammar · Reading & Writing' },
-  chinese: { label:'Chinese', color:'#AAAAAA', tint:'rgba(0,0,0,0.03)', text:'#AAAAAA', tagline:'文言文120实词 · 议论文高分结构 · 诗词鉴赏' },
-  politic: { label:'Politics', color:'#777777', tint:'rgba(0,0,0,0.02)', text:'#777777', tagline:'马哲核心 · 政经公式 · 2026时政热点' },
-  collegeEnglish: { label:'College English', color:'#5E5CE6', tint:'rgba(94,92,230,0.08)', text:'#5E5CE6', tagline:'CET Vocabulary · Translation · Writing' }
+  english: { label:'English', color:'#FFFFFF', tint:'rgba(0,0,0,0.04)', text:'#FFFFFF', tagline:'Academic Vocab · Grammar · Reading & Writing', isSample: true },
+  chinese: { label:'Chinese', color:'#AAAAAA', tint:'rgba(0,0,0,0.03)', text:'#AAAAAA', tagline:'文言文120实词 · 议论文高分结构 · 诗词鉴赏', isSample: true },
+  politic: { label:'Politics', color:'#777777', tint:'rgba(0,0,0,0.02)', text:'#777777', tagline:'马哲核心 · 政经公式 · 2026时政热点', isSample: true },
+  collegeEnglish: { label:'College English', color:'#5E5CE6', tint:'rgba(94,92,230,0.08)', text:'#5E5CE6', tagline:'CET Vocabulary · Translation · Writing', isSample: true }
 };
 const FIXED_SCORE_DEFAULTS = {
-  collegeEnglish: { maxScore:100, currentScore:0, targetScore:85, note:'Focus on vocabulary accuracy, translation structure, and writing templates.', modules:[{name:'Vocabulary',score:25,duration:'20min'},{name:'Reading',score:35,duration:'40min'},{name:'Translation',score:20,duration:'25min'},{name:'Writing',score:20,duration:'30min'}] }
+  collegeEnglish: { isSample: true, maxScore:100, currentScore:0, targetScore:85, note:'Focus on vocabulary accuracy, translation structure, and writing templates.', modules:[{name:'Vocabulary',score:25,duration:'20min'},{name:'Reading',score:35,duration:'40min'},{name:'Translation',score:20,duration:'25min'},{name:'Writing',score:20,duration:'30min'}] }
 };
 function getSidebarSubjectKeys() {
   const fixed = FIXED_SUBJECT_ORDER.filter(k => customSubjects[k]);
@@ -2654,21 +2800,27 @@ function getSidebarSubjectKeys() {
   return fixed.concat(extras);
 }
 function ensureFixedSidebarSubjects() {
+  if (localStorage.getItem('study_demo_data_removed') === 'true') return;
   let changed = false;
+  const hasExistingSubjectData = localStorage.getItem('study_subjects_pro') !== null;
   FIXED_SUBJECT_ORDER.forEach(k => {
-    if (!customSubjects[k]) { customSubjects[k] = { ...FIXED_SUBJECT_DEFAULTS[k] }; changed = true; }
-    if (FIXED_SUBJECT_DEFAULTS[k]?.label && customSubjects[k].label !== FIXED_SUBJECT_DEFAULTS[k].label) {
+    if (!hasExistingSubjectData) {
+      if (!customSubjects[k]) { customSubjects[k] = { ...FIXED_SUBJECT_DEFAULTS[k] }; changed = true; }
+    }
+    if (customSubjects[k] && FIXED_SUBJECT_DEFAULTS[k]?.label && customSubjects[k].label !== FIXED_SUBJECT_DEFAULTS[k].label) {
       customSubjects[k].label = FIXED_SUBJECT_DEFAULTS[k].label;
       changed = true;
     }
   });
   Object.keys(FIXED_SCORE_DEFAULTS).forEach(k => {
-    if (!subjectScores[k]) { subjectScores[k] = JSON.parse(JSON.stringify(FIXED_SCORE_DEFAULTS[k])); changed = true; }
+    if (!hasExistingSubjectData) {
+      if (!subjectScores[k]) { subjectScores[k] = JSON.parse(JSON.stringify(FIXED_SCORE_DEFAULTS[k])); changed = true; }
+    }
   });
   const ordered = {};
   getSidebarSubjectKeys().forEach(k => { ordered[k] = customSubjects[k]; });
   customSubjects = ordered;
-  if (!customSubjects[appState.currentSubject]) { appState.currentSubject = 'english'; changed = true; }
+  if (!customSubjects[appState.currentSubject]) { appState.currentSubject = Object.keys(customSubjects)[0] || ''; changed = true; }
   if (changed) { localStorage.setItem('study_subjects_pro', JSON.stringify(customSubjects)); localStorage.setItem('study_scores_pro', JSON.stringify(subjectScores)); saveAppState(); }
 }
 
@@ -2698,29 +2850,29 @@ let weeklyPlan = JSON.parse(localStorage.getItem(WEEKLY_PLAN_KEY)) || {
     longestStreak: 0,
     currentStreak: 0
   },
-  plannerTab: 'current' // 'current', 'archive', 'stats', 'prompt'
+  plannerTab: 'current', isSample: true // 'current', 'archive', 'stats', 'prompt'
 };
 function saveWeeklyPlan() { localStorage.setItem(WEEKLY_PLAN_KEY, JSON.stringify(weeklyPlan)); }
 const sampleRoadmapMilestones = [
-  {id:'rm1', title:'Foundation', startDate:'2026-07-01', targetFinishDate:'2026-08-31', status:'in_progress', notes:'Build the basic framework for all subjects.', order:0, createdAt:'2026-07-01'},
-  {id:'rm2', title:'Skill Building', startDate:'2026-09-01', targetFinishDate:'2026-10-31', status:'not_started', notes:'Move from foundation to subject-specific skills.', order:1, createdAt:'2026-07-01'},
-  {id:'rm3', title:'Intensive Practice', startDate:'2026-11-01', targetFinishDate:'2026-12-31', status:'not_started', notes:'Practice, correction, and weak-point consolidation.', order:2, createdAt:'2026-07-01'},
-  {id:'rm4', title:'Mock Exams', startDate:'2027-01-01', targetFinishDate:'2027-02-28', status:'not_started', notes:'Full-length timed simulations and review cycles.', order:3, createdAt:'2026-07-01'},
-  {id:'rm5', title:'Final Review', startDate:'2027-03-01', targetFinishDate:'2027-03-31', status:'not_started', notes:'Final sprint, formula review, and confidence building.', order:4, createdAt:'2026-07-01'}
+  {isSample: true, id:'rm1', title:'Foundation', startDate:'2026-07-01', targetFinishDate:'2026-08-31', status:'in_progress', notes:'Build the basic framework for all subjects.', order:0, createdAt:'2026-07-01'},
+  {isSample: true, id:'rm2', title:'Skill Building', startDate:'2026-09-01', targetFinishDate:'2026-10-31', status:'not_started', notes:'Move from foundation to subject-specific skills.', order:1, createdAt:'2026-07-01'},
+  {isSample: true, id:'rm3', title:'Intensive Practice', startDate:'2026-11-01', targetFinishDate:'2026-12-31', status:'not_started', notes:'Practice, correction, and weak-point consolidation.', order:2, createdAt:'2026-07-01'},
+  {isSample: true, id:'rm4', title:'Mock Exams', startDate:'2027-01-01', targetFinishDate:'2027-02-28', status:'not_started', notes:'Full-length timed simulations and review cycles.', order:3, createdAt:'2026-07-01'},
+  {isSample: true, id:'rm5', title:'Final Review', startDate:'2027-03-01', targetFinishDate:'2027-03-31', status:'not_started', notes:'Final sprint, formula review, and confidence building.', order:4, createdAt:'2026-07-01'}
 ];
 const sampleRoadmapPlans = [
-  {id:'rp1', milestoneId:'rm1', subject:'english', title:'Grammar Book', startDate:'2026-07-01', targetFinishDate:'2026-08-31', status:'in_progress', notes:'Complete the grammar foundation and correction cycle.', order:0, createdAt:'2026-07-01'},
-  {id:'rp2', milestoneId:'rm2', subject:'english', title:'Reading Book', startDate:'2026-09-01', targetFinishDate:'2026-10-31', status:'not_started', notes:'Build long-form reading accuracy and speed.', order:1, createdAt:'2026-07-01'},
-  {id:'rp3', milestoneId:'rm2', subject:'english', title:'Vocabulary Expansion', startDate:'2026-09-01', targetFinishDate:'2026-10-31', status:'not_started', notes:'Daily review and SRS consolidation.', order:2, createdAt:'2026-07-01'},
-  {id:'rp4', milestoneId:'rm2', subject:'chinese', title:'Modern Reading', startDate:'2026-09-01', targetFinishDate:'2026-10-31', status:'not_started', notes:'Reading methods and answer structure.', order:3, createdAt:'2026-07-01'},
-  {id:'rp5', milestoneId:'rm3', subject:'chinese', title:'Essay', startDate:'2026-11-01', targetFinishDate:'2026-12-31', status:'not_started', notes:'Outline library and timed writing.', order:4, createdAt:'2026-07-01'},
-  {id:'rp6', milestoneId:'rm3', subject:'politic', title:'Theory Review', startDate:'2026-11-01', targetFinishDate:'2026-12-31', status:'not_started', notes:'Theory framework and practice questions.', order:5, createdAt:'2026-07-01'},
-  {id:'rp7', milestoneId:'rm2', subject:'collegeEnglish', title:'Writing Practice', startDate:'2026-09-01', targetFinishDate:'2026-10-31', status:'not_started', notes:'Weekly writing drills and correction.', order:6, createdAt:'2026-07-01'}
+  {isSample: true, id:'rp1', milestoneId:'rm1', subject:'english', title:'Grammar Book', startDate:'2026-07-01', targetFinishDate:'2026-08-31', status:'in_progress', notes:'Complete the grammar foundation and correction cycle.', order:0, createdAt:'2026-07-01'},
+  {isSample: true, id:'rp2', milestoneId:'rm2', subject:'english', title:'Reading Book', startDate:'2026-09-01', targetFinishDate:'2026-10-31', status:'not_started', notes:'Build long-form reading accuracy and speed.', order:1, createdAt:'2026-07-01'},
+  {isSample: true, id:'rp3', milestoneId:'rm2', subject:'english', title:'Vocabulary Expansion', startDate:'2026-09-01', targetFinishDate:'2026-10-31', status:'not_started', notes:'Daily review and SRS consolidation.', order:2, createdAt:'2026-07-01'},
+  {isSample: true, id:'rp4', milestoneId:'rm2', subject:'chinese', title:'Modern Reading', startDate:'2026-09-01', targetFinishDate:'2026-10-31', status:'not_started', notes:'Reading methods and answer structure.', order:3, createdAt:'2026-07-01'},
+  {isSample: true, id:'rp5', milestoneId:'rm3', subject:'chinese', title:'Essay', startDate:'2026-11-01', targetFinishDate:'2026-12-31', status:'not_started', notes:'Outline library and timed writing.', order:4, createdAt:'2026-07-01'},
+  {isSample: true, id:'rp6', milestoneId:'rm3', subject:'politic', title:'Theory Review', startDate:'2026-11-01', targetFinishDate:'2026-12-31', status:'not_started', notes:'Theory framework and practice questions.', order:5, createdAt:'2026-07-01'},
+  {isSample: true, id:'rp7', milestoneId:'rm2', subject:'collegeEnglish', title:'Writing Practice', startDate:'2026-09-01', targetFinishDate:'2026-10-31', status:'not_started', notes:'Weekly writing drills and correction.', order:6, createdAt:'2026-07-01'}
 ];
 const sampleRoadmapExams = [
-  {id:'rex1', subject:'english', title:'IELTS', examDate:'2027-03-01', notes:'Main English target', createdAt:'2026-07-01'},
-  {id:'rex2', subject:'chinese', title:'Final Exam', examDate:'2026-12-01', notes:'Chinese final exam', createdAt:'2026-07-01'},
-  {id:'rex3', subject:'politic', title:'Politics Exam', examDate:'2027-01-01', notes:'Politics target exam', createdAt:'2026-07-01'}
+  {isSample: true, id:'rex1', subject:'english', title:'IELTS', examDate:'2027-03-01', notes:'Main English target', createdAt:'2026-07-01'},
+  {isSample: true, id:'rex2', subject:'chinese', title:'Final Exam', examDate:'2026-12-01', notes:'Chinese final exam', createdAt:'2026-07-01'},
+  {isSample: true, id:'rex3', subject:'politic', title:'Politics Exam', examDate:'2027-01-01', notes:'Politics target exam', createdAt:'2026-07-01'}
 ];
 let roadmapMilestones = JSON.parse(localStorage.getItem(ROADMAP_MILESTONES_KEY)) || sampleRoadmapMilestones;
 let roadmapPlans = JSON.parse(localStorage.getItem(ROADMAP_KEY)) || sampleRoadmapPlans;
@@ -4705,7 +4857,7 @@ function openQuizSettings() {
     <div style="display:flex;flex-direction:column;gap:14px;">
       <div style="padding:16px;background:var(--bg-card);border:1px solid var(--line);border-radius:var(--radius-lg);">
         <div style="font-weight:800;font-size:15px;margin-bottom:4px;letter-spacing:-0.01em;">Data Management Panel</div>
-        <div style="font-size:12px;color:var(--ink-tertiary);line-height:1.5;margin-bottom:14px;">Select the module data you want to export, import, or reset. Quiz Hub remains an independent module and is managed here only for backup and restore.</div>
+        <div style="font-size:12px;color:var(--ink-tertiary);line-height:1.5;margin-bottom:14px;">Select the module data you want to export or reset. Quiz Hub remains an independent module and is managed here only for backup and restore.</div>
         <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap;">
           <label style="font-size:12px;font-weight:700;color:var(--ink-secondary);white-space:nowrap;">模块：</label>
           <select id="controlModuleSelect">
@@ -4714,9 +4866,8 @@ function openQuizSettings() {
         </div>
         <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;">
           <button class="apple-btn primary" onclick="exportSelectedModules()">⬆ Export</button>
-          <button class="apple-btn" onclick="openImportModuleSheet()">⬇ Import</button>
           <button class="apple-btn danger" onclick="resetSelectedModules()">Reset</button>
-          <input type="file" id="controlCenterImportFile" style="display:none" accept=".json" onchange="importSelectedModules(event)" />
+          <button class="apple-btn danger" onclick="removeDemoDataConfirm()">Remove Demo Data</button>
         </div>
       </div>
       <div style="padding:16px;background:var(--bg-card);border:1px solid var(--line);border-radius:var(--radius-lg);">
@@ -4727,17 +4878,51 @@ function openQuizSettings() {
           <button class="apple-btn primary" onclick="countdownConfig.title=document.getElementById('settingsCdTitle').value.trim()||'Exam';countdownConfig.targetDate=document.getElementById('settingsCdDate').value;saveResState();render();toast('Exam date saved');">Save</button>
         </div>
       </div>
-      <div style="padding:16px;background:var(--bg-card);border:1px solid var(--line);border-radius:var(--radius-lg);">
-        <div style="font-weight:800;font-size:15px;margin-bottom:4px;letter-spacing:-0.01em;">🤖 AI Import Wizard</div>
-        <div style="font-size:12px;color:var(--ink-tertiary);line-height:1.5;margin-bottom:14px;">选择板块 → 复制 Prompt → 去 AI 生成 JSON → 粘贴导入。</div>
-        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;">
-          ${[['quiz','Quiz Hub（题目）'],['wordbook','Word Book（单词）'],['synonyms','Synonyms（同义词）'],['passage','Reading Passage（阅读文章）'],['study_resource','Study Resource（学习资源）']].map(([v,l])=>`
-            <button class="apple-btn small ai-wizard-tab" data-tab="${v}" onclick="switchAIWizardTab('${v}')" style="font-size:12px;">${l}</button>`).join('')}
+      <div class="ai-studio-panel">
+        <div class="ai-studio-title">🤖 AI Studio</div>
+        <div style="font-size:12px;color:var(--ink-tertiary);line-height:1.5;margin-bottom:14px;">选择 Module → 复制 Prompt → 去 AI 生成 JSON → 粘贴导入。</div>
+        <div class="ai-studio-module-row">
+          <label for="aiStudioModuleSelect">Module</label>
+          <div class="ai-studio-select-wrap">
+            <select id="aiStudioModuleSelect" class="ai-studio-select" onchange="switchAIWizardTab(this.value)">
+              ${AI_STUDIO_MODULES.map(m=>`<option value="${m.key}" ${m.key==='study_resource'?'selected':''}>${m.label}</option>`).join('')}
+            </select>
+          </div>
         </div>
-        <div id="aiWizardPromptBox" style="background:var(--bg-elev);border:1px solid var(--line);border-radius:var(--radius);padding:12px;font-size:11px;color:var(--ink-secondary);line-height:1.6;white-space:pre-wrap;max-height:140px;overflow-y:auto;font-family:monospace;cursor:text;user-select:text;"></div>
-        <div style="display:flex;gap:8px;margin-top:10px;align-items:center;flex-wrap:wrap;">
-          <button class="apple-btn primary" onclick="copyAIWizardPrompt()">📋 复制 Prompt</button>
-          <button class="apple-btn" onclick="openAIJSONImport()">📥 粘贴 JSON 导入</button>
+        <div class="ai-studio-divider"></div>
+        <div class="ai-studio-section">
+          <div class="ai-studio-section-head">
+            <div>
+              <div class="ai-studio-kicker">Prompt</div>
+              <div id="aiStudioPromptTitle" class="ai-studio-section-title">Study Resource Prompt</div>
+            </div>
+            <button class="apple-btn primary" onclick="copyAIWizardPrompt()">Copy Prompt</button>
+          </div>
+          <div id="aiWizardPromptBox" class="ai-studio-prompt-box"></div>
+        </div>
+        <div class="ai-studio-divider"></div>
+        <div class="ai-studio-section">
+          <div class="ai-studio-section-head">
+            <div>
+              <div class="ai-studio-kicker">Import JSON</div>
+              <div id="aiStudioImportTitle" class="ai-studio-section-title">Study Resource Import</div>
+            </div>
+          </div>
+          <div class="ai-studio-import-mode">
+            <label>导入方式：</label>
+            <label><input type="radio" name="aiImportMode" value="merge" checked> 合并（保留现有数据）</label>
+            <label><input type="radio" name="aiImportMode" value="overwrite"> 覆盖（替换现有数据）</label>
+          </div>
+          <textarea id="aiJsonPasteArea" class="ai-studio-import-textarea" placeholder="在这里粘贴 AI 生成的 JSON..."></textarea>
+          <div class="ai-studio-actions">
+            <button class="apple-btn" onclick="previewAIStudioImport()">预览</button>
+            <button id="aiStudioImportButton" class="apple-btn primary" onclick="executeAIStudioImport()">Import</button>
+          </div>
+        </div>
+        <div class="ai-studio-divider"></div>
+        <div class="ai-studio-section">
+          <div class="ai-studio-kicker">Import Status</div>
+          <div id="aiImportPreview" class="ai-studio-status">Import status will appear here. Toast remains unchanged.</div>
         </div>
       </div>
       <div style="padding:16px;background:var(--bg-card);border:1px solid var(--line);border-radius:var(--radius-lg);">
@@ -4746,8 +4931,8 @@ function openQuizSettings() {
       </div>
     </div>
   `,[{text:'Close',cls:'primary',onclick:()=>closeSheet('genericSheet')}]);
-  // init first tab
-  setTimeout(()=>switchAIWizardTab('quiz'),50);
+  // init AI Studio default module
+  setTimeout(()=>switchAIWizardTab('study_resource'),50);
 }
 
 function exportQuizJSON() {
@@ -4797,6 +4982,7 @@ function clearAllQuiz() {
 }
 
 function loadSeedData() {
+  localStorage.removeItem('study_demo_data_removed');
   if(quizState.passages.length&&!confirm('Merge sample data?')) return;
   const seed = getSeedData();
   seed.passages.forEach(p=>{if(!quizState.passages.find(x=>x.id===p.id))quizState.passages.push(p);});
@@ -4811,22 +4997,22 @@ function loadSeedData() {
 function getSeedData() {
   return {
     passages:[
-      {id:'sec_seed_001',customName:'Subjunctive Mood',title:'Subjunctive Mood in Context',content:''},
-      {id:'sec_seed_002',customName:'Prepositions',title:'Prepositions in Academic Writing',content:''}
+      {isSample: true, id:'sec_seed_001',customName:'Subjunctive Mood',title:'Subjunctive Mood in Context',content:''},
+      {isSample: true, id:'sec_seed_002',customName:'Prepositions',title:'Prepositions in Academic Writing',content:''}
     ],
     grammarQuestions:[
-      {id:'g_seed_001',passageId:'sec_seed_001',quizSetId:null,question:'Which sentence uses subjunctive mood correctly?',options:['A. If I was you, I will go.','B. If I were you, I would go.','C. If I am you, I would go.','D. If I be you, I go.'],answer:'B',explanation:'虚拟语气中，与现在事实相反时，be 动词用 were。'},
-      {id:'g_seed_002',passageId:'sec_seed_002',quizSetId:null,question:'The result depends ____ several factors.',options:['A. of','B. on','C. from','D. at'],answer:'B',explanation:'depend on = 取决于'}
+      {isSample: true, id:'g_seed_001',passageId:'sec_seed_001',quizSetId:null,question:'Which sentence uses subjunctive mood correctly?',options:['A. If I was you, I will go.','B. If I were you, I would go.','C. If I am you, I would go.','D. If I be you, I go.'],answer:'B',explanation:'虚拟语气中，与现在事实相反时，be 动词用 were。'},
+      {isSample: true, id:'g_seed_002',passageId:'sec_seed_002',quizSetId:null,question:'The result depends ____ several factors.',options:['A. of','B. on','C. from','D. at'],answer:'B',explanation:'depend on = 取决于'}
     ],
     vocabularyQuestions:[
-      {id:'v_seed_001',passageId:'sec_seed_002',quizSetId:null,synonymGroup:'depend on',question:'Closest synonym of "depend on"?',options:['A. rely on','B. look after','C. turn off','D. give away'],answer:'A',explanation:'depend on 与 rely on 都表示依赖。'}
+      {isSample: true, id:'v_seed_001',passageId:'sec_seed_002',quizSetId:null,synonymGroup:'depend on',question:'Closest synonym of "depend on"?',options:['A. rely on','B. look after','C. turn off','D. give away'],answer:'A',explanation:'depend on 与 rely on 都表示依赖。'}
     ],
         wordBook:[
-      {id:'wbk_1', text:'reconsider', meaning:'重新考虑', example:'You should reconsider the decision.', subject:'english', source:'Academic Writing', dateAdded:'2026-07-03', addedAt:Date.now()-86400000, highlight:true, highlightColor:'dark-brown', starred:true, srsBox:0, srsNext:Date.now(), srsReviews:1, srsLapses:0},
-      {id:'wbk_2', text:'take advantage of', meaning:'利用，占……的便宜', example:'We should take advantage of this opportunity.', subject:'english', source:'Reading Passage 1', dateAdded:'2026-07-03', addedAt:Date.now()-43200000, highlight:false, starred:false, srsBox:1, srsNext:Date.now()+86400000, srsReviews:2, srsLapses:0},
-      {id:'wbk_3', text:'depends on', meaning:'依赖于；取决于', example:'The project depends on careful planning.', subject:'english', source:'Academic Writing', dateAdded:'2026-07-03', addedAt:Date.now(), highlight:true, highlightColor:'dark-brown', starred:false, srsBox:0, srsNext:Date.now(), srsReviews:0, srsLapses:0}
+      {isSample: true, id:'wbk_1', text:'reconsider', meaning:'重新考虑', example:'You should reconsider the decision.', subject:'english', source:'Academic Writing', dateAdded:'2026-07-03', addedAt:Date.now()-86400000, highlight:true, highlightColor:'dark-brown', starred:true, srsBox:0, srsNext:Date.now(), srsReviews:1, srsLapses:0},
+      {isSample: true, id:'wbk_2', text:'take advantage of', meaning:'利用，占……的便宜', example:'We should take advantage of this opportunity.', subject:'english', source:'Reading Passage 1', dateAdded:'2026-07-03', addedAt:Date.now()-43200000, highlight:false, starred:false, srsBox:1, srsNext:Date.now()+86400000, srsReviews:2, srsLapses:0},
+      {isSample: true, id:'wbk_3', text:'depends on', meaning:'依赖于；取决于', example:'The project depends on careful planning.', subject:'english', source:'Academic Writing', dateAdded:'2026-07-03', addedAt:Date.now(), highlight:true, highlightColor:'dark-brown', starred:false, srsBox:0, srsNext:Date.now(), srsReviews:0, srsLapses:0}
     ],
-    synonymLibrary:[{groupName:'Depend Group',words:['depend on','rely on','count on','hinge on'],notes:'表示依赖',srsBox:0,srsNext:Date.now(),srsReviews:0,srsLapses:0}]
+    synonymLibrary:[{isSample: true, groupName:'Depend Group',words:['depend on','rely on','count on','hinge on'],notes:'表示依赖',srsBox:0,srsNext:Date.now(),srsReviews:0,srsLapses:0}]
   };
 }
 
@@ -4917,30 +5103,168 @@ const AI_WIZARD_PROMPTS = {
 - createdAt 填今天日期 2026-07-06
 
 请将以下内容转换：
-[在这里粘贴你的学习资料列表]`
+[在这里粘贴你的学习资料列表]`,
+
+  study_roadmap: `你是一个 JSON 转换助手。请将我粘贴的学习路线图计划转换成以下格式，直接输出 JSON，不要任何多余文字或代码块标记。
+
+（这里放你的 Prompt）
+
+格式：
+{"roadmapMilestones":[{"id":"rm_001","title":"阶段名称","startDate":"2026-07-01","targetFinishDate":"2026-08-31","status":"in_progress","notes":"阶段说明","order":0,"createdAt":"2026-07-06"}],"roadmapPlans":[{"id":"rp_001","milestoneId":"rm_001","subject":"english","title":"任务名称","startDate":"2026-07-01","targetFinishDate":"2026-08-31","status":"in_progress","notes":"任务备注","order":0,"createdAt":"2026-07-06"}]}
+
+规则：
+- 只输出合法 JSON
+- milestoneId 必须与 roadmapMilestones 中的 id 对应
+- status 可选值："not_started"、"in_progress"、"completed"
+- subject 填对应的科目，如 "english"、"chinese"、"politic"
+
+请将以下内容转换：
+[在这里粘贴你的路线图内容]`,
+
+  roadmap: `你是一个 JSON 转换助手。请将我粘贴的学习路线图计划转换成以下格式，直接输出 JSON，不要任何多余文字或代码块标记。
+
+（这里放你的 Prompt）
+
+格式：
+{"roadmapMilestones":[{"id":"rm_001","title":"阶段名称","startDate":"2026-07-01","targetFinishDate":"2026-08-31","status":"in_progress","notes":"阶段说明","order":0,"createdAt":"2026-07-06"}],"roadmapPlans":[{"id":"rp_001","milestoneId":"rm_001","subject":"english","title":"任务名称","startDate":"2026-07-01","targetFinishDate":"2026-08-31","status":"in_progress","notes":"任务备注","order":0,"createdAt":"2026-07-06"}]}
+
+规则：
+- 只输出合法 JSON
+- milestoneId 必须与 roadmapMilestones 中的 id 对应
+- status 可选值："not_started"、"in_progress"、"completed"
+- subject 填对应的科目，如 "english"、"chinese"、"politic"
+
+请将以下内容转换：
+[在这里粘贴你的路线图内容]`
 };
 
-let _aiWizardTab = 'quiz';
+const AI_STUDIO_MODULES = [
+  {key:'study_resource', label:'Study Resource'},
+  {key:'study_roadmap', label:'Study Roadmap'},
+  {key:'weekly_planner', label:'Weekly Planner'},
+  {key:'wordbook', label:'Word Book'},
+  {key:'synonyms', label:'Synonyms'},
+  {key:'quiz', label:'Quiz Hub'},
+  {key:'passage', label:'Reading Passage'}
+];
+
+let _aiWizardTab = 'study_resource';
+
+function getAIStudioModuleLabel(tab) {
+  return (AI_STUDIO_MODULES.find(m => m.key === tab) || {}).label || tab;
+}
+
+function getAIWizardPrompt(tab) {
+  if (tab === 'weekly_planner' && typeof generateStudyPlanningPrompt === 'function') {
+    return generateStudyPlanningPrompt();
+  }
+  return AI_WIZARD_PROMPTS[tab] || '';
+}
 
 function switchAIWizardTab(tab) {
-  _aiWizardTab = tab;
+  _aiWizardTab = tab || 'study_resource';
+  const label = getAIStudioModuleLabel(_aiWizardTab);
+  const prompt = getAIWizardPrompt(_aiWizardTab);
   const box = document.getElementById('aiWizardPromptBox');
-  if (box) box.textContent = AI_WIZARD_PROMPTS[tab] || '';
+  if (box) box.textContent = prompt || '';
+  const select = document.getElementById('aiStudioModuleSelect');
+  if (select && select.value !== _aiWizardTab) select.value = _aiWizardTab;
+  const promptTitle = document.getElementById('aiStudioPromptTitle');
+  if (promptTitle) promptTitle.textContent = label + ' Prompt';
+  const importTitle = document.getElementById('aiStudioImportTitle');
+  if (importTitle) importTitle.textContent = label + ' Import';
+  const importButton = document.getElementById('aiStudioImportButton');
+  if (importButton) importButton.textContent = 'Import';
+  const prev = document.getElementById('aiImportPreview');
+  if (prev) prev.textContent = 'Import status will appear here. Toast remains unchanged.';
   document.querySelectorAll('.ai-wizard-tab').forEach(b => {
-    b.classList.toggle('active', b.dataset.tab === tab);
+    b.classList.toggle('active', b.dataset.tab === _aiWizardTab);
   });
 }
 
 function copyAIWizardPrompt() {
-  const prompt = AI_WIZARD_PROMPTS[_aiWizardTab] || '';
+  const prompt = getAIWizardPrompt(_aiWizardTab) || '';
   navigator.clipboard.writeText(prompt)
     .then(() => toast('✅ Prompt 已复制，去 AI 生成 JSON 后回来粘贴导入'))
     .catch(() => toast('复制失败，请手动选中复制'));
 }
 
+function previewAIStudioImport() {
+  const tab = _aiWizardTab;
+  const raw = document.getElementById('aiJsonPasteArea')?.value.trim();
+  const prev = document.getElementById('aiImportPreview');
+  if (!raw || !prev) return;
+  if (tab === 'weekly_planner') {
+    try {
+      const data = raw.startsWith('[') ? JSON.parse(raw) : raw.split('\n').filter(Boolean);
+      const count = Array.isArray(data) ? data.length : 0;
+      prev.innerHTML = `<div style="background:var(--bg-elev);padding:10px;border-radius:var(--radius);border:1px solid var(--line-light);">📅 Weekly Planner: ${count} 条任务</div>`;
+    } catch(e) {
+      prev.innerHTML = `<div style="color:var(--red);padding:8px;">❌ JSON 格式错误：${e.message}</div>`;
+    }
+    return;
+  }
+  if (tab === 'study_roadmap' || tab === 'roadmap') {
+    try {
+      const data = JSON.parse(raw);
+      const lines = [];
+      if (Array.isArray(data)) lines.push(`🧭 Study Roadmap: ${data.length} 个阶段`);
+      if (data.roadmapMilestones?.length) lines.push(`🧭 Milestones: ${data.roadmapMilestones.length} 个`);
+      if (data.roadmapPlans?.length) lines.push(`📝 Plans: ${data.roadmapPlans.length} 条`);
+      if (!lines.length) lines.push('⚠️ 未检测到可导入的 Study Roadmap 数据');
+      prev.innerHTML = `<div style="background:var(--bg-elev);padding:10px;border-radius:var(--radius);border:1px solid var(--line-light);">${lines.join('<br>')}</div>`;
+    } catch(e) {
+      prev.innerHTML = `<div style="color:var(--red);padding:8px;">❌ JSON 格式错误：${e.message}</div>`;
+    }
+    return;
+  }
+  previewAIImport(tab);
+}
+
+function executeAIStudioImport() {
+  const tab = _aiWizardTab;
+  const raw = document.getElementById('aiJsonPasteArea')?.value.trim();
+  if (!raw) { toast('请先粘贴 JSON'); return; }
+  const mode = document.querySelector('input[name="aiImportMode"]:checked')?.value || 'merge';
+
+  if (tab === 'weekly_planner') {
+    let holder = document.getElementById('importPlannerText');
+    let created = false;
+    if (!holder) {
+      holder = document.createElement('textarea');
+      holder.id = 'importPlannerText';
+      holder.style.display = 'none';
+      document.body.appendChild(holder);
+      created = true;
+    }
+    holder.value = raw;
+    importWeekly(mode === 'overwrite' ? 'replace' : 'merge');
+    if (created && holder.parentNode) holder.parentNode.removeChild(holder);
+    return;
+  }
+
+  if (tab === 'study_roadmap' || tab === 'roadmap') {
+    let holder = document.getElementById('roadmapAIImportText');
+    let created = false;
+    if (!holder) {
+      holder = document.createElement('textarea');
+      holder.id = 'roadmapAIImportText';
+      holder.style.display = 'none';
+      document.body.appendChild(holder);
+      created = true;
+    }
+    holder.value = raw;
+    executeRoadmapAIImport();
+    if (created && holder.parentNode) holder.parentNode.removeChild(holder);
+    return;
+  }
+
+  confirmAIImport(tab);
+}
+
 function openAIJSONImport() {
   const tab = _aiWizardTab;
-  const labels = {quiz:'Quiz Hub',wordbook:'Word Book',synonyms:'Synonyms',passage:'Reading Passage',study_resource:'Study Resource'};
+  const labels = {quiz:'Quiz Hub',wordbook:'Word Book',synonyms:'Synonyms',passage:'Reading Passage',study_resource:'Study Resource',study_roadmap:'Study Roadmap',roadmap:'Study Roadmap',weekly_planner:'Weekly Planner'};
   openGenericSheet(`📥 导入 JSON — ${labels[tab]||tab}`,`
     <div style="font-size:13px;color:var(--ink-secondary);margin-bottom:10px;line-height:1.5;">
       将 AI 生成的 JSON 粘贴到下方，选择导入方式后点击导入。
@@ -5275,7 +5599,6 @@ function roadmapPlanCard(plan) {
         <span>${esc(subject.label || roadmapSubjectLabel(plan.subject))}</span>
         <span>${formatDate(plan.startDate)} – ${formatDate(plan.targetFinishDate)}</span>
       </div>
-      <div class="roadmap-plan-progress"><div class="progress-bar"><div class="progress-fill" style="width:${prog.percent}%;background:var(--accent)"></div></div><small>${prog.percent}%${prog.synced?' · Exercise Bank':''}</small></div>
       ${plan.notes ? `<div class="roadmap-notes">${esc(plan.notes)}</div>` : ''}
     </div>
     <div class="roadmap-actions" onclick="event.stopPropagation()">
@@ -5324,7 +5647,6 @@ function renderMilestoneSubjectPlans(ms) {
     return `<div class="roadmap-milestone-subject ${expanded?'':'collapsed'}" data-msid="${ms.id}" data-subject="${key}">
       <div class="roadmap-milestone-subject-head" onclick="toggleMilestoneSubject('${ms.id}','${key}')">
         <div class="roadmap-milestone-subject-title"><span class="roadmap-subject-caret">▼</span><span class="roadmap-subject-dot" style="background:${s.color||'var(--ink-tertiary)'}"></span>${esc(s.label||key)} <span class="count-pill">${subjectPlans.length}</span></div>
-        <div style="min-width:110px;"><div class="progress-bar"><div class="progress-fill" style="width:${progress}%;background:${s.color||'var(--accent)'}"></div></div></div>
       </div>
       <div class="roadmap-milestone-plan-list">${subjectPlans.map(roadmapPlanCard).join('')}</div>
     </div>`;
@@ -5342,7 +5664,6 @@ function milestoneCard(ms, idx) {
         <div class="roadmap-milestone-index">Milestone ${idx + 1}</div>
         <div class="roadmap-milestone-title"><span class="roadmap-disclosure">⌄</span>${esc(ms.title)}</div>
         <div class="roadmap-plan-meta"><span class="roadmap-status ${ms.status}">${roadmapStatusLabel(ms.status)}</span><span>${formatMilestoneRange(ms.startDate, ms.targetFinishDate)}</span><span>${plans.length} plans</span></div>
-        <div class="roadmap-plan-progress"><div class="progress-bar"><div class="progress-fill" style="width:${progress}%;background:var(--accent)"></div></div><small>${progress}%</small></div>
         ${ms.notes ? `<div class="roadmap-notes">${esc(ms.notes)}</div>` : ''}
       </div>
       <div class="roadmap-actions" onclick="event.stopPropagation()">
@@ -5375,23 +5696,14 @@ function renderExamManager() {
   return `<div class="roadmap-section"><div class="roadmap-section-head"><h3>Exam Manager <span class="count-pill">${roadmapExams.length}</span></h3><button class="apple-btn primary" onclick="openExamModal()">+ Add Exam</button></div><div class="roadmap-exam-grid">${cards}</div></div>`;
 }
 function renderOverallProgress() {
-  const milestones = getOrderedMilestones();
-  const avg = milestones.length ? Math.round(milestones.reduce((sum,m)=>sum+getMilestoneProgress(m),0)/milestones.length) : 0;
-  const completed = milestones.filter(m => m.status === 'completed' || getMilestoneProgress(m) >= 100).length;
-  const inProgress = milestones.filter(m => m.status === 'in_progress' && getMilestoneProgress(m) < 100).length;
-  const notStarted = milestones.length - completed - inProgress;
-  return `<div class="roadmap-section"><div class="roadmap-section-head"><h3>Overall Progress</h3></div><div class="roadmap-overall-grid">
-    <div class="roadmap-overall-summary"><div class="roadmap-kicker">Entire Preparation Cycle</div><div class="roadmap-progress-number">${avg}%</div><div class="progress-bar" style="height:8px;"><div class="progress-fill" style="width:${avg}%;background:var(--accent);"></div></div></div>
-    <div class="roadmap-overall-summary"><div class="roadmap-progress-stats" style="margin-top:0;"><div class="roadmap-mini-stat"><div class="num">${notStarted}</div><div class="label">Not Started</div></div><div class="roadmap-mini-stat"><div class="num">${inProgress}</div><div class="label">In Progress</div></div><div class="roadmap-mini-stat"><div class="num">${completed}</div><div class="label">Completed</div></div></div></div>
-  </div></div>`;
+  return '';
 }
 function renderStudyRoadmap(container) {
   normalizeRoadmapMilestones(); normalizeRoadmapPlans(); normalizeRoadmapExams(); ensureMilestoneExpanded(); ensureMilestoneSubjectExpanded();
   container.innerHTML = `<div class="roadmap-page">
-    <div class="roadmap-section-head" style="margin-bottom:-4px;"><h3>Study Roadmap</h3></div>
+    <div class="roadmap-section-head" style="margin-bottom:-4px;"><h3>Study Roadmap</h3><div style="display:flex;gap:8px;flex-wrap:wrap;"><button class="apple-btn primary" onclick="openGenerateRoadmapModal()">🤖 Generate Roadmap</button><button class="apple-btn" onclick="openRoadmapAIImportModal()">Import from AI</button></div></div>
     ${renderExamManager()}
     ${renderMilestonesSection()}
-    ${renderOverallProgress()}
   </div>`;
 }
 function expandCurrentMilestone() {
@@ -5481,6 +5793,252 @@ function milestoneDragOver(ev,id){ if(!milestoneDraggedId||milestoneDraggedId===
 function milestoneDragLeave(ev,id){ const el=document.getElementById('milestone_'+id); if(el)el.classList.remove('drag-over'); }
 function milestoneDrop(ev,targetId){ ev.preventDefault(); document.querySelectorAll('.roadmap-milestone-card').forEach(el=>el.classList.remove('drag-over','dragging')); const sourceId=milestoneDraggedId||(ev.dataTransfer&&ev.dataTransfer.getData('text/plain')); milestoneDraggedId=null; if(!sourceId||sourceId===targetId)return; const ordered=getOrderedMilestones(); const sIdx=ordered.findIndex(m=>m.id===sourceId), tIdx=ordered.findIndex(m=>m.id===targetId); if(sIdx<0||tIdx<0)return; const [moved]=ordered.splice(sIdx,1); ordered.splice(tIdx,0,moved); ordered.forEach((m,i)=>m.order=i); roadmapMilestones=ordered; saveRoadmap(); render(); toast('Milestone order saved'); }
 function milestoneDragEnd(){ milestoneDraggedId=null; document.querySelectorAll('.roadmap-milestone-card').forEach(el=>el.classList.remove('drag-over','dragging')); }
+function openGenerateRoadmapModal() {
+  openGenericSheet('🤖 Generate Roadmap', `
+    <div style="font-size:13px;color:var(--ink-secondary);line-height:1.5;margin-bottom:14px;">
+      Fill in your study profile below. We will generate a structured AI prompt for you to paste into ChatGPT or Claude.
+    </div>
+    <div class="field"><label>Learning Goal</label><input id="genGoal" placeholder="e.g. IELTS Academic" /></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+      <div class="field"><label>Target Score</label><input id="genScore" placeholder="e.g. 7.5" /></div>
+      <div class="field"><label>Study Duration</label><input id="genDuration" placeholder="e.g. 3 Months" /></div>
+    </div>
+    <div class="field"><label>Current Level</label><input id="genLevel" placeholder="e.g. Intermediate" /></div>
+    <div class="field">
+      <label>Focus Areas</label>
+      <div style="display:grid;grid-template-columns:repeat(2, minmax(120px, 1fr));gap:8px;margin-top:6px;">
+        ${['Reading', 'Writing', 'Listening', 'Speaking', 'Vocabulary', 'Grammar'].map(fa => `
+          <label style="display:flex;gap:8px;align-items:center;font-size:13px;color:var(--ink);cursor:pointer;">
+            <input type="checkbox" class="gen-focus" value="${fa}" checked />
+            <span>${fa}</span>
+          </label>
+        `).join('')}
+      </div>
+    </div>
+  `, [
+    {text:'Cancel', onclick:()=>closeSheet('genericSheet')},
+    {text:'Generate Prompt', cls:'primary', onclick:()=>executeGenerateRoadmapPrompt()}
+  ]);
+}
+
+function executeGenerateRoadmapPrompt() {
+  const goal = document.getElementById('genGoal')?.value.trim() || 'IELTS Academic';
+  const score = document.getElementById('genScore')?.value.trim() || '7.5';
+  const duration = document.getElementById('genDuration')?.value.trim() || '3 Months';
+  const level = document.getElementById('genLevel')?.value.trim() || 'Intermediate';
+  
+  const focusElements = Array.from(document.querySelectorAll('.gen-focus:checked'));
+  const focusList = focusElements.map(el => el.value).filter(Boolean);
+  const focusStr = focusList.length ? focusList.join(', ') : 'Reading, Writing, Listening, Speaking, Vocabulary, Grammar';
+
+  const promptText = `You are an expert AI study planner and curriculum coach.
+Please generate a comprehensive, structured Study Roadmap for my study preparation based on the following profile:
+
+- Learning Goal: ${goal}
+- Target Score: ${score}
+- Study Duration: ${duration}
+- Current Level: ${level}
+- Focus Areas: ${focusStr}
+
+Please output ONLY valid JSON without any markdown formatting, backticks, comments, or introductory text.
+The JSON must strictly follow this exact array structure:
+
+[
+  {
+    "milestone": "Foundation",
+    "subjects": [
+      {
+        "name": "Grammar",
+        "tasks": [
+          "Basic Tenses",
+          "Sentence Structure",
+          "Articles"
+        ],
+        "status": "Not Started",
+        "target": "Week 1-2"
+      },
+      {
+        "name": "Vocabulary",
+        "tasks": [
+          "Academic Word List 1-500",
+          "Synonym grouping for essays"
+        ],
+        "status": "Not Started",
+        "target": "Week 1-2"
+      }
+    ]
+  },
+  {
+    "milestone": "Skill Building",
+    "subjects": [
+      {
+        "name": "Reading",
+        "tasks": [
+          "Skimming and scanning techniques",
+          "True/False/Not Given drills"
+        ],
+        "status": "Not Started",
+        "target": "Week 3-6"
+      }
+    ]
+  }
+]
+
+Requirements:
+1. Divide the total study duration (${duration}) into logical study milestones (e.g. Foundation, Skill Building, Intensive Practice, Mock Exams, Final Review).
+2. Cover the selected focus areas (${focusStr}) across the milestones.
+3. For each subject inside a milestone, list specific, actionable study tasks in the "tasks" array.
+4. Set realistic target timeframe strings for each subject (e.g. "Week 1-2", "Month 2").
+5. Only output the JSON array.`;
+
+  if (typeof AI_WIZARD_PROMPTS !== 'undefined') {
+    AI_WIZARD_PROMPTS.study_roadmap = promptText;
+    AI_WIZARD_PROMPTS.roadmap = promptText;
+  }
+  const promptBox = document.getElementById('aiWizardPromptBox');
+  if (promptBox && (typeof _aiWizardTab !== 'undefined' && (_aiWizardTab === 'study_roadmap' || _aiWizardTab === 'roadmap'))) {
+    promptBox.textContent = promptText;
+  }
+
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(promptText).then(() => {
+      toast('Prompt copied successfully.');
+    }).catch(() => {
+      fallbackCopyPromptRoadmapGen(promptText);
+    });
+  } else {
+    fallbackCopyPromptRoadmapGen(promptText);
+  }
+
+  closeSheet('genericSheet');
+}
+
+function fallbackCopyPromptRoadmapGen(text) {
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.position = 'fixed';
+  ta.style.left = '-9999px';
+  document.body.appendChild(ta);
+  ta.focus();
+  ta.select();
+  try {
+    document.execCommand('copy');
+    toast('Prompt copied successfully.');
+  } catch(e) {
+    toast('Copy failed');
+  }
+  document.body.removeChild(ta);
+}
+
+function openRoadmapAIImportModal() {
+  openGenericSheet('Import from AI', `
+    <div style="font-size:13px;color:var(--ink-secondary);line-height:1.5;margin-bottom:12px;">
+      Paste the AI-generated JSON below to replace your current Study Roadmap.
+    </div>
+    <div class="field" style="margin:0;">
+      <textarea id="roadmapAIImportText" rows="14" style="width:100%;font-family:monospace;font-size:12px;" placeholder="Paste the AI-generated JSON here..."></textarea>
+    </div>
+  `, [
+    {text:'Cancel', onclick:()=>closeSheet('genericSheet')},
+    {text:'Import', cls:'primary', onclick:()=>executeRoadmapAIImport()}
+  ]);
+}
+
+function executeRoadmapAIImport() {
+  const text = document.getElementById('roadmapAIImportText')?.value.trim();
+  if (!text) {
+    toast('Invalid JSON format.');
+    return;
+  }
+  let data = null;
+  try {
+    data = JSON.parse(text);
+  } catch(e) {
+    toast('Invalid JSON format.');
+    return;
+  }
+  if (!Array.isArray(data) || !data.length || !data.every(item => item && typeof item === 'object')) {
+    toast('Invalid JSON format.');
+    return;
+  }
+
+  const newMilestones = [];
+  const newPlans = [];
+  let msOrder = 0;
+  let planOrder = 0;
+
+  data.forEach((mItem, idx) => {
+    const msId = uid('rm');
+    const title = String(mItem.milestone || mItem.title || `Milestone ${idx + 1}`).trim();
+    const startDate = normalizePlanDate(mItem.startDate || mItem.start || '');
+    const targetFinishDate = normalizePlanDate(mItem.targetFinishDate || mItem.end || mItem.targetDate || '');
+    let msStatus = normalizeRoadmapStatus(mItem.status || 'not_started');
+
+    const subjectsArr = Array.isArray(mItem.subjects) ? mItem.subjects : (mItem.subject ? [mItem.subject] : []);
+    subjectsArr.forEach(sItem => {
+      if (!sItem || typeof sItem !== 'object') return;
+      const rawSubj = String(sItem.name || sItem.subject || sItem.label || '').trim();
+      const subjectKey = detectSubjectKey(rawSubj) || Object.keys(customSubjects)[0] || 'english';
+      const planStatus = normalizeRoadmapStatus(sItem.status || mItem.status || 'not_started');
+      const targetStr = String(sItem.target || sItem.targetDate || sItem.date || targetFinishDate || '').trim();
+      const planFinishDate = normalizePlanDate(targetStr);
+      const planStartDate = normalizePlanDate(sItem.startDate || startDate || '');
+
+      const notesArr = [];
+      if (rawSubj && !detectSubjectKey(rawSubj)) notesArr.push(rawSubj);
+      if (targetStr && !planFinishDate) notesArr.push(`Target: ${targetStr}`);
+      if (sItem.notes) notesArr.push(sItem.notes);
+      const planNotes = notesArr.join(' · ');
+
+      const tasksArr = Array.isArray(sItem.tasks) ? sItem.tasks : (sItem.task ? [sItem.task] : (sItem.title ? [sItem.title] : (rawSubj ? [rawSubj] : ['Untitled Task'])));
+      tasksArr.forEach(taskTitle => {
+        newPlans.push({
+          id: uid('rp'),
+          milestoneId: msId,
+          subject: subjectKey,
+          title: String(taskTitle || 'Untitled Plan').trim(),
+          startDate: planStartDate,
+          targetFinishDate: planFinishDate,
+          status: planStatus,
+          notes: planNotes,
+          order: planOrder++,
+          createdAt: todayISO()
+        });
+      });
+    });
+
+    const msPlans = newPlans.filter(p => p.milestoneId === msId);
+    if (msPlans.length > 0) {
+      if (msPlans.every(p => p.status === 'completed')) msStatus = 'completed';
+      else if (msPlans.some(p => p.status === 'in_progress' || p.status === 'completed')) msStatus = 'in_progress';
+    }
+
+    newMilestones.push({
+      id: msId,
+      title: title,
+      startDate: startDate,
+      targetFinishDate: targetFinishDate,
+      status: msStatus,
+      notes: String(mItem.notes || '').trim(),
+      order: msOrder++,
+      createdAt: todayISO()
+    });
+  });
+
+  roadmapMilestones = newMilestones;
+  roadmapPlans = newPlans;
+  roadmapMilestoneExpanded = null;
+  roadmapSubjectExpanded = null;
+
+  localStorage.setItem('study_roadmap_milestones_pro', JSON.stringify(roadmapMilestones));
+  localStorage.setItem('study_roadmap_plans_pro', JSON.stringify(roadmapPlans));
+  if (typeof saveRoadmap === 'function') saveRoadmap();
+
+  closeSheet('genericSheet');
+  if (typeof render === 'function') render();
+  toast('Roadmap imported successfully');
+}
+
 function openImportPlanModal(prefill='') {
   openGenericSheet('Import Plan', `
     <div class="field"><label>Paste Study Plan</label><textarea id="importPlanText" rows="14" placeholder="Paste an AI-formatted study roadmap here...">${esc(prefill)}</textarea></div>
@@ -6179,33 +6737,7 @@ function getSelectedControlModules() {
   return [];
 }
 
-function openImportModuleSheet() {
-  const moduleRows = [
-    ['study_resource','Study Resource'],
-    ['weekly_planner','Weekly AI Planner'],
-    ['quiz_hub','Quiz Hub'],
-    ['word_book','Word Book'],
-    ['synonyms','Synonyms']
-  ];
-  const selected = getSelectedControlModules();
-  openGenericSheet('⬇ Import Data',`
-    <div style="font-size:13px;color:var(--ink-secondary);margin-bottom:12px;line-height:1.5;">
-      选择要导入的板块（默认继承上方已选模块），再选择文件。按住 Cmd/Ctrl 多选。
-    </div>
-    <select id="importModuleSelect">
-      ${moduleRows.map(([key,label])=>`<option value="${key}" ${selected.includes(key)?'selected':''}>${label}</option>`).join('')}
-    </select>
-  `,[
-    {text:'取消', onclick:()=>closeSheet('genericSheet')},
-    {text:'选择文件导入', cls:'primary', onclick:()=>{
-      const sel = [document.getElementById('importModuleSelect').value].filter(Boolean);
-      if(!sel.length){toast('请先选择至少一个模块');return;}
-      window._pendingImportModules = sel;
-      document.getElementById('controlCenterImportFile').click();
-      closeSheet('genericSheet');
-    }}
-  ]);
-}
+
 
 function quizExportObject() {
   return {version:'2.0',schemaVersion:QUIZ_SCHEMA,exportedAt:Date.now(),passages:quizState.passages,quizSets:quizState.quizSets,grammarQuestions:quizState.grammarQuestions,vocabularyQuestions:quizState.vocabularyQuestions,wordBook:quizState.wordBook,synonymLibrary:quizState.synonymLibrary,highlights:quizState.highlights,wrongBook:quizState.wrongBook,wordMemory:quizState.wordMemory,answerLog:quizState.answerLog,currentPassageId:quizState.currentPassageId,currentQuizSetId:quizState.currentQuizSetId,activeQuizSetIds:quizState.activeQuizSetIds,activeTab:quizState.activeTab,activeQIndex:quizState.activeQIndex};
@@ -6232,78 +6764,160 @@ function exportSelectedModules() {
   toast('Selected data exported');
 }
 
-function importSelectedModules(event) {
-  const selected = window._pendingImportModules?.length ? window._pendingImportModules : getSelectedControlModules();
-  window._pendingImportModules = null;
-  if (!selected.length) { toast('Select at least one module'); event.target.value=''; return; }
-  const file = event.target.files[0]; if (!file) return;
-  const reader = new FileReader();
-  reader.onload = e => {
-    try {
-      const data = JSON.parse(e.target.result);
-      if (!confirm('Import selected module data? Selected modules will be overwritten when matching data exists.')) { event.target.value=''; return; }
-      applySelectedModuleImport(data, selected);
-      event.target.value = '';
-      toast('Selected data imported');
-      closeSheet('genericSheet');
-      render();
-    } catch(err) { alert('Import failed: ' + err.message); event.target.value = ''; }
-  };
-  reader.readAsText(file);
+
+
+function removeDemoDataConfirm() {
+  openGenericSheet('Remove Demo Data', `
+    <div style="font-size:14px;color:var(--ink-secondary);line-height:1.6;padding:8px 0;">
+      This will permanently remove all built-in demo data.<br><br>Your own data will remain unchanged.
+    </div>
+  `, [
+    {text:'Cancel', onclick:()=>closeSheet('genericSheet')},
+    {text:'Remove', cls:'danger', onclick:()=>{ closeSheet('genericSheet'); executeRemoveDemoData(); }}
+  ]);
 }
 
-function applySelectedModuleImport(data, selected) {
-  const modules = data.modules || {};
-  if (selected.includes('study_resource')) {
-    const r = modules.study_resource || data.resources || null;
-    if (r) {
-      if (r.customSubjects) customSubjects = r.customSubjects;
-      if (r.resources) resources = r.resources;
-      if (r.exercises) exercises = r.exercises;
-      if (r.subjectScores) subjectScores = r.subjectScores;
-      if (r.countdownConfig) countdownConfig = r.countdownConfig;
-      if (r.modOrder) modOrder = r.modOrder;
-      if (r.studyTasks) studyTasks = r.studyTasks;
-      if (r.learningItems) learningItems = r.learningItems;
-      if (r.roadmapMilestones) roadmapMilestones = r.roadmapMilestones;
-      if (r.roadmapPlans) roadmapPlans = r.roadmapPlans;
-      if (r.roadmapExams) roadmapExams = r.roadmapExams;
-      if (r.roadmapSubjectExpanded) roadmapSubjectExpanded = r.roadmapSubjectExpanded;
-      if (r.roadmapMilestoneExpanded) roadmapMilestoneExpanded = r.roadmapMilestoneExpanded;
-      if (r.studySuggest) studySuggest = r.studySuggest;
-      ensureFixedSidebarSubjects(); normalizeRoadmapMilestones(); normalizeRoadmapPlans(); normalizeRoadmapExams(); saveResState(); saveRoadmap(); saveSuggest();
+function executeRemoveDemoData() {
+  let foundDemo = false;
+
+  if (customSubjects && typeof customSubjects === 'object') {
+    Object.keys(customSubjects).forEach(k => {
+      if (customSubjects[k] && customSubjects[k].isSample === true) {
+        delete customSubjects[k];
+        foundDemo = true;
+      }
+    });
+  }
+  if (subjectScores && typeof subjectScores === 'object') {
+    Object.keys(subjectScores).forEach(k => {
+      if (subjectScores[k] && subjectScores[k].isSample === true) {
+        delete subjectScores[k];
+        foundDemo = true;
+      }
+    });
+  }
+  if (customSubjects && !customSubjects[appState.currentSubject]) {
+    appState.currentSubject = Object.keys(customSubjects)[0] || '';
+  }
+
+  if (Array.isArray(resources)) {
+    const len = resources.length;
+    resources = resources.filter(r => r && r.isSample !== true);
+    if (resources.length < len) foundDemo = true;
+  }
+
+  if (Array.isArray(exercises)) {
+    const len = exercises.length;
+    exercises = exercises.filter(e => e && e.isSample !== true);
+    if (exercises.length < len) foundDemo = true;
+  }
+
+  if (Array.isArray(learningItems)) {
+    const len = learningItems.length;
+    learningItems = learningItems.filter(l => l && l.isSample !== true);
+    if (learningItems.length < len) foundDemo = true;
+  }
+
+  if (Array.isArray(studyTasks)) {
+    const len = studyTasks.length;
+    studyTasks = studyTasks.filter(t => t && t.isSample !== true);
+    if (studyTasks.length < len) foundDemo = true;
+  }
+
+  if (Array.isArray(roadmapMilestones)) {
+    const len = roadmapMilestones.length;
+    roadmapMilestones = roadmapMilestones.filter(m => m && m.isSample !== true);
+    if (roadmapMilestones.length < len) foundDemo = true;
+  }
+  if (Array.isArray(roadmapPlans)) {
+    const len = roadmapPlans.length;
+    roadmapPlans = roadmapPlans.filter(p => p && p.isSample !== true);
+    if (roadmapPlans.length < len) foundDemo = true;
+  }
+  if (Array.isArray(roadmapExams)) {
+    const len = roadmapExams.length;
+    roadmapExams = roadmapExams.filter(e => e && e.isSample !== true);
+    if (roadmapExams.length < len) foundDemo = true;
+  }
+
+  if (weeklyPlan && typeof weeklyPlan === 'object') {
+    if (Array.isArray(weeklyPlan.tasks)) {
+      const len = weeklyPlan.tasks.length;
+      weeklyPlan.tasks = weeklyPlan.tasks.filter(t => t && t.isSample !== true);
+      if (weeklyPlan.tasks.length < len) foundDemo = true;
+    }
+    if (Array.isArray(weeklyPlan.history)) {
+      const len = weeklyPlan.history.length;
+      weeklyPlan.history = weeklyPlan.history.filter(h => h && h.isSample !== true);
+      if (weeklyPlan.history.length < len) foundDemo = true;
+    }
+    if (weeklyPlan.isSample === true) {
+      weeklyPlan.isSample = false;
+      foundDemo = true;
     }
   }
-  if (selected.includes('weekly_planner')) {
-    const w = modules.weekly_planner || data.weekly_planner || null;
-    if (w) {
-      if (w.weeklyPlan) weeklyPlan = w.weeklyPlan;
-      else if (w.currentWeek || w.tasks || w.history) weeklyPlan = w;
-      if (Array.isArray(w.studyMilestones) && typeof studyMilestones !== 'undefined') studyMilestones = w.studyMilestones;
-      if (w.progressCheckState && typeof progressCheckState !== 'undefined') progressCheckState = w.progressCheckState;
-      saveWeeklyPlan(); if (typeof saveStudyMilestones === 'function') saveStudyMilestones(); if (typeof saveProgressCheck === 'function') saveProgressCheck();
+
+  if (typeof studyMilestones !== 'undefined' && Array.isArray(studyMilestones)) {
+    const len = studyMilestones.length;
+    studyMilestones = studyMilestones.filter(m => m && m.isSample !== true);
+    if (studyMilestones.length < len) foundDemo = true;
+  }
+  if (typeof progressCheckState !== 'undefined' && progressCheckState && Array.isArray(progressCheckState.history)) {
+    const len = progressCheckState.history.length;
+    progressCheckState.history = progressCheckState.history.filter(h => h && h.isSample !== true);
+    if (progressCheckState.history.length < len) foundDemo = true;
+  }
+
+  if (quizState && typeof quizState === 'object') {
+    ['passages', 'quizSets', 'grammarQuestions', 'vocabularyQuestions', 'wordBook', 'synonymLibrary', 'highlights', 'wrongBook'].forEach(prop => {
+      if (Array.isArray(quizState[prop])) {
+        const len = quizState[prop].length;
+        quizState[prop] = quizState[prop].filter(x => x && x.isSample !== true);
+        if (quizState[prop].length < len) foundDemo = true;
+      }
+    });
+    if (quizState.passages && !quizState.passages.find(p => p.id === quizState.currentPassageId)) {
+      quizState.currentPassageId = quizState.passages[0]?.id || null;
     }
   }
-  if (selected.includes('quiz_hub')) {
-    const q = modules.quiz_hub?.quizData || data.quizData || (data.passages || data.grammarQuestions || data.vocabularyQuestions ? data : null);
-    if (q) importQuizData(q);
+
+  if (countdownConfig && countdownConfig.isSample === true) {
+    countdownConfig = { title: '', targetDate: '' };
+    foundDemo = true;
   }
-  if (selected.includes('word_book')) {
-    const wb = modules.word_book || data.word_book || data.quizData || data;
-    if (Array.isArray(wb.wordBook) || Array.isArray(wb.vocabularyBook)) {
-      quizState.wordBook = Array.isArray(wb.wordBook) ? wb.wordBook : wb.vocabularyBook;
-      if (wb.wordMemory) quizState.wordMemory = wb.wordMemory;
-      saveQuiz();
-    }
+
+  if (foundDemo) {
+    localStorage.setItem('study_demo_data_removed', 'true');
   }
-  if (selected.includes('synonyms')) {
-    const syn = modules.synonyms || data.synonyms || data.quizData || data;
-    if (Array.isArray(syn.synonymLibrary)) { quizState.synonymLibrary = syn.synonymLibrary; saveQuiz(); }
+
+  localStorage.setItem('study_subjects_pro', JSON.stringify(customSubjects || {}));
+  localStorage.setItem('study_scores_pro', JSON.stringify(subjectScores || {}));
+  localStorage.setItem('study_resources_pro', JSON.stringify(resources || []));
+  localStorage.setItem('study_exercises_pro', JSON.stringify(exercises || []));
+  localStorage.setItem('study_tasks_pro', JSON.stringify(studyTasks || []));
+  if (typeof saveLearning === 'function') saveLearning(); else localStorage.setItem('study_learning_pro', JSON.stringify(learningItems || []));
+  if (typeof saveRoadmap === 'function') saveRoadmap();
+  if (typeof saveWeeklyPlan === 'function') saveWeeklyPlan();
+  if (typeof saveStudyMilestones === 'function') saveStudyMilestones();
+  if (typeof saveProgressCheck === 'function') saveProgressCheck();
+  if (typeof saveQuiz === 'function') saveQuiz();
+  if (typeof saveAppState === 'function') saveAppState();
+  if (typeof saveResState === 'function') saveResState();
+  if (typeof saveSuggest === 'function') saveSuggest();
+
+  if (typeof renderSharedStats === 'function') renderSharedStats();
+  if (typeof renderSidebar === 'function') renderSidebar();
+  render();
+
+  if (foundDemo) {
+    toast('Demo data removed successfully.');
+  } else {
+    toast('No demo data found.');
   }
-  saveAll();
 }
 
 function resetSelectedModules() {
+  localStorage.removeItem('study_demo_data_removed');
   const selected = getSelectedControlModules();
   if (!selected.length) { toast('Select at least one module'); return; }
   if (!confirm('Reset selected module data? This cannot be undone. Export a backup first if needed.')) return;
@@ -6349,22 +6963,6 @@ function exportAllData() {
   toast('Full backup exported OK');
 }
 
-function importAllData(event) {
-  const file = event.target.files[0]; if(!file) return;
-  const reader = new FileReader();
-  reader.onload = e => {
-    try {
-      const data = JSON.parse(e.target.result);
-      applySelectedModuleImport(data, ['study_resource','weekly_planner','quiz_hub','word_book','synonyms']);
-      if(data.appState) appState = Object.assign(appState, data.appState);
-      if(data.studySuggest) studySuggest = data.studySuggest;
-      saveAll(); render();
-      toast('Backup imported OK');
-    } catch(err) { alert('Import failed: '+err.message); }
-  };
-  reader.readAsText(file);
-  event.target.value = '';
-}
 
 function downloadJSON(obj, filename) {
   const blob = new Blob([JSON.stringify(obj,null,2)],{type:'application/json'});
@@ -7241,7 +7839,7 @@ function generateWeeklyPlan() {
   let grammarStep = Math.round(8 * stepMultiplier);
   if (customStr.toLowerCase().includes('grammar')) grammarStep = Math.round(grammarStep * 1.5);
 
-  tasks.push({ 
+  tasks.push({ isSample: (localStorage.getItem('study_demo_data_removed') === 'true' ? false : true), 
     id:'w_grammar', category:'Grammar', title:grammarBook?grammarBook.title:'Grammar Book', 
     startProgress:grammarStart, currentProgress:grammarStart, targetProgress:grammarStart + grammarStep, 
     unit:'pages', status:'in_progress', priority:'High', list:'Study',
@@ -7252,7 +7850,7 @@ function generateWeeklyPlan() {
   const readingBook = allLr.find(item => item.title && item.title.toLowerCase().includes('reading'));
   const readingStart = readingBook ? readingBook.currentPage : 50;
   let readingStep = Math.round(8 * stepMultiplier);
-  tasks.push({ 
+  tasks.push({ isSample: (localStorage.getItem('study_demo_data_removed') === 'true' ? false : true), 
     id:'w_reading', category:'Reading', title:readingBook?readingBook.title:'Reading Book', 
     startProgress:readingStart, currentProgress:readingStart, targetProgress:readingStart + readingStep, 
     unit:'pages', status:'in_progress', priority:'Medium', list:'Study',
@@ -7260,7 +7858,7 @@ function generateWeeklyPlan() {
   });
 
   // Vocabulary
-  tasks.push({ 
+  tasks.push({ isSample: (localStorage.getItem('study_demo_data_removed') === 'true' ? false : true), 
     id:'w_vocab', category:'Vocabulary', title:'Word Book SRS Review', 
     startProgress:0, currentProgress:0, targetProgress: dueVocab > 0 ? dueVocab : 30, 
     unit:'words', status:'in_progress', priority:'High', list:'Study',
@@ -7268,13 +7866,13 @@ function generateWeeklyPlan() {
   });
 
   if (customStr.toLowerCase().includes('sunday for review')) {
-    tasks.push({ id:'w_sun_review', title:'Sunday Weekly Review', date:getTaskDate(6), time:'20:00', priority:'High', list:'Study', status:'in_progress', startProgress:0, currentProgress:0, targetProgress:1, unit:'session' });
+    tasks.push({ isSample: (localStorage.getItem('study_demo_data_removed') === 'true' ? false : true), id:'w_sun_review', title:'Sunday Weekly Review', date:getTaskDate(6), time:'20:00', priority:'High', list:'Study', status:'in_progress', startProgress:0, currentProgress:0, targetProgress:1, unit:'session' });
   }
 
   // Mock Test - Higher frequency when exam is close
   let mockCount = (daysToExam !== null && daysToExam < 60) ? 2 : 1;
   for(let i=0; i<mockCount; i++) {
-    tasks.push({ 
+    tasks.push({ isSample: (localStorage.getItem('study_demo_data_removed') === 'true' ? false : true), 
       id:'w_mock_'+i, category:'Practice', title:'Weekly Mock Test' + (mockCount>1 ? ' #'+(i+1) : ''), 
       startProgress:0, currentProgress:0, targetProgress:1, 
       unit:'test', status:'in_progress', priority:'Medium', list:'Study',
@@ -7504,7 +8102,7 @@ function renderAIWeeklySummary(weekObj){
 }
 function detectStudyMilestones(){
   const existing = new Set(safeArray(studyMilestones).map(m=>m.key));
-  const add = (key,title) => { if(!existing.has(key)){ studyMilestones.push({key,title,date:todayISO(),id:uid('ms')}); existing.add(key); } };
+  const add = (key,title) => { if(!existing.has(key)){ studyMilestones.push({key,title,date:todayISO(),id:uid('ms'), isSample: (localStorage.getItem('study_demo_data_removed') === 'true' ? false : true)}); existing.add(key); } };
   const vocabCount = safeArray(quizState.wordBook).length;
   if(vocabCount >= 500) add('vocab_500','500 Vocabulary Mastered');
   if(vocabCount >= 1000) add('vocab_1000','1000 Vocabulary Mastered');
@@ -7756,5 +8354,5 @@ window.addEventListener('orientationchange', handleResponsiveViewportChange);
 render();
 </script>
 <script defer src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ==" data-cf-beacon='{"version":"2024.11.0","token":"1954b47c125f43f8b4338b3c4f804e4f","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a16c066f0a70d79b',t:'MTc4MzMxMzgwOQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a16c1e0eea861314',t:'MTc4MzMxNDc3Nw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a16c36f39dc5e377',t:'MTc4MzMxNTc5Nw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a16c066f0a70d79b',t:'MTc4MzMxMzgwOQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a16c1e0eea861314',t:'MTc4MzMxNDc3Nw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a16c36f39dc5e377',t:'MTc4MzMxNTc5Nw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a16ce673adbcdc98',t:'MTc4MzMyMjk4NQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a16d1d2f5e4e3802',t:'MTc4MzMyNTIyNw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a16d56df287607da',t:'MTc4MzMyNzU5MA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
