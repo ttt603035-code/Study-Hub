@@ -2991,16 +2991,9 @@ function renderSharedStats() {
 //  PROGRESS
 // ================================================================
 function getSubjectProgress(subject) {
-  const allEx = exercises || [];
-  const allLr = learningItems || [];
-  const subEx = [...allEx, ...allLr].filter(e => (!subject || e.subject === subject) && !e.archived);
-  let total = 0, done = 0;
-  subEx.forEach(ex => {
-    const sts = ex.subtasks || [];
-    if (sts.length > 0) { total += sts.length; done += sts.filter(s=>s.completed).length; }
-    else if ((parseInt(ex.totalPages)||0) > 0) { total += parseInt(ex.totalPages)||0; done += Math.min(parseInt(ex.currentPage)||0, parseInt(ex.totalPages)||0); }
-    else { total += 1; if(ex.status==='completed' || ex.completed) done += 1; }
-  });
+  const subRes = (resources || []).filter(r => !subject || r.subject === subject);
+  const total = subRes.length;
+  const done = subRes.filter(r => r.status === 'completed').length;
   return { total, done, percent: total===0?0:Math.round(done/total*100) };
 }
 
@@ -4713,19 +4706,16 @@ function openQuizSettings() {
       <div style="padding:16px;background:var(--bg-card);border:1px solid var(--line);border-radius:var(--radius-lg);">
         <div style="font-weight:800;font-size:15px;margin-bottom:4px;letter-spacing:-0.01em;">Data Management Panel</div>
         <div style="font-size:12px;color:var(--ink-tertiary);line-height:1.5;margin-bottom:14px;">Select the module data you want to export, import, or reset. Quiz Hub remains an independent module and is managed here only for backup and restore.</div>
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:8px;margin-bottom:14px;">
-          ${moduleRows.map(([key,label,desc])=>`
-            <label style="display:flex;gap:10px;align-items:flex-start;padding:12px;background:var(--bg-elev);border:1px solid var(--line-light);border-radius:var(--radius);cursor:pointer;">
-              <input type="checkbox" class="control-module-check" value="${key}" checked style="margin-top:2px;">
-              <span><span style="display:block;font-size:13px;font-weight:800;color:var(--ink);">${label}</span><span style="display:block;font-size:11px;color:var(--ink-tertiary);line-height:1.4;margin-top:2px;">${desc}</span></span>
-            </label>`).join('')}
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap;">
+          <label style="font-size:12px;font-weight:700;color:var(--ink-secondary);white-space:nowrap;">模块：</label>
+          <select id="controlModuleSelect">
+            ${moduleRows.map(([key,label])=>`<option value="${key}">${label}</option>`).join('')}
+          </select>
         </div>
         <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;">
-          <button class="apple-btn small" onclick="setControlModuleSelection(true)">Select All</button>
-          <button class="apple-btn small" onclick="setControlModuleSelection(false)">Clear</button>
-          <button class="apple-btn primary" onclick="exportSelectedModules()">Export Data</button>
-          <button class="apple-btn" onclick="document.getElementById('controlCenterImportFile').click()">Import Data</button>
-          <button class="apple-btn danger" onclick="resetSelectedModules()">Reset All Data</button>
+          <button class="apple-btn primary" onclick="exportSelectedModules()">⬆ Export</button>
+          <button class="apple-btn" onclick="openImportModuleSheet()">⬇ Import</button>
+          <button class="apple-btn danger" onclick="resetSelectedModules()">Reset</button>
           <input type="file" id="controlCenterImportFile" style="display:none" accept=".json" onchange="importSelectedModules(event)" />
         </div>
       </div>
@@ -4738,11 +4728,26 @@ function openQuizSettings() {
         </div>
       </div>
       <div style="padding:16px;background:var(--bg-card);border:1px solid var(--line);border-radius:var(--radius-lg);">
+        <div style="font-weight:800;font-size:15px;margin-bottom:4px;letter-spacing:-0.01em;">🤖 AI Import Wizard</div>
+        <div style="font-size:12px;color:var(--ink-tertiary);line-height:1.5;margin-bottom:14px;">选择板块 → 复制 Prompt → 去 AI 生成 JSON → 粘贴导入。</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;">
+          ${[['quiz','Quiz Hub（题目）'],['wordbook','Word Book（单词）'],['synonyms','Synonyms（同义词）'],['passage','Reading Passage（阅读文章）'],['study_resource','Study Resource（学习资源）']].map(([v,l])=>`
+            <button class="apple-btn small ai-wizard-tab" data-tab="${v}" onclick="switchAIWizardTab('${v}')" style="font-size:12px;">${l}</button>`).join('')}
+        </div>
+        <div id="aiWizardPromptBox" style="background:var(--bg-elev);border:1px solid var(--line);border-radius:var(--radius);padding:12px;font-size:11px;color:var(--ink-secondary);line-height:1.6;white-space:pre-wrap;max-height:140px;overflow-y:auto;font-family:monospace;cursor:text;user-select:text;"></div>
+        <div style="display:flex;gap:8px;margin-top:10px;align-items:center;flex-wrap:wrap;">
+          <button class="apple-btn primary" onclick="copyAIWizardPrompt()">📋 复制 Prompt</button>
+          <button class="apple-btn" onclick="openAIJSONImport()">📥 粘贴 JSON 导入</button>
+        </div>
+      </div>
+      <div style="padding:16px;background:var(--bg-card);border:1px solid var(--line);border-radius:var(--radius-lg);">
         <div style="font-weight:800;font-size:15px;margin-bottom:10px;letter-spacing:-0.01em;">Cloud Sync</div>
         <button class="apple-btn" onclick="closeSheet('genericSheet');openCloudSync()">Open Cloud Sync</button>
       </div>
     </div>
   `,[{text:'Close',cls:'primary',onclick:()=>closeSheet('genericSheet')}]);
+  // init first tab
+  setTimeout(()=>switchAIWizardTab('quiz'),50);
 }
 
 function exportQuizJSON() {
@@ -4831,6 +4836,211 @@ function copyAIPrompt() {
 Rules: Output ONLY valid JSON. Each question needs passageId and quizSetId. Options start with A./B./C./D. Answer is single uppercase letter. Explanation in Chinese.
 Paste your questions below:`;
   navigator.clipboard.writeText(prompt).then(()=>toast('Prompt copied OK')).catch(()=>toast('Copy failed'));
+}
+
+// ================================================================
+//  AI IMPORT WIZARD
+// ================================================================
+const AI_WIZARD_PROMPTS = {
+  quiz: `你是一个 JSON 转换助手。请将我粘贴的题目转换成以下格式，直接输出 JSON，不要任何多余文字或代码块标记。
+
+格式：
+{"version":"2.0","passages":[{"id":"sec_001","customName":"填写板块名称","title":"","content":""}],"quizSets":[{"id":"qs_001","passageId":"sec_001","name":"1"}],"grammarQuestions":[{"id":"g_001","passageId":"sec_001","quizSetId":"qs_001","question":"题目内容","options":["A. 选项","B. 选项","C. 选项","D. 选项"],"answer":"A","explanation":"中文解析"}],"vocabularyQuestions":[],"wordBook":[],"synonymLibrary":[],"highlights":[]}
+
+规则：
+- 只输出合法 JSON，不加任何说明
+- 每题必须有 passageId 和 quizSetId
+- 选项格式必须是 A./B./C./D. 开头
+- answer 只写单个大写字母
+- explanation 用中文写
+- 如果有多个板块，创建多个 passage，id 递增（sec_001, sec_002…）
+
+请将以下内容转换：
+[在这里粘贴你的题目]`,
+
+  wordbook: `你是一个 JSON 转换助手。请将我粘贴的单词/词组列表转换成以下格式，直接输出 JSON，不要任何多余文字或代码块标记。
+
+格式：
+{"wordBook":[{"id":"wbk_001","text":"单词或词组","meaning":"中文释义","example":"例句","subject":"english","source":"来源","dateAdded":"2026-07-06","highlight":false,"starred":false,"srsBox":0,"srsReviews":0,"srsLapses":0}]}
+
+规则：
+- 只输出合法 JSON
+- id 从 wbk_001 递增
+- subject 默认填 "english"
+- 没有例句就留空字符串
+- dateAdded 填今天日期 2026-07-06
+
+请将以下内容转换：
+[在这里粘贴你的单词列表]`,
+
+  synonyms: `你是一个 JSON 转换助手。请将我粘贴的同义词组转换成以下格式，直接输出 JSON，不要任何多余文字或代码块标记。
+
+格式：
+{"synonymLibrary":[{"id":"syn_001","groupName":"组名/核心词","words":["词1","词2","词3"],"notes":"中文说明","srsBox":0,"srsReviews":0,"srsLapses":0}]}
+
+规则：
+- 只输出合法 JSON
+- id 从 syn_001 递增
+- groupName 用最核心的词或短语
+- notes 简短说明用法区别（中文）
+
+请将以下内容转换：
+[在这里粘贴你的同义词内容]`,
+
+  passage: `你是一个 JSON 转换助手。请将我粘贴的阅读文章转换成以下格式，直接输出 JSON，不要任何多余文字或代码块标记。
+
+格式：
+{"passages":[{"id":"sec_001","customName":"文章标题或板块名","title":"完整标题","content":"文章正文内容"}],"quizSets":[{"id":"qs_001","passageId":"sec_001","name":"1"}]}
+
+规则：
+- 只输出合法 JSON
+- content 保留原文完整内容，保留换行
+- 如果有多篇文章，依次 sec_001, sec_002…
+- customName 简短，title 可以更完整
+
+请将以下内容转换：
+[在这里粘贴你的阅读文章]`,
+
+  study_resource: `你是一个 JSON 转换助手。请将我粘贴的学习资料/资源列表转换成以下格式，直接输出 JSON，不要任何多余文字或代码块标记。
+
+格式：
+{"resources":[{"id":"r_001","subject":"english","title":"资料标题","path":"D:/Study/English/filename.pdf","status":"not_started","startDate":"2026-07-06","tags":["标签1","标签2"],"createdAt":"2026-07-06"}]}
+
+规则：
+- 只输出合法 JSON
+- id 从 r_001 递增
+- subject 可选值："english"、"chinese"、"politic" 或自定义科目
+- status 可选值："not_started"（未开始）、"pending"（进行中）、"completed"（已完成）
+- startDate 填今天日期 2026-07-06 或预计开始日期
+- tags 用数组，填关键词分类
+- path 填文件路径或链接
+- createdAt 填今天日期 2026-07-06
+
+请将以下内容转换：
+[在这里粘贴你的学习资料列表]`
+};
+
+let _aiWizardTab = 'quiz';
+
+function switchAIWizardTab(tab) {
+  _aiWizardTab = tab;
+  const box = document.getElementById('aiWizardPromptBox');
+  if (box) box.textContent = AI_WIZARD_PROMPTS[tab] || '';
+  document.querySelectorAll('.ai-wizard-tab').forEach(b => {
+    b.classList.toggle('active', b.dataset.tab === tab);
+  });
+}
+
+function copyAIWizardPrompt() {
+  const prompt = AI_WIZARD_PROMPTS[_aiWizardTab] || '';
+  navigator.clipboard.writeText(prompt)
+    .then(() => toast('✅ Prompt 已复制，去 AI 生成 JSON 后回来粘贴导入'))
+    .catch(() => toast('复制失败，请手动选中复制'));
+}
+
+function openAIJSONImport() {
+  const tab = _aiWizardTab;
+  const labels = {quiz:'Quiz Hub',wordbook:'Word Book',synonyms:'Synonyms',passage:'Reading Passage',study_resource:'Study Resource'};
+  openGenericSheet(`📥 导入 JSON — ${labels[tab]||tab}`,`
+    <div style="font-size:13px;color:var(--ink-secondary);margin-bottom:10px;line-height:1.5;">
+      将 AI 生成的 JSON 粘贴到下方，选择导入方式后点击导入。
+    </div>
+    <div style="margin-bottom:10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+      <label style="font-size:12px;font-weight:700;color:var(--ink-secondary);">导入方式：</label>
+      <label style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer;">
+        <input type="radio" name="aiImportMode" value="merge" checked> 合并（保留现有数据）
+      </label>
+      <label style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer;">
+        <input type="radio" name="aiImportMode" value="overwrite"> 覆盖（替换现有数据）
+      </label>
+    </div>
+    <textarea id="aiJsonPasteArea" placeholder="在这里粘贴 AI 生成的 JSON..." style="width:100%;height:220px;font-family:monospace;font-size:12px;padding:10px;border:1px solid var(--line);border-radius:var(--radius);background:var(--bg-elev);color:var(--ink);resize:vertical;box-sizing:border-box;"></textarea>
+    <div id="aiImportPreview" style="margin-top:10px;font-size:12px;color:var(--ink-tertiary);"></div>
+  `,[
+    {text:'取消', onclick:()=>closeSheet('genericSheet')},
+    {text:'预览', onclick:()=>previewAIImport(tab)},
+    {text:'导入', cls:'primary', onclick:()=>confirmAIImport(tab)}
+  ]);
+}
+
+function previewAIImport(tab) {
+  const raw = document.getElementById('aiJsonPasteArea')?.value.trim();
+  const prev = document.getElementById('aiImportPreview');
+  if (!raw || !prev) return;
+  try {
+    const data = JSON.parse(raw);
+    let lines = [];
+    if (data.passages?.length) lines.push(`📖 Passages: ${data.passages.length} 个`);
+    if (data.grammarQuestions?.length) lines.push(`📝 Grammar 题: ${data.grammarQuestions.length} 题`);
+    if (data.vocabularyQuestions?.length) lines.push(`📝 Vocabulary 题: ${data.vocabularyQuestions.length} 题`);
+    if (data.wordBook?.length) lines.push(`📚 Word Book: ${data.wordBook.length} 个单词`);
+    if (data.synonymLibrary?.length) lines.push(`🔗 Synonyms: ${data.synonymLibrary.length} 组`);
+    if (data.resources?.length) lines.push(`📁 Study Resource: ${data.resources.length} 条`);
+    if (!lines.length) lines.push('⚠️ 未检测到可导入的数据，请确认 JSON 格式正确');
+    prev.innerHTML = `<div style="background:var(--bg-elev);padding:10px;border-radius:var(--radius);border:1px solid var(--line-light);">${lines.join('<br>')}</div>`;
+  } catch(e) {
+    prev.innerHTML = `<div style="color:var(--red);padding:8px;">❌ JSON 格式错误：${e.message}</div>`;
+  }
+}
+
+function confirmAIImport(tab) {
+  const raw = document.getElementById('aiJsonPasteArea')?.value.trim();
+  if (!raw) { toast('请先粘贴 JSON'); return; }
+  let data;
+  try { data = JSON.parse(raw); } catch(e) { toast('JSON 格式错误：' + e.message); return; }
+
+  const mode = document.querySelector('input[name="aiImportMode"]:checked')?.value || 'merge';
+  const overwrite = mode === 'overwrite';
+
+  if (overwrite && !confirm('覆盖模式会替换现有数据，确认继续？')) return;
+
+  try {
+    if (tab === 'quiz' || tab === 'passage') {
+      // passages
+      if (data.passages?.length) {
+        if (overwrite) { quizState.passages = data.passages; }
+        else { data.passages.forEach(p => { if (!p.id) p.id = uid('sec'); if (!quizState.passages.find(x=>x.id===p.id)) quizState.passages.push(p); }); }
+      }
+      // quizSets
+      if (data.quizSets?.length) {
+        if (overwrite) { quizState.quizSets = data.quizSets; }
+        else { data.quizSets.forEach(qs => { if (!qs.id) qs.id = uid('qs'); if (!quizState.quizSets.find(x=>x.id===qs.id)) quizState.quizSets.push(qs); }); }
+      }
+      // auto-create quizSets for passages without one
+      quizState.passages.forEach(p => { if (!quizState.quizSets.some(qs=>qs.passageId===p.id)) quizState.quizSets.push({id:uid('qs'),passageId:p.id,name:'1',createdAt:Date.now()}); });
+      // questions
+      if (data.grammarQuestions?.length) {
+        if (overwrite) { quizState.grammarQuestions = data.grammarQuestions; }
+        else { data.grammarQuestions.forEach(q => { if (!q.id) q.id = uid('g'); if (!quizState.grammarQuestions.find(x=>x.id===q.id)) quizState.grammarQuestions.push(q); }); }
+      }
+      if (data.vocabularyQuestions?.length) {
+        if (overwrite) { quizState.vocabularyQuestions = data.vocabularyQuestions; }
+        else { data.vocabularyQuestions.forEach(q => { if (!q.id) q.id = uid('v'); if (!quizState.vocabularyQuestions.find(x=>x.id===q.id)) quizState.vocabularyQuestions.push(q); }); }
+      }
+    }
+    if (tab === 'wordbook' || (!tab && data.wordBook?.length)) {
+      const wb = data.wordBook || [];
+      if (overwrite) { quizState.wordBook = wb; }
+      else { wb.forEach(w => { if (!w.id) w.id = uid('wbk'); if (!quizState.wordBook.find(x=>x.text===w.text)) quizState.wordBook.push(w); }); }
+    }
+    if (tab === 'synonyms' || (!tab && data.synonymLibrary?.length)) {
+      const sl = data.synonymLibrary || [];
+      if (overwrite) { quizState.synonymLibrary = sl; }
+      else { sl.forEach(g => { if (!quizState.synonymLibrary.find(x=>x.groupName===g.groupName)) quizState.synonymLibrary.push(g); }); }
+    }
+    if (tab === 'study_resource' || (!tab && data.resources?.length)) {
+      const sr = data.resources || [];
+      if (overwrite) { resources = sr; }
+      else { sr.forEach(r => { if (!r.id) r.id = uid('r'); if (!resources.find(x=>x.id===r.id)) resources.push(r); }); }
+      saveResState();
+    }
+    if (!quizState.currentPassageId && quizState.passages.length) quizState.currentPassageId = quizState.passages[0].id;
+    saveQuiz(); render();
+    toast('✅ 导入成功！');
+    closeSheet('genericSheet');
+  } catch(e) {
+    toast('导入出错：' + e.message);
+  }
 }
 
 function openCloudSync() {
@@ -5504,6 +5714,7 @@ function renderStudyResources(container) {
     html += renderModResources(subj);
 
     container.innerHTML = html;
+    initResourceDrag();
   } catch (err) {
     console.error("Study Resources Error:", err);
     container.innerHTML = `<div class="empty-state">Error loading resources: ${err.message}</div>`;
@@ -5959,11 +6170,41 @@ function filterLinks(q) {
 
 
 function setControlModuleSelection(checked) {
-  document.querySelectorAll('.control-module-check').forEach(cb => cb.checked = !!checked);
+  // no-op for single select
 }
 
 function getSelectedControlModules() {
-  return Array.from(document.querySelectorAll('.control-module-check')).filter(cb => cb.checked).map(cb => cb.value);
+  const sel = document.getElementById('controlModuleSelect');
+  if (sel && sel.value) return [sel.value];
+  return [];
+}
+
+function openImportModuleSheet() {
+  const moduleRows = [
+    ['study_resource','Study Resource'],
+    ['weekly_planner','Weekly AI Planner'],
+    ['quiz_hub','Quiz Hub'],
+    ['word_book','Word Book'],
+    ['synonyms','Synonyms']
+  ];
+  const selected = getSelectedControlModules();
+  openGenericSheet('⬇ Import Data',`
+    <div style="font-size:13px;color:var(--ink-secondary);margin-bottom:12px;line-height:1.5;">
+      选择要导入的板块（默认继承上方已选模块），再选择文件。按住 Cmd/Ctrl 多选。
+    </div>
+    <select id="importModuleSelect">
+      ${moduleRows.map(([key,label])=>`<option value="${key}" ${selected.includes(key)?'selected':''}>${label}</option>`).join('')}
+    </select>
+  `,[
+    {text:'取消', onclick:()=>closeSheet('genericSheet')},
+    {text:'选择文件导入', cls:'primary', onclick:()=>{
+      const sel = [document.getElementById('importModuleSelect').value].filter(Boolean);
+      if(!sel.length){toast('请先选择至少一个模块');return;}
+      window._pendingImportModules = sel;
+      document.getElementById('controlCenterImportFile').click();
+      closeSheet('genericSheet');
+    }}
+  ]);
 }
 
 function quizExportObject() {
@@ -5992,7 +6233,8 @@ function exportSelectedModules() {
 }
 
 function importSelectedModules(event) {
-  const selected = getSelectedControlModules();
+  const selected = window._pendingImportModules?.length ? window._pendingImportModules : getSelectedControlModules();
+  window._pendingImportModules = null;
   if (!selected.length) { toast('Select at least one module'); event.target.value=''; return; }
   const file = event.target.files[0]; if (!file) return;
   const reader = new FileReader();
@@ -6570,7 +6812,9 @@ function completeCurrentWeek() {
     vocabAdded: (quizState.wordBook || []).length,
     quizzesCompleted: Object.keys(quizState.answerLog || {}).length,
     wrongReviewed: (quizState.wrongBook || []).length, 
-    suggestion: weeklyPlan.suggestion
+    suggestion: weeklyPlan.suggestion,
+    reflection: '',
+    achievement: ''
   };
 
   weeklyPlan.history.unshift(review);
@@ -6720,6 +6964,48 @@ function initWeeklyTaskDrag() {
       window.addEventListener('pointermove', onMove);
       window.addEventListener('pointerup', onUp);
     };
+  });
+}
+
+function initResourceDrag() {
+  const lists = document.querySelectorAll('[id^="resDragList_"]');
+  lists.forEach(list => {
+    list.querySelectorAll('.st-drag-grip').forEach(grip => {
+      grip.onpointerdown = e => {
+        const item = e.target.closest('.res-card');
+        if (!item) return;
+        e.preventDefault();
+        item.classList.add('st-is-dragging');
+
+        const onMove = me => {
+          const sibs = Array.from(list.querySelectorAll('.res-card:not(.st-is-dragging)'));
+          const over = sibs.find(s => {
+            const r = s.getBoundingClientRect();
+            return me.clientY > r.top && me.clientY < r.bottom;
+          });
+          if (over) {
+            const r = over.getBoundingClientRect();
+            if (me.clientY < r.top + r.height / 2) over.before(item);
+            else over.after(item);
+          }
+        };
+        const onUp = () => {
+          item.classList.remove('st-is-dragging');
+          window.removeEventListener('pointermove', onMove);
+          window.removeEventListener('pointerup', onUp);
+          // Persist order
+          const newIds = Array.from(list.querySelectorAll('.res-card')).map(el => el.dataset.resid);
+          const reordered = [];
+          newIds.forEach(id => { const r = resources.find(x => x.id === id); if (r) reordered.push(r); });
+          // Keep items not currently displayed in their original relative order
+          const removed = resources.filter(x => !newIds.includes(x.id));
+          resources = [...removed, ...reordered];
+          saveResState();
+        };
+        window.addEventListener('pointermove', onMove);
+        window.addEventListener('pointerup', onUp);
+      };
+    });
   });
 }
 
@@ -7289,7 +7575,7 @@ function renderCurrentPlan(completedCount, totalTasks, completionRate, estimated
         </div>
       </div>
     </div>
-    <div class="roadmap-hero" style="grid-template-columns: 1fr; margin-bottom: 24px;"><div class="roadmap-card"><div class="roadmap-kicker">Week Overview — ${weeklyPlan.status}</div><div style="display:flex; justify-content:space-between; align-items:baseline;"><div class="roadmap-days" style="font-size: 28px;">Week ${weeklyPlan.currentWeek}</div><div class="roadmap-days-sub">${weeklyPlan.startDate} — ${weeklyPlan.endDate}</div></div></div></div>
+    <div class="roadmap-hero" style="grid-template-columns: 1fr; margin-bottom: 24px;"><div class="roadmap-card"><div class="roadmap-kicker">Week Overview — ${weeklyPlan.status}</div><div style="display:flex; justify-content:space-between; align-items:baseline;"><div class="roadmap-days" style="font-size: 28px;">Week ${weeklyPlan.currentWeek}</div><div class="roadmap-days-sub" style="display:flex;align-items:center;gap:4px;"><input type="date" value="${weeklyPlan.startDate||''}" onchange="weeklyPlan.startDate=this.value;saveWeeklyPlan();" style="font-size:12px;font-weight:600;border:1px solid var(--line);border-radius:6px;padding:2px 6px;background:var(--bg-card);color:var(--ink);"> <span style="color:var(--ink-tertiary);">—</span> <input type="date" value="${weeklyPlan.endDate||''}" onchange="weeklyPlan.endDate=this.value;saveWeeklyPlan();" style="font-size:12px;font-weight:600;border:1px solid var(--line);border-radius:6px;padding:2px 6px;background:var(--bg-card);color:var(--ink);"></div></div></div></div>
     <div class="roadmap-section">
       <div class="roadmap-section-head"><h3>This Week Tasks</h3><div style="display:flex; gap:8px; flex-wrap:wrap;"><button class="apple-btn small" onclick="addCustomWeeklyTask()">+ Add Task</button><button class="apple-btn small primary" onclick="copyAIPrompt()">Copy AI Prompt</button><button class="apple-btn small" onclick="regenerateWeeklyPlan()">AI Regenerate</button></div></div>
       <div class="exercise-list" id="weeklyTaskList">${safeArray(weeklyPlan.tasks).map((task, idx) => renderWeeklyTaskCard(task, idx)).join('')}</div>
@@ -7308,7 +7594,7 @@ function renderWeeklyTaskCard(task, idx) {
       <div style="flex:1; min-width:0;"><div style="display:flex; justify-content:space-between; gap:8px; align-items:flex-start;">
         <input aria-label="Task title" type="text" value="${esc(task.title)}" oninput="updateWeeklyTaskField('${esc(task.id)}', 'title', this.value, true)" style="font-size: 15px; font-weight: 700; color: var(--ink); border:none; background:transparent; padding:2px 0; width:100%; outline:none;">
         <button class="res-tool-btn" title="Delete task" onclick="deleteWeeklyTask('${esc(task.id)}')">✕</button></div>
-        <div style="font-size: 11px; color: var(--ink-tertiary); margin-top: 2px;">Goal: ${task.startProgress||0} → ${task.targetProgress||1} ${esc(task.unit||'task')}</div>
+        <div style="font-size: 11px; color: var(--ink-tertiary); margin-top: 2px;">Goal: <input type="number" value="${task.startProgress||0}" onchange="updateWeeklyTaskField('${esc(task.id)}', 'startProgress', +this.value||0)" style="font-size:11px;width:38px;text-align:center;border:1px solid var(--line);border-radius:4px;padding:1px 3px;background:var(--bg-card);color:var(--ink);"> → <input type="number" value="${task.targetProgress||1}" onchange="updateWeeklyTaskField('${esc(task.id)}', 'targetProgress', +this.value||1)" style="font-size:11px;width:38px;text-align:center;border:1px solid var(--line);border-radius:4px;padding:1px 3px;background:var(--bg-card);color:var(--ink);"> ${esc(task.unit||'task')}</div>
         <div style="margin-top: 8px;"><div class="progress-bar"><div class="progress-fill" style="width: ${displayProgress}%; background: var(--accent);"></div></div></div>
         <div class="apple-picker-group">
           <div class="apple-picker-item" style="min-width:110px;"><label>Date</label><input type="date" value="${task.date || todayISO()}" onchange="updateWeeklyTaskField('${esc(task.id)}', 'date', this.value, true)"></div>
@@ -7321,13 +7607,13 @@ function renderWeeklyTaskCard(task, idx) {
 }
 function updateWeeklyTaskField(taskId, field, value, noRender) {
   const task = safeArray(weeklyPlan.tasks).find(t => t.id === taskId);
-  if (task) { task[field] = value; saveWeeklyPlan(); if (!noRender && (field === 'priority' || field === 'title')) render(); }
+  if (task) { task[field] = value; saveWeeklyPlan(); if (!noRender && (field === 'priority' || field === 'title' || field === 'startProgress' || field === 'targetProgress')) render(); }
 }
 function completeCurrentWeek() {
   if (!confirm('Finish this week and generate Review? This will move the current plan to Archive.')) return;
   const tasks = safeArray(weeklyPlan.tasks);
   const reviewData = getWeeklyReviewData({tasks, startDate:weeklyPlan.startDate, endDate:weeklyPlan.endDate});
-  const review = { week: weeklyPlan.currentWeek, startDate: weeklyPlan.startDate, endDate: weeklyPlan.endDate, tasks: JSON.parse(JSON.stringify(tasks)), completionRate: reviewData.completionRate, studyTime: reviewData.studyTime, vocabAdded: reviewData.vocabAdded, quizzesCompleted: reviewData.quizTotal, quizAccuracy: reviewData.quizAccuracy, wrongReviewed: reviewData.wrongReviewed, resourcesUsed: reviewData.resourcesUsed, mostActiveSubject: reviewData.mostActiveSubject, bestStudyDay: reviewData.bestStudyDay, suggestion: weeklyPlan.suggestion, review: reviewData, aiSummaryHtml: renderAIWeeklySummary({tasks, startDate:weeklyPlan.startDate, endDate:weeklyPlan.endDate}) };
+  const review = { week: weeklyPlan.currentWeek, startDate: weeklyPlan.startDate, endDate: weeklyPlan.endDate, tasks: JSON.parse(JSON.stringify(tasks)), completionRate: reviewData.completionRate, studyTime: reviewData.studyTime, vocabAdded: reviewData.vocabAdded, quizzesCompleted: reviewData.quizTotal, quizAccuracy: reviewData.quizAccuracy, wrongReviewed: reviewData.wrongReviewed, resourcesUsed: reviewData.resourcesUsed, mostActiveSubject: reviewData.mostActiveSubject, bestStudyDay: reviewData.bestStudyDay, suggestion: weeklyPlan.suggestion, review: reviewData, aiSummaryHtml: renderAIWeeklySummary({tasks, startDate:weeklyPlan.startDate, endDate:weeklyPlan.endDate}), reflection: '', achievement: '' };
   weeklyPlan.history = safeArray(weeklyPlan.history); weeklyPlan.history.unshift(review);
   weeklyPlan.overallStats = weeklyPlan.overallStats || {};
   weeklyPlan.overallStats.totalWeeks = (weeklyPlan.overallStats.totalWeeks||0)+1;
@@ -7344,8 +7630,42 @@ function renderPlannerArchive() {
 }
 function viewArchivedWeek(startDate) {
   const week = safeArray(weeklyPlan.history).find(h => h.startDate === startDate); if (!week) return;
+  if (!week.reflection) week.reflection = '';
+  if (!week.achievement) week.achievement = '';
+  const wIdx = safeArray(weeklyPlan.history).indexOf(week);
   const tasksHtml = safeArray(week.tasks).map(t => `<div class="list-item" style="opacity: 0.9; margin-bottom:8px; padding:10px; border:1px solid var(--line); border-radius:8px;"><div style="display:flex; justify-content:space-between; align-items:center;"><span style="font-weight:700; font-size:13px;">${esc(t.title)}</span><span class="roadmap-status ${t.status}" style="font-size:10px;">${roadmapStatusLabel(t.status)}</span></div><div style="font-size:11px; color:var(--ink-tertiary); margin-top:4px;">${t.date || ''} ${t.time || ''} · ${t.priority || 'Medium'} Priority</div></div>`).join('');
-  openGenericSheet(`Week ${week.week} Review`, `<div style="display:flex;flex-direction:column;gap:16px;">${renderWeeklyReviewCard(week)}${renderAIWeeklySummary(week)}<div class="roadmap-section" style="padding:0; border:none; box-shadow:none;"><div class="roadmap-section-head"><h3>Task Snapshot</h3></div><div style="max-height:240px; overflow-y:auto; padding-right:4px;">${tasksHtml}</div></div></div>`, [{text:'Close', cls:'primary', onclick:()=>closeSheet('genericSheet')}]);
+  const ae = "style=\"width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--bg-card);color:var(--ink);font-size:13px;line-height:1.6;resize:none;overflow:hidden;font-family:inherit;\" oninput=\"this.style.height='auto';this.style.height=this.scrollHeight+'px';\"";
+  const numInput = (val,key) => `<input type="number" value="${val||0}" onchange="weeklyPlan.history[${wIdx}].${key}=+this.value||0;saveWeeklyPlan();" style="font-size:22px;font-weight:800;width:70px;text-align:center;border:1px solid var(--line);border-radius:6px;padding:2px 4px;background:var(--bg-card);color:var(--ink);">`;
+  openGenericSheet(`Week ${week.week} Review`, `<div style="display:flex;flex-direction:column;gap:16px;">
+    <div class="weekly-review-card" style="margin-top:0;">
+      <div class="roadmap-section-head"><h3>Weekly Review</h3></div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;">
+        <div class="weekly-review-stat"><div class="label">Completion Rate</div>${numInput(week.completionRate,'completionRate')}%</div>
+        <div class="weekly-review-stat"><div class="label">Study Time</div>${numInput(week.studyTime,'studyTime')}h</div>
+        <div class="weekly-review-stat"><div class="label">Quiz Accuracy</div>${numInput(week.quizAccuracy,'quizAccuracy')}%</div>
+        <div class="weekly-review-stat"><div class="label">Vocab Added</div>${numInput(week.vocabAdded,'vocabAdded')}</div>
+        <div class="weekly-review-stat"><div class="label">Wrong Reviewed</div>${numInput(week.wrongReviewed,'wrongReviewed')}</div>
+        <div class="weekly-review-stat"><div class="label">Quizzes Done</div>${numInput(week.quizzesCompleted,'quizzesCompleted')}</div>
+      </div>
+    </div>
+    <div class="ai-summary-card">
+      <div class="roadmap-section-head"><h3>AI Summary</h3></div>
+      <textarea ${ae} oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px';weeklyPlan.history[${wIdx}].aiSummaryHtml=this.value;saveWeeklyPlan();">${esc(week.aiSummaryHtml || '')}</textarea>
+    </div>
+    <div class="roadmap-section" style="padding:0; border:none; box-shadow:none;">
+      <div class="roadmap-section-head"><h3>Task Snapshot</h3></div>
+      <div style="max-height:240px; overflow-y:auto; padding-right:4px;">${tasksHtml}</div>
+    </div>
+    <div class="ai-summary-card">
+      <div class="roadmap-section-head"><h3>Reflection</h3></div>
+      <textarea ${ae} placeholder="Write your reflection for this week..." oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px';weeklyPlan.history[${wIdx}].reflection=this.value;saveWeeklyPlan();">${esc(week.reflection)}</textarea>
+    </div>
+    <div class="ai-summary-card">
+      <div class="roadmap-section-head"><h3>Achievement</h3></div>
+      <textarea ${ae} placeholder="Record your achievements for this week..." oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px';weeklyPlan.history[${wIdx}].achievement=this.value;saveWeeklyPlan();">${esc(week.achievement)}</textarea>
+    </div>
+  </div>`, [{text:'Close', cls:'primary', onclick:()=>closeSheet('genericSheet')}]);
+  setTimeout(()=>{document.querySelectorAll('#genericSheetBody textarea').forEach(ta=>{ta.style.height='auto';ta.style.height=ta.scrollHeight+'px';});},60);
 }
 function renderPromptEditor() {
   return `<div class="roadmap-section"><div class="roadmap-section-head"><h3>AI Planning Prompt</h3><button class="apple-btn small primary" onclick="copyAIPrompt()">Copy AI Prompt</button></div><div style="margin-bottom: 16px; font-size: 13px; color: var(--ink-secondary); line-height: 1.6;">No AI API is connected. Click Copy AI Prompt to copy a complete planning prompt using your current StudyHub data, then paste it into ChatGPT or Claude manually.</div><textarea id="plannerCustomPrompt" style="width: 100%; height: 160px; padding: 16px; border-radius: 12px; border: 1px solid var(--line); background: var(--bg-card); font-size: 14px; line-height: 1.6;" placeholder="Optional custom instructions" oninput="weeklyPlan.customPrompt = this.value; saveWeeklyPlan();">${esc(weeklyPlan.customPrompt || '')}</textarea><div style="margin-top:16px;"><div class="roadmap-kicker">Generated prompt preview</div><pre style="white-space:pre-wrap;background:var(--bg-elev);border:1px solid var(--line);border-radius:var(--radius);padding:12px;font-size:12px;line-height:1.55;max-height:360px;overflow:auto;">${esc(generateStudyPlanningPrompt())}</pre></div></div>`;
@@ -7435,5 +7755,6 @@ window.addEventListener('resize', handleResponsiveViewportChange);
 window.addEventListener('orientationchange', handleResponsiveViewportChange);
 render();
 </script>
-</body>
+<script defer src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ==" data-cf-beacon='{"version":"2024.11.0","token":"1954b47c125f43f8b4338b3c4f804e4f","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a16c066f0a70d79b',t:'MTc4MzMxMzgwOQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a16c1e0eea861314',t:'MTc4MzMxNDc3Nw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a16c36f39dc5e377',t:'MTc4MzMxNTc5Nw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
