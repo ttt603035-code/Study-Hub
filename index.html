@@ -853,6 +853,164 @@ textarea { resize: vertical; }
   background: var(--bg-elev);
   color: var(--ink-secondary);
 }
+.res-resource-main-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  min-width: 0;
+}
+.res-resource-main-row .st-drag-grip {
+  flex-shrink: 0;
+  margin-top: 4px;
+}
+.res-file-badge {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  height: 20px;
+  padding: 0 8px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--line-light);
+  background: var(--bg-elev);
+  color: var(--ink-secondary);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: .05em;
+  line-height: 1;
+}
+.res-file-badge.type-pdf,
+.res-file-badge.type-docx { background: rgba(0,0,0,0.05); color: var(--ink); }
+.res-file-badge.type-web,
+.res-file-badge.type-link,
+.res-file-badge.type-video,
+.res-file-badge.type-folder { background: var(--bg-elev); color: var(--ink-secondary); }
+.res-resource-main-row .res-title {
+  min-width: 0;
+  flex: 1;
+  font-size: 14px;
+  font-weight: 750;
+  line-height: 1.35;
+  color: var(--ink);
+  letter-spacing: -0.01em;
+  word-break: break-word;
+}
+.res-resource-controls {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+}
+.res-more-btn {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ink-tertiary);
+  background: transparent;
+  font-size: 18px;
+  line-height: 1;
+  transition: background .12s ease, color .12s ease;
+}
+.res-more-btn:hover,
+.res-more-btn:focus { background: var(--bg-elev); color: var(--ink); }
+.res-resource-menu-wrap { position: relative; }
+.res-resource-menu {
+  position: absolute;
+  z-index: 20;
+  right: 0;
+  top: 28px;
+  min-width: 168px;
+  display: none;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--bg-popover);
+  box-shadow: var(--shadow-lg);
+}
+.res-resource-menu-wrap:hover .res-resource-menu,
+.res-resource-menu-wrap:focus-within .res-resource-menu { display: flex; }
+.res-menu-item,
+.res-path-reveal > summary {
+  width: 100%;
+  padding: 7px 9px;
+  border-radius: 9px;
+  color: var(--ink);
+  background: transparent;
+  font-size: 12px;
+  font-weight: 650;
+  text-align: left;
+  text-decoration: none;
+  list-style: none;
+  cursor: pointer;
+}
+.res-path-reveal > summary::-webkit-details-marker { display: none; }
+.res-menu-item:hover,
+.res-path-reveal > summary:hover { background: var(--bg-elev); }
+.res-menu-item.disabled { color: var(--ink-tertiary); cursor: default; }
+.res-menu-item.disabled:hover { background: transparent; }
+.res-menu-item.danger { color: var(--red); }
+.res-menu-path {
+  margin: 2px 4px 6px;
+  padding: 7px 8px;
+  border-radius: 9px;
+  background: var(--bg-elev);
+  color: var(--ink-tertiary);
+  font-family: 'SF Mono', ui-monospace, monospace;
+  font-size: 10px;
+  line-height: 1.35;
+  word-break: break-all;
+}
+.res-resource-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  min-height: 20px;
+  color: var(--ink-secondary);
+}
+.res-resource-meta-row .res-tags { gap: 5px; }
+.res-subject-label,
+.res-meta-dot {
+  font-size: 11px;
+  font-weight: 650;
+  color: var(--ink-tertiary);
+}
+.res-resource-date {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink-tertiary);
+  line-height: 1.2;
+}
+.res-resource-progress-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 8px;
+  margin-top: 1px;
+}
+.res-resource-progress {
+  height: 4px;
+  overflow: hidden;
+  border-radius: var(--radius-pill);
+  background: var(--bg-elev);
+}
+.res-resource-progress > div {
+  height: 100%;
+  border-radius: inherit;
+  background: var(--ink);
+  transition: width .18s ease;
+}
+.res-resource-progress-row > span {
+  font-size: 10px;
+  font-weight: 750;
+  color: var(--ink-tertiary);
+}
+.res-card.completed .res-resource-progress > div { background: var(--ink-tertiary); }
 .res-bottom {
   display: flex;
   align-items: center;
@@ -6341,36 +6499,61 @@ function renderResFilterBar() {
 function resourceCard(r) {
   const isDone = r.status==='completed';
   const isNotStarted = r.status==='not_started'||(r.startDate&&r.startDate>todayISO());
-  const statusText = isDone?'Done':isNotStarted?'Not Started':'In Progress';
-  const statusColor = isDone?'#1D1D1F':isNotStarted?'#888':'#555';
-  const statusBg = isDone?'rgba(0,0,0,0.07)':isNotStarted?'rgba(0,0,0,0.04)':'rgba(0,0,0,0.04)';
+  const pathText = String(r.path || '');
+  const pathLower = pathText.toLowerCase().trim();
+  const pathBase = pathLower.split(/[?#]/)[0];
+  const rawType = String(r.type || '').toLowerCase().trim();
+  let fileType = 'OTHER';
+  if (rawType.includes('pdf') || pathBase.endsWith('.pdf')) fileType = 'PDF';
+  else if (rawType.includes('doc') || pathBase.endsWith('.docx') || pathBase.endsWith('.doc')) fileType = 'DOCX';
+  else if (rawType.includes('video') || /\.(mp4|mov|m4v|avi|mkv|webm)$/.test(pathBase) || /(youtube\.com|youtu\.be|vimeo\.com)/.test(pathLower)) fileType = 'VIDEO';
+  else if (rawType.includes('folder') || /[\\/]$/.test(pathText) || (!/\.[a-z0-9]{2,6}$/.test(pathBase) && /^[a-z]:[\\/]/i.test(pathText))) fileType = 'FOLDER';
+  else if (rawType.includes('web') || /^https?:\/\//.test(pathLower)) fileType = 'WEB';
+  else if (rawType.includes('link') || /^[a-z]+:\/\//.test(pathLower)) fileType = 'LINK';
 
-  // Resource type icon
-  const typeIcons = { pdf:'📄', video:'🎬', link:'🔗', note:'📝', book:'📚', audio:'🎧', image:'🖼' };
-  const typeIcon = typeIcons[r.type] || '📁';
+  const subjectLabel = customSubjects[r.subject]?.label || r.subject || 'General';
+  const tags = Array.isArray(r.tags) ? r.tags.filter(Boolean) : [];
+  const dateVal = r.createdAt || r.startDate || '';
+  const dateText = dateVal ? `${r.createdAt ? 'Added' : 'Start'} ${formatDate(dateVal)}` : 'Added date not set';
+  const numericProgress = Number(r.progress ?? r.percent ?? r.completion);
+  let progressPct = isDone ? 100 : (isNotStarted ? 0 : 50);
+  if (Number.isFinite(numericProgress)) progressPct = numericProgress <= 1 ? Math.round(numericProgress * 100) : Math.round(numericProgress);
+  progressPct = Math.max(0, Math.min(100, progressPct));
+  const safePath = encodeURIComponent(pathText);
 
   return `<div class="res-card subtask-draggable ${isDone?'completed':''}" data-resid="${r.id}">
-    <!-- Top: icon + title + drag -->
-    <div style="display:flex;align-items:flex-start;gap:7px;">
-      <div class="st-drag-grip" title="长按拖拽排序" style="flex-shrink:0;margin-top:1px;"><span></span><span></span><span></span></div>
-      <div style="font-size:18px;flex-shrink:0;line-height:1;margin-top:1px;">${typeIcon}</div>
-      <div style="flex:1;min-width:0;">
-        <div class="res-title" style="font-size:13px;font-weight:700;color:${isDone?'var(--ink-tertiary)':'var(--ink)'};${isDone?'text-decoration:line-through;':''}line-height:1.3;word-break:break-word;">${esc(r.title)}</div>
-        ${r.type?`<div style="font-size:10px;color:var(--ink-tertiary);font-weight:600;margin-top:2px;text-transform:uppercase;letter-spacing:0.04em;">${esc(r.type)}</div>`:''}
+    <div class="res-resource-main-row">
+      <div class="st-drag-grip" title="长按拖拽排序"><span></span><span></span><span></span></div>
+      <span class="res-file-badge type-${fileType.toLowerCase()}">${fileType}</span>
+      <div class="res-title" title="${esc(r.title)}">${esc(r.title)}</div>
+      <div class="res-resource-controls">
+        <div class="res-check ${isDone?'checked':''}" onclick="toggleResourceStatus('${r.id}')" title="Toggle complete">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5L19 7"/></svg>
+        </div>
+        <div class="res-resource-menu-wrap">
+          <button class="res-more-btn" type="button" aria-label="Resource actions">⋯</button>
+          <div class="res-resource-menu" role="menu">
+            ${pathText ? `<a class="res-menu-item" href="${esc(pathText)}" target="_blank" rel="noopener">Open File</a>` : `<span class="res-menu-item disabled">Open File</span>`}
+            ${pathText ? `<details class="res-path-reveal"><summary>Reveal Path</summary><div class="res-menu-path">${esc(pathText)}</div></details>` : `<span class="res-menu-item disabled">Reveal Path</span>`}
+            ${pathText ? `<button class="res-menu-item" onclick="if(navigator.clipboard){navigator.clipboard.writeText(decodeURIComponent('${safePath}')).then(()=>toast('Path copied')).catch(()=>toast('Copy failed'));}else{toast('Copy failed');}">Copy Path</button>` : `<span class="res-menu-item disabled">Copy Path</span>`}
+            <button class="res-menu-item" onclick="openEditResourceModal('${r.id}')">Edit</button>
+            <button class="res-menu-item danger" onclick="deleteResource('${r.id}')">Delete</button>
+          </div>
+        </div>
       </div>
     </div>
-    <!-- Status pill -->
-    <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;">
-      <span style="font-size:10px;font-weight:700;color:${statusColor};background:${statusBg};padding:2px 7px;border-radius:99px;">${statusText}</span>
-      <div class="res-check ${isDone?'checked':''}" onclick="toggleResourceStatus('${r.id}')" style="flex-shrink:0;">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5L19 7"/></svg>
-      </div>
+
+    <div class="res-resource-meta-row">
+      ${tags.length ? `<div class="res-tags">${tags.map(t=>`<span class="pill-tag">${esc(t)}</span>`).join('')}</div><span class="res-meta-dot">•</span>` : ''}
+      <span class="res-subject-label">${esc(subjectLabel)}</span>
     </div>
-    <!-- Actions -->
-    <div style="display:flex;gap:4px;border-top:1px solid var(--line-light);padding-top:7px;margin-top:1px;">
-      <button class="apple-btn small" style="flex:1;font-size:11px;padding:4px 0;" onclick="openEditResourceModal('${r.id}')">Edit</button>
-      <button class="res-tool-btn delete" style="font-size:11px;padding:4px 7px;border-radius:6px;" onclick="deleteResource('${r.id}')">✕</button>
-    </div>
+
+    <div class="res-resource-date">${esc(dateText)}</div>
+
+    ${(r.status || Number.isFinite(numericProgress)) ? `<div class="res-resource-progress-row" title="${isDone?'Done':isNotStarted?'Not Started':'In Progress'}">
+      <div class="res-resource-progress"><div style="width:${progressPct}%"></div></div>
+      <span>${progressPct}%</span>
+    </div>` : ''}
   </div>`;
 }
 
