@@ -8,7 +8,7 @@
 <title>Study Dashboard — Unified</title>
 <style>
 /* ============================================================
-   APPLE HUMAN INTERFACE — DARK THEME — UNIFIED DESIGN SYSTEM
+   APPLE HUMAN INTERFACE — UNIFIED DESIGN SYSTEM
    ============================================================ */
 :root {
   --bg: #FFFFFF;
@@ -51,7 +51,6 @@
   --sidebar-w: 240px;
   --topbar-h: 56px;
 }
-
 
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -1006,6 +1005,22 @@ textarea { resize: vertical; }
 }
 .ex-card:hover { border-color: var(--ink-faint); }
 .ex-card.pinned { border-color: #999; }
+/* Flat variant for roadmap plan cards - no border, transparent bg, bottom line only */
+.roadmap-milestone-plan-list .ex-card,
+.ex-card.ex-card-flat {
+  background: transparent !important;
+  border: none !important;
+  border-bottom: 1px solid var(--line-light) !important;
+  border-radius: 0 !important;
+  margin-bottom: 0 !important;
+  box-shadow: none !important;
+}
+.roadmap-milestone-plan-list .ex-card:hover,
+.ex-card.ex-card-flat:hover {
+  border: none !important;
+  border-bottom: 1px solid var(--ink-faint) !important;
+  background: transparent !important;
+}
 .ex-row { display: flex; align-items: center; gap: 10px; padding: 14px 16px; }
 .ex-check {
   width: 18px; height: 18px;
@@ -1326,23 +1341,30 @@ textarea { resize: vertical; }
 .roadmap-plan-list { display: flex; flex-direction: column; gap: 10px; }
 .roadmap-plan-card {
   display: grid;
-  grid-template-columns: auto 1fr auto;
-  gap: 12px;
-  align-items: start;
-  padding: 14px;
-  background: var(--bg-card);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  align-items: center;
+  padding: 12px 14px;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--line-light);
+  border-radius: 0;
   cursor:pointer;
-  transition: transform 0.18s cubic-bezier(0.25, 1, 0.5, 1), box-shadow 0.18s ease, border-color 0.18s ease, opacity 0.18s ease;
+  transition: background 0.15s ease, opacity 0.18s ease;
 }
-.roadmap-plan-card:hover { border-color: var(--ink-faint); transform: translateY(-1px); }
-.roadmap-plan-card.dragging, .roadmap-event.dragging { opacity: 0.55; transform: scale(0.99); }
-.roadmap-plan-card.drag-over, .roadmap-event.drag-over { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(0,0,0,0.08); }
+.roadmap-plan-card:last-child { border-bottom: none; }
+.roadmap-plan-card:hover { background: var(--bg-card-hover); }
+.roadmap-plan-card.dragging { opacity: 0.55; }
+.roadmap-plan-card.drag-over { background: var(--bg-card); box-shadow: inset 0 -2px 0 0 var(--accent); }
+.roadmap-event.dragging { opacity: 0.55; transform: scale(0.99); }
+.roadmap-event.drag-over { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(0,0,0,0.08); }
 .roadmap-grip { width: 18px; padding-top: 3px; cursor: grab; display: grid; grid-template-columns: repeat(2, 3px); gap: 3px; opacity: 0.45; }
 .roadmap-grip span { width: 3px; height: 3px; background: var(--ink-tertiary); border-radius: 50%; }
 .roadmap-plan-title { font-size: 14px; font-weight: 800; color: var(--ink); margin-bottom: 5px; }
 .roadmap-plan-meta { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: 11px; color: var(--ink-tertiary); }
+.roadmap-plan-row-body { min-width: 0; }
+.roadmap-plan-card .roadmap-actions { opacity: 0; transition: opacity 0.15s ease; }
+.roadmap-plan-card:hover .roadmap-actions { opacity: 1; }
 .roadmap-status { display: inline-flex; align-items: center; height: 22px; padding: 0 9px; border-radius: var(--radius-pill); font-size: 10px; font-weight: 800; letter-spacing: 0.01em; border: 1px solid var(--line); background: var(--bg-card); color: var(--ink-secondary); }
 .roadmap-status.not_started { color: var(--ink-tertiary); }
 .roadmap-status.in_progress { color: var(--ink); background: rgba(0,0,0,0.04); }
@@ -1369,29 +1391,30 @@ textarea { resize: vertical; }
 .roadmap-preview-list { max-height:300px; overflow:auto; display:flex; flex-direction:column; gap:8px; }
 @media (max-width: 900px) { .roadmap-hero { grid-template-columns: 1fr; } }
 @media (max-width: 640px) {
-  .roadmap-plan-card, .roadmap-event { grid-template-columns: auto 1fr; }
+  .roadmap-plan-card { grid-template-columns: 1fr; } .roadmap-plan-card .roadmap-actions { justify-content: flex-start; margin-top: 4px; } .roadmap-event { grid-template-columns: auto 1fr; }
   .roadmap-actions { grid-column: 2; justify-content: flex-start; }
   .roadmap-progress-stats { grid-template-columns: 1fr; }
 }
 
-.roadmap-milestones-list { display:flex; flex-direction:column; gap:12px; }
-.roadmap-milestone-card { background:var(--bg-elev); border:1px solid var(--line); border-radius:var(--radius-lg); overflow:hidden; transition:transform 0.18s cubic-bezier(0.25,1,0.5,1), border-color 0.18s ease, box-shadow 0.18s ease, opacity 0.18s ease; }
-.roadmap-milestone-card:hover { border-color:var(--ink-faint); }
+.roadmap-milestones-list { display:flex; flex-direction:column; gap:0; }
+.roadmap-milestone-card { background:transparent !important; border:none !important; border-bottom:1px solid var(--line-light) !important; border-radius:0 !important; box-shadow:none !important; overflow:hidden; transition:transform 0.18s cubic-bezier(0.25,1,0.5,1), opacity 0.18s ease; }
+.roadmap-milestone-card:last-child { border-bottom:none !important; }
+.roadmap-milestone-card:hover { border-bottom-color:var(--ink-faint) !important; }
 .roadmap-milestone-card.dragging { opacity:0.55; transform:scale(0.99); }
-.roadmap-milestone-card.drag-over { border-color:var(--accent); box-shadow:0 0 0 2px rgba(0,0,0,0.08); }
+.roadmap-milestone-card.drag-over { border-bottom-color:var(--accent) !important; box-shadow:0 2px 0 0 var(--accent) !important; }
 .roadmap-milestone-card.collapsed .roadmap-milestone-body { display:none; }
 .roadmap-milestone-card.collapsed .roadmap-disclosure { transform:rotate(-90deg); }
-.roadmap-milestone-head { display:grid; grid-template-columns:auto 1fr auto; gap:12px; align-items:start; padding:16px; cursor:pointer; background:var(--bg-card); }
+.roadmap-milestone-head { display:grid; grid-template-columns:auto 1fr auto; gap:12px; align-items:start; padding:16px; cursor:pointer; background:transparent !important; border:none !important; border-radius:0 !important; }
 .roadmap-milestone-index { font-size:11px; color:var(--ink-tertiary); font-weight:800; text-transform:uppercase; letter-spacing:0.06em; margin-bottom:4px; }
 .roadmap-milestone-title { display:flex; align-items:center; gap:8px; font-size:18px; font-weight:800; letter-spacing:-0.02em; margin-bottom:6px; }
-.roadmap-milestone-body { padding:12px; display:flex; flex-direction:column; gap:12px; }
-.roadmap-milestone-subject { background:var(--bg-card); border:1px solid var(--line); border-radius:var(--radius); overflow:hidden; }
-.roadmap-milestone-subject-head { display:flex; justify-content:space-between; align-items:center; gap:10px; padding:11px 12px; border-bottom:1px solid var(--line-light); cursor:pointer; transition:background 0.18s ease; }
-.roadmap-milestone-subject-head:hover { background:var(--bg-card-hover); }
+.roadmap-milestone-body { padding:12px; display:flex; flex-direction:column; gap:12px; background:transparent !important; border:none !important; }
+.roadmap-milestone-subject { background:transparent !important; border:none !important; border-radius:0 !important; box-shadow:none !important; overflow:hidden; }
+.roadmap-milestone-subject-head { display:flex; justify-content:space-between; align-items:center; gap:10px; padding:11px 12px; background:transparent !important; border:none !important; border-bottom:1px solid var(--line-light) !important; border-radius:0 !important; cursor:pointer; transition:background 0.18s ease; }
+.roadmap-milestone-subject-head:hover { background:var(--bg-card-hover) !important; }
 .roadmap-milestone-subject-title { display:flex; align-items:center; gap:8px; font-size:13px; font-weight:800; }
 .roadmap-subject-caret { width:16px; color:var(--ink-tertiary); font-size:12px; line-height:1; transition:transform 0.2s cubic-bezier(0.25,1,0.5,1); }
 .roadmap-milestone-subject.collapsed .roadmap-subject-caret { transform:rotate(-90deg); }
-.roadmap-milestone-plan-list { padding:10px; display:flex; flex-direction:column; gap:8px; max-height:1200px; opacity:1; overflow:hidden; transition:max-height 0.22s cubic-bezier(0.25,1,0.5,1), opacity 0.18s ease, padding-top 0.22s cubic-bezier(0.25,1,0.5,1), padding-bottom 0.22s cubic-bezier(0.25,1,0.5,1); }
+.roadmap-milestone-plan-list { padding:0; display:flex; flex-direction:column; gap:0 !important; max-height:1200px; opacity:1; overflow:hidden; background:transparent !important; border:none !important; transition:max-height 0.22s cubic-bezier(0.25,1,0.5,1), opacity 0.18s ease, padding-top 0.22s cubic-bezier(0.25,1,0.5,1), padding-bottom 0.22s cubic-bezier(0.25,1,0.5,1); }
 .roadmap-milestone-subject.collapsed .roadmap-milestone-plan-list { max-height:0; opacity:0; padding-top:0; padding-bottom:0; }
 .roadmap-overall-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
 .roadmap-overall-summary { background:var(--bg-elev); border:1px solid var(--line); border-radius:var(--radius); padding:16px; }
@@ -2602,6 +2625,182 @@ img, svg, video, canvas, iframe, table, pre, code {
   }
 }
 
+
+/* ============================================================
+   WEEKLY TASK CARD — MINIMAL VISUAL OVERRIDE (CSS ONLY)
+   ============================================================ */
+
+/* --- Compact card: strip background, shrink padding --- */
+#weeklyTaskList .ex-card {
+  background: transparent !important;
+  border: none !important;
+  border-bottom: 1px solid var(--line-light) !important;
+  border-radius: 0 !important;
+  padding: 10px 12px !important;
+  margin-bottom: 0 !important;
+  box-shadow: none !important;
+}
+#weeklyTaskList .ex-card:last-child { border-bottom: none !important; }
+
+/* --- Tighter inner layout --- */
+#weeklyTaskList .ex-card > div {
+  gap: 8px !important;
+}
+
+/* --- Shrink drag grip, hide by default --- */
+#weeklyTaskList .st-drag-grip {
+  opacity: 0 !important;
+  width: 14px !important;
+  height: 14px !important;
+  transition: opacity 0.15s ease !important;
+}
+#weeklyTaskList .ex-card:hover .st-drag-grip { opacity: 0.35 !important; }
+
+/* --- Smaller checkbox --- */
+#weeklyTaskList .ex-check {
+  width: 16px !important;
+  height: 16px !important;
+  border-radius: 4px !important;
+  border-width: 1.5px !important;
+}
+
+/* --- Title: bolder, tighter --- */
+#weeklyTaskList .ex-card input[type="text"] {
+  font-size: 13px !important;
+  font-weight: 800 !important;
+  line-height: 1.3 !important;
+}
+
+/* --- Delete button: hidden by default, fade in on hover --- */
+#weeklyTaskList .ex-card .res-tool-btn {
+  opacity: 0 !important;
+  pointer-events: none !important;
+  transition: opacity 0.15s ease !important;
+  font-size: 11px !important;
+  padding: 1px 4px !important;
+}
+#weeklyTaskList .ex-card:hover .res-tool-btn {
+  opacity: 1 !important;
+  pointer-events: auto !important;
+}
+
+/* --- Goal text: smaller, lighter --- */
+#weeklyTaskList .ex-card div[style*="font-size: 11px"][style*="Goal:"] {
+  font-size: 10px !important;
+  margin-top: 1px !important;
+  opacity: 0.6;
+}
+
+/* --- Progress bar: ultra thin --- */
+#weeklyTaskList .progress-bar {
+  height: 3px !important;
+  border-radius: 2px !important;
+  margin-top: 4px !important;
+  margin-bottom: 0 !important;
+}
+
+/* --- Picker group: flatten to inline row, no card bg --- */
+#weeklyTaskList .apple-picker-group {
+  margin-top: 6px !important;
+  gap: 4px !important;
+}
+#weeklyTaskList .apple-picker-item {
+  background: transparent !important;
+  border: none !important;
+  padding: 2px 0 !important;
+  min-width: 0 !important;
+  flex: 0 0 auto !important;
+}
+#weeklyTaskList .apple-picker-item label {
+  font-size: 9px !important;
+  margin-bottom: 1px !important;
+  display: inline !important;
+  margin-right: 4px !important;
+  opacity: 0.5;
+}
+#weeklyTaskList .apple-picker-item input,
+#weeklyTaskList .apple-picker-item select {
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  padding: 0 !important;
+  border: none !important;
+  background: transparent !important;
+}
+#weeklyTaskList .apple-picker-item input[type="date"],
+#weeklyTaskList .apple-picker-item input[type="time"] {
+  width: auto !important;
+}
+
+/* --- Completed state: dim + strikethrough --- */
+#weeklyTaskList .ex-card:has(.ex-check.checked) {
+  opacity: 0.45 !important;
+}
+#weeklyTaskList .ex-card:has(.ex-check.checked) input[type="text"] {
+  text-decoration: line-through !important;
+  color: var(--ink-tertiary) !important;
+}
+#weeklyTaskList .ex-card:has(.ex-check.checked) .progress-fill {
+  opacity: 0.4 !important;
+}
+
+/* --- Exercise list gap tightened --- */
+#weeklyTaskList.exercise-list {
+  gap: 0 !important;
+}
+
+
+/* ============================================================
+   WEEKLY TASK GROUP ACCORDION
+   ============================================================ */
+.wk-group { margin-bottom: 4px; }
+.wk-group-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  border-bottom: 1px solid var(--line-light);
+  transition: background 0.12s ease;
+}
+.wk-group-head:hover { background: var(--bg-card-hover); }
+.wk-group-arrow {
+  font-size: 11px;
+  color: var(--ink-tertiary);
+  transition: transform 0.2s cubic-bezier(0.25,1,0.5,1);
+  flex-shrink: 0;
+  width: 16px;
+  text-align: center;
+}
+.wk-group.collapsed .wk-group-arrow { transform: rotate(-90deg); }
+.wk-group-label {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-tertiary);
+  flex: 1;
+}
+.wk-group-count {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--ink-tertiary);
+  opacity: 0.6;
+}
+.wk-group-body {
+  display: flex;
+  flex-direction: column;
+  transition: max-height 0.22s cubic-bezier(0.25,1,0.5,1), opacity 0.18s ease;
+  overflow: hidden;
+  max-height: 4000px;
+  opacity: 1;
+}
+.wk-group.collapsed .wk-group-body {
+  max-height: 0;
+  opacity: 0;
+  pointer-events: none;
+}
 </style>
 </head>
 <body>
@@ -2841,6 +3040,8 @@ let customSubjects = JSON.parse(localStorage.getItem('study_subjects_pro')) || {
 };
 
 const sampleResources = [
+  {isSample: true, id:'r_gram', subject:'english', title:'Grammar Book', path:'D:/Study/English/Grammar_Book.pdf', status:'pending', startDate:'2026-06-20', tags:['Grammar'], createdAt:'2026-06-20', currentPage:36, totalPages:120},
+  {isSample: true, id:'r_read', subject:'english', title:'Reading Book', path:'D:/Study/English/Reading_Book.pdf', status:'not_started', startDate:'2026-06-20', tags:['Reading'], createdAt:'2026-06-20', currentPage:0, totalPages:100},
   {isSample: true, id:'r1',subject:'english',title:'IELTS Core Academic Vocabulary 5000',path:'D:/Study/English/IELTS_Vocab.pdf',status:'pending',startDate:'2026-06-25',tags:['Vocabulary','High-Freq'],createdAt:'2026-06-25'},
   {isSample: true, id:'r2',subject:'english',title:'Advanced Grammar & Passive Voice',path:'D:/Study/English/Grammar.docx',status:'completed',startDate:'2026-06-20',tags:['Grammar','Writing'],createdAt:'2026-06-28'},
   {isSample: true, id:'r3',subject:'english',title:'Essay Structure & Templates',path:'D:/Study/English/Essays.pdf',status:'not_started',startDate:'2026-07-15',tags:['Writing'],createdAt:'2026-06-30'},
@@ -2991,13 +3192,13 @@ const sampleRoadmapMilestones = [
   {isSample: true, id:'rm5', title:'Final Review', startDate:'2027-03-01', targetFinishDate:'2027-03-31', status:'not_started', notes:'Final sprint, formula review, and confidence building.', order:4, createdAt:'2026-07-01'}
 ];
 const sampleRoadmapPlans = [
-  {isSample: true, id:'rp1', milestoneId:'rm1', subject:'english', title:'Grammar Book', startDate:'2026-07-01', targetFinishDate:'2026-08-31', status:'in_progress', notes:'Complete the grammar foundation and correction cycle.', order:0, createdAt:'2026-07-01'},
-  {isSample: true, id:'rp2', milestoneId:'rm2', subject:'english', title:'Reading Book', startDate:'2026-09-01', targetFinishDate:'2026-10-31', status:'not_started', notes:'Build long-form reading accuracy and speed.', order:1, createdAt:'2026-07-01'},
-  {isSample: true, id:'rp3', milestoneId:'rm2', subject:'english', title:'Vocabulary Expansion', startDate:'2026-09-01', targetFinishDate:'2026-10-31', status:'not_started', notes:'Daily review and SRS consolidation.', order:2, createdAt:'2026-07-01'},
-  {isSample: true, id:'rp4', milestoneId:'rm2', subject:'chinese', title:'Modern Reading', startDate:'2026-09-01', targetFinishDate:'2026-10-31', status:'not_started', notes:'Reading methods and answer structure.', order:3, createdAt:'2026-07-01'},
-  {isSample: true, id:'rp5', milestoneId:'rm3', subject:'chinese', title:'Essay', startDate:'2026-11-01', targetFinishDate:'2026-12-31', status:'not_started', notes:'Outline library and timed writing.', order:4, createdAt:'2026-07-01'},
-  {isSample: true, id:'rp6', milestoneId:'rm3', subject:'politic', title:'Theory Review', startDate:'2026-11-01', targetFinishDate:'2026-12-31', status:'not_started', notes:'Theory framework and practice questions.', order:5, createdAt:'2026-07-01'},
-  {isSample: true, id:'rp7', milestoneId:'rm2', subject:'collegeEnglish', title:'Writing Practice', startDate:'2026-09-01', targetFinishDate:'2026-10-31', status:'not_started', notes:'Weekly writing drills and correction.', order:6, createdAt:'2026-07-01'}
+  {isSample: true, id:'rp1', milestoneId:'rm1', subject:'english', title:'Grammar Book', startDate:'2026-07-01', targetFinishDate:'2026-08-31', status:'in_progress', notes:'Complete the grammar foundation and correction cycle.', order:0, createdAt:'2026-07-01', startProgress:36, targetProgress:44, currentProgress:36, unit:'pages'},
+  {isSample: true, id:'rp2', milestoneId:'rm2', subject:'english', title:'Reading Book', startDate:'2026-09-01', targetFinishDate:'2026-10-31', status:'not_started', notes:'Build long-form reading accuracy and speed.', order:1, createdAt:'2026-07-01', startProgress:0, targetProgress:100, currentProgress:0, unit:'pages'},
+  {isSample: true, id:'rp3', milestoneId:'rm2', subject:'english', title:'Vocabulary Expansion', startDate:'2026-09-01', targetFinishDate:'2026-10-31', status:'not_started', notes:'Daily review and SRS consolidation.', order:2, createdAt:'2026-07-01', startProgress:0, targetProgress:500, currentProgress:0, unit:'words'},
+  {isSample: true, id:'rp4', milestoneId:'rm2', subject:'chinese', title:'Modern Reading', startDate:'2026-09-01', targetFinishDate:'2026-10-31', status:'not_started', notes:'Reading methods and answer structure.', order:3, createdAt:'2026-07-01', startProgress:0, targetProgress:20, currentProgress:0, unit:'passages'},
+  {isSample: true, id:'rp5', milestoneId:'rm3', subject:'chinese', title:'Essay', startDate:'2026-11-01', targetFinishDate:'2026-12-31', status:'not_started', notes:'Outline library and timed writing.', order:4, createdAt:'2026-07-01', startProgress:0, targetProgress:10, currentProgress:0, unit:'essays'},
+  {isSample: true, id:'rp6', milestoneId:'rm3', subject:'politic', title:'Theory Review', startDate:'2026-11-01', targetFinishDate:'2026-12-31', status:'not_started', notes:'Theory framework and practice questions.', order:5, createdAt:'2026-07-01', startProgress:0, targetProgress:15, currentProgress:0, unit:'chapters'},
+  {isSample: true, id:'rp7', milestoneId:'rm2', subject:'collegeEnglish', title:'Writing Practice', startDate:'2026-09-01', targetFinishDate:'2026-10-31', status:'not_started', notes:'Weekly writing drills and correction.', order:6, createdAt:'2026-07-01', startProgress:0, targetProgress:8, currentProgress:0, unit:'essays'}
 ];
 const sampleRoadmapExams = [
   {isSample: true, id:'rex1', subject:'english', title:'IELTS', examDate:'2027-03-01', notes:'Main English target', createdAt:'2026-07-01'},
@@ -3117,6 +3318,86 @@ function removeInlineHighlight(subj, word) {
   saveResState(); render();
 }
 function matchesSearch(text, q) { if(!q) return true; return text.toLowerCase().includes(q.toLowerCase()); }
+function normTitle(s) { return String(s||'').toLowerCase().replace(/[^a-z0-9\u4e00-\u9fff]+/g,' ').trim(); }
+function findMatchingResource(title) {
+  if (!title || !resources || !resources.length) return null;
+  const cleanTitle = normTitle(title);
+  if (!cleanTitle) return null;
+  let matched = resources.find(r => normTitle(r.title) === cleanTitle);
+  if (matched) return matched;
+  matched = resources.find(r => {
+    const cleanRes = normTitle(r.title);
+    return cleanRes && (cleanRes.includes(cleanTitle) || cleanTitle.includes(cleanRes));
+  });
+  return matched || null;
+}
+function syncProgressToResource(title, currentProg, targetProg, status, startProg) {
+  const res = findMatchingResource(title);
+  if (res) {
+    if (currentProg !== undefined && currentProg !== null) {
+      res.currentPage = Number(currentProg);
+      res.progress = Number(currentProg);
+    }
+    if (targetProg !== undefined && targetProg !== null) {
+      res.totalPages = Number(targetProg);
+    }
+    if (res.totalPages > 0 && res.currentPage !== undefined) {
+      const pct = Math.round((res.currentPage / res.totalPages) * 100);
+      res.percent = pct;
+      res.progress = pct;
+      if (res.currentPage >= res.totalPages || status === 'completed') {
+        res.status = 'completed';
+      } else if (res.status === 'completed' && res.currentPage < res.totalPages) {
+        res.status = 'in_progress';
+      }
+    } else if (status === 'completed') {
+      res.status = 'completed';
+      res.percent = 100;
+      res.progress = 100;
+    }
+    saveResState();
+  }
+}
+function syncResourceToTasks(res) {
+  if (!res || !res.title) return;
+  const cleanRes = normTitle(res.title);
+  if (!cleanRes) return;
+  let changedWeekly = false;
+  safeArray(weeklyPlan?.tasks).forEach(task => {
+    const cleanTask = normTitle(task.title);
+    if (cleanTask && (cleanTask === cleanRes || cleanRes.includes(cleanTask) || cleanTask.includes(cleanRes))) {
+      if (res.status === 'completed') {
+        task.status = 'completed';
+        if (task.targetProgress) task.currentProgress = task.targetProgress;
+        changedWeekly = true;
+      } else if (res.currentPage !== undefined) {
+        task.currentProgress = res.currentPage;
+        if (task.targetProgress && task.currentProgress >= task.targetProgress) task.status = 'completed';
+        else if (task.status === 'completed' && task.currentProgress < (task.targetProgress||1)) task.status = 'in_progress';
+        changedWeekly = true;
+      }
+    }
+  });
+  if (changedWeekly && typeof saveWeeklyPlan === 'function') saveWeeklyPlan();
+
+  let changedRoadmap = false;
+  safeArray(roadmapPlans).forEach(plan => {
+    const cleanPlan = normTitle(plan.title);
+    if (cleanPlan && (cleanPlan === cleanRes || cleanRes.includes(cleanPlan) || cleanPlan.includes(cleanRes))) {
+      if (res.status === 'completed') {
+        plan.status = 'completed';
+        if (plan.targetProgress) plan.currentProgress = plan.targetProgress;
+        changedRoadmap = true;
+      } else if (res.currentPage !== undefined) {
+        plan.currentProgress = res.currentPage;
+        if (plan.targetProgress && plan.currentProgress >= plan.targetProgress) plan.status = 'completed';
+        else if (plan.status === 'completed' && plan.currentProgress < (plan.targetProgress||1)) plan.status = 'in_progress';
+        changedRoadmap = true;
+      }
+    }
+  });
+  if (changedRoadmap && typeof saveRoadmap === 'function') saveRoadmap();
+}
 
 // ================================================================
 //  MODULE SWITCHING
@@ -4997,7 +5278,7 @@ function openQuizSettings() {
         <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;">
           <button class="apple-btn primary" onclick="exportSelectedModules()">⬆ Export</button>
           <button class="apple-btn danger" onclick="resetSelectedModules()">Reset</button>
-          <button class="apple-btn danger" onclick="removeDemoDataConfirm()">Remove Demo Data</button>
+          <button class="apple-btn danger" onclick="removeDemoData()">Remove data</button>
         </div>
       </div>
       <div style="padding:16px;background:var(--bg-card);border:1px solid var(--line);border-radius:var(--radius-lg);">
@@ -5659,12 +5940,17 @@ function normalizeRoadmapPlans() {
     const subject = customSubjects[p.subject] ? p.subject : detectSubjectKey(p.subject || p.subjectLabel || '') || appState.currentSubject || 'english';
     let milestoneId = p.milestoneId;
     if (!roadmapMilestones.find(m => m.id === milestoneId)) milestoneId = findMilestoneForDate(startDate || targetFinishDate);
+    const sp = (p.startProgress !== undefined && p.startProgress !== null && p.startProgress !== '') ? Number(p.startProgress) : 0;
+    const tp = (p.targetProgress !== undefined && p.targetProgress !== null && p.targetProgress !== '') ? Number(p.targetProgress) : 1;
+    const cp = (p.currentProgress !== undefined && p.currentProgress !== null && p.currentProgress !== '') ? Number(p.currentProgress) : sp;
+    const un = p.unit || 'pages';
     return {
       id: p.id || uid('rp'), milestoneId, subject,
       title: p.title || 'Untitled Plan', startDate, targetFinishDate,
       status: normalizeRoadmapStatus(p.status), notes: p.notes || '',
       order: typeof p.order === 'number' ? p.order : idx,
-      createdAt: p.createdAt || todayISO()
+      createdAt: p.createdAt || todayISO(),
+      startProgress: sp, targetProgress: tp, currentProgress: cp, unit: un
     };
   });
 }
@@ -5697,7 +5983,6 @@ function ensureMilestoneExpanded() {
   getOrderedMilestones().forEach(m => { if (typeof roadmapMilestoneExpanded[m.id] !== 'boolean') roadmapMilestoneExpanded[m.id] = (m.id === currentId); });
 }
 function toggleMilestone(id) { ensureMilestoneExpanded(); roadmapMilestoneExpanded[id] = !roadmapMilestoneExpanded[id]; saveRoadmap(); render(); }
-function normTitle(s) { return String(s||'').toLowerCase().replace(/[^a-z0-9\u4e00-\u9fff]+/g,' ').trim(); }
 function getRoadmapPlanProgress(plan) {
   const title = normTitle(plan.title);
   const lrMatches = learningItems.filter(lr => (!plan.subject || lr.subject === plan.subject) && title && (normTitle(lr.title).includes(title) || title.includes(normTitle(lr.title))));
@@ -5709,6 +5994,13 @@ function getRoadmapPlanProgress(plan) {
     else vals.push(ex.status === 'completed' ? 100 : (ex.status === 'pending' ? 50 : 0));
   });
   if (vals.length) return { percent: Math.round(vals.reduce((a,b)=>a+b,0)/vals.length), synced:true };
+  if (plan && plan.targetProgress !== undefined && plan.targetProgress !== null && plan.targetProgress !== '' && Number(plan.targetProgress) > Number(plan.startProgress || 0)) {
+    const sp = Number(plan.startProgress || 0);
+    const tp = Number(plan.targetProgress || 1);
+    const cp = (plan.currentProgress !== undefined && plan.currentProgress !== null && plan.currentProgress !== '') ? Number(plan.currentProgress) : sp;
+    const pct = Math.round(((cp - sp) / (tp - sp)) * 100);
+    return { percent: Math.max(0, Math.min(100, pct)), synced:false };
+  }
   return { percent: plan.status === 'completed' ? 100 : (plan.status === 'in_progress' ? 50 : 0), synced:false };
 }
 function getMilestonePlans(msId) { return getRoadmapOrderedPlans().filter(p => p.milestoneId === msId); }
@@ -5718,25 +6010,112 @@ function getMilestoneProgress(ms) {
   return ms.status === 'completed' ? 100 : (ms.status === 'in_progress' ? 50 : 0);
 }
 function roadmapPlanCard(plan) {
+  if (plan && plan.startProgress === undefined) plan.startProgress = 0;
+  if (plan && plan.targetProgress === undefined) plan.targetProgress = 1;
+  if (plan && plan.currentProgress === undefined) plan.currentProgress = plan.startProgress || 0;
+  if (plan && !plan.unit) plan.unit = 'pages';
   const prog = getRoadmapPlanProgress(plan);
   const subject = customSubjects[plan.subject] || {};
-  return `<div class="roadmap-plan-card" id="roadmap_${plan.id}" onclick="openRoadmapPlanModal('${plan.id}')">
-    <div class="roadmap-grip" style="visibility:hidden"><span></span><span></span><span></span><span></span><span></span><span></span></div>
-    <div style="min-width:0;">
-      <div class="roadmap-plan-title">${esc(plan.title)}</div>
-      <div class="roadmap-plan-meta">
-        <span class="roadmap-status ${plan.status}">${roadmapStatusLabel(plan.status)}</span>
-        <span>${esc(subject.label || roadmapSubjectLabel(plan.subject))}</span>
-        <span>${formatDate(plan.startDate)} – ${formatDate(plan.targetFinishDate)}</span>
-      </div>
-      ${plan.notes ? `<div class="roadmap-notes">${esc(plan.notes)}</div>` : ''}
+  const subjColor = subject.color || '#999';
+  const subjLabel = subject.label || roadmapSubjectLabel(plan.subject);
+  const sp = (plan && plan.startProgress !== undefined && plan.startProgress !== null && plan.startProgress !== '') ? Number(plan.startProgress) : 0;
+  const tp = (plan && plan.targetProgress !== undefined && plan.targetProgress !== null && plan.targetProgress !== '') ? Number(plan.targetProgress) : 1;
+  const cp = (plan && plan.currentProgress !== undefined && plan.currentProgress !== null && plan.currentProgress !== '') ? Number(plan.currentProgress) : sp;
+  const un = (plan && plan.unit) ? plan.unit : 'pages';
+
+  let rawPct = 0;
+  if (tp > sp) {
+    rawPct = Math.round(((cp - sp) / (tp - sp)) * 100);
+  } else {
+    rawPct = (plan.status === 'completed' || cp >= tp) ? 100 : 0;
+  }
+  const displayProgress = Math.max(0, Math.min(100, rawPct));
+
+  return `<div class="ex-card ex-card-flat" style="padding: 10px 12px; display: flex; flex-direction: column; gap: 6px;" id="roadmap_${plan.id}" onclick="openRoadmapPlanModal('${plan.id}')">
+    <!-- 第一行：科目标识 + 标题 + 状态 -->
+    <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+      <span style="display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: var(--ink-secondary); min-width: 80px;">
+        <span style="width: 8px; height: 8px; border-radius: 3px; background: ${subjColor}; display: inline-block; flex-shrink: 0;"></span>
+        ${esc(subjLabel)}
+      </span>
+      <span style="font-size: 14px; font-weight: 700; color: var(--ink); flex: 1; min-width: 0; word-break: break-word;">${esc(plan.title)}</span>
+      <span class="roadmap-status ${plan.status}" style="font-size: 10px; font-weight: 700; padding: 2px 10px; border-radius: 999px; flex-shrink: 0; border: 1px solid var(--line); background: var(--bg-card); color: var(--ink-secondary);">${roadmapStatusLabel(plan.status)}</span>
     </div>
-    <div class="roadmap-actions" onclick="event.stopPropagation()">
+    <!-- 第二行：日期范围与迷你进度条 -->
+    <div style="font-size: 11px; color: var(--ink-tertiary); display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
+      <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap; min-width: 0;">
+        <span>📅 ${formatDate(plan.startDate)} — ${formatDate(plan.targetFinishDate)}</span>
+        ${plan.notes ? `<span style="opacity: 0.7;">${esc(plan.notes)}</span>` : ''}
+      </div>
+      <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0; margin-left: auto;">
+        <div class="progress-bar" style="width: 90px; height: 4px; border-radius: 999px; background: var(--bg-elev); overflow: hidden; flex-shrink: 0;"><div class="progress-fill" style="width: ${displayProgress}%; height: 100%; border-radius: 999px; background: var(--accent); transition: width 0.3s ease;"></div></div>
+        <span style="font-size: 11px; font-weight: 700; color: var(--ink-tertiary); min-width: 32px; text-align: right;">${displayProgress}%</span>
+      </div>
+    </div>
+    <!-- 第三行：可编辑的目标页数与控制按钮 -->
+    <div style="font-size: 11px; color: var(--ink-tertiary); display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 2px;" onclick="event.stopPropagation()">
+      <div style="display: flex; align-items: center; gap: 4px; flex-wrap: wrap;">
+        Goal: <input aria-label="Start progress" type="number" value="${sp}" onchange="updateRoadmapPlanField('${esc(plan.id)}', 'startProgress', +this.value||0)" style="font-size:11px;width:38px;text-align:center;border:1px solid var(--line);border-radius:4px;padding:1px 3px;background:var(--bg-card);color:var(--ink);"> → <input aria-label="Target progress" type="number" value="${tp}" onchange="updateRoadmapPlanField('${esc(plan.id)}', 'targetProgress', +this.value||1)" style="font-size:11px;width:38px;text-align:center;border:1px solid var(--line);border-radius:4px;padding:1px 3px;background:var(--bg-card);color:var(--ink);"> ${esc(un)}
+      </div>
+      <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
+        <button class="apple-btn small" onclick="updateRoadmapPlanProgress('${esc(plan.id)}', 1)">+1</button>
+        <button class="apple-btn small" onclick="updateRoadmapPlanProgress('${esc(plan.id)}', -1)">-1</button>
+        <button class="apple-btn small" onclick="markRoadmapPlanStatus('${esc(plan.id)}', 'completed')">Mark Done</button>
+      </div>
+    </div>
+    <!-- 操作按钮 -->
+    <div style="display: flex; gap: 6px; justify-content: flex-end; margin-top: 4px;" onclick="event.stopPropagation()">
       <button class="apple-btn small" onclick="openRoadmapPlanModal('${plan.id}')">Edit</button>
       <button class="apple-btn small" onclick="duplicateRoadmapPlan('${plan.id}')">Duplicate</button>
       <button class="apple-btn small danger" onclick="deleteRoadmapPlan('${plan.id}')">Delete</button>
     </div>
   </div>`;
+}
+function updateRoadmapPlanField(planId, field, value, noRender) {
+  const plan = safeArray(roadmapPlans).find(p => p.id === planId);
+  if (plan) {
+    plan[field] = value;
+    if (field === 'startProgress' || field === 'targetProgress') {
+      const sp = Number(plan.startProgress || 0);
+      const tp = Number(plan.targetProgress || 1);
+      const cp = (plan.currentProgress !== undefined && plan.currentProgress !== null && plan.currentProgress !== '') ? Number(plan.currentProgress) : sp;
+      plan.currentProgress = Math.max(sp, Math.min(tp, cp));
+      if (plan.currentProgress >= tp && tp > sp) plan.status = 'completed';
+      else if (plan.status === 'completed' && plan.currentProgress < tp) plan.status = 'in_progress';
+    }
+    saveRoadmap();
+    if (!noRender) render();
+  }
+}
+function updateRoadmapPlanProgress(id, delta) {
+  const plan = safeArray(roadmapPlans).find(p => p.id === id);
+  if (plan) {
+    const sp = (plan.startProgress !== undefined && plan.startProgress !== null && plan.startProgress !== '') ? Number(plan.startProgress) : 0;
+    const cp = (plan.currentProgress !== undefined && plan.currentProgress !== null && plan.currentProgress !== '') ? Number(plan.currentProgress) : sp;
+    const tp = (plan.targetProgress !== undefined && plan.targetProgress !== null && plan.targetProgress !== '') ? Number(plan.targetProgress) : 1;
+    plan.currentProgress = Math.max(sp, cp + delta);
+    plan.status = plan.currentProgress >= tp ? 'completed' : 'in_progress';
+    saveRoadmap();
+    render();
+  }
+}
+function markRoadmapPlanStatus(id, status) {
+  const plan = safeArray(roadmapPlans).find(p => p.id === id);
+  if (plan) {
+    const sp = (plan.startProgress !== undefined && plan.startProgress !== null && plan.startProgress !== '') ? Number(plan.startProgress) : 0;
+    const tp = (plan.targetProgress !== undefined && plan.targetProgress !== null && plan.targetProgress !== '') ? Number(plan.targetProgress) : 1;
+    plan.startProgress = sp;
+    plan.targetProgress = tp;
+    plan.unit = plan.unit || 'pages';
+    plan.status = status;
+    if (status === 'completed') {
+      plan.currentProgress = tp;
+    } else {
+      plan.currentProgress = sp;
+    }
+    saveRoadmap();
+    render();
+  }
 }
 function getMilestoneSubjectStateKey(msId, subject) { return `${msId}__${subject}`; }
 function subjectHasInProgressPlans(msId, subject) {
@@ -5831,7 +6210,7 @@ function renderOverallProgress() {
 function renderStudyRoadmap(container) {
   normalizeRoadmapMilestones(); normalizeRoadmapPlans(); normalizeRoadmapExams(); ensureMilestoneExpanded(); ensureMilestoneSubjectExpanded();
   container.innerHTML = `<div class="roadmap-page">
-    <div class="roadmap-section-head" style="margin-bottom:-4px;"><h3>Study Roadmap</h3><div style="display:flex;gap:8px;flex-wrap:wrap;"><button class="apple-btn primary" onclick="openGenerateRoadmapModal()">🤖 Generate Roadmap</button><button class="apple-btn" onclick="openRoadmapAIImportModal()">Import from AI</button></div></div>
+    <div class="roadmap-section-head" style="margin-bottom:-4px;"><h3>Study Roadmap</h3><div style="display:flex;gap:8px;flex-wrap:wrap;"><button class="apple-btn primary" onclick="openRoadmapAIImportModal()">🤖 AI Import</button></div></div>
     ${renderExamManager()}
     ${renderMilestonesSection()}
   </div>`;
@@ -5877,13 +6256,14 @@ function deleteMilestone(id) {
 }
 function openRoadmapPlanModal(id='', milestoneId='') {
   const isEdit = !!id;
-  const plan = isEdit ? roadmapPlans.find(p => p.id === id) : { milestoneId:milestoneId || getCurrentMilestoneId(), subject:appState.currentSubject, title:'', startDate:'', targetFinishDate:'', status:'not_started', notes:'' };
+  const plan = isEdit ? roadmapPlans.find(p => p.id === id) : { milestoneId:milestoneId || getCurrentMilestoneId(), subject:appState.currentSubject, title:'', startDate:'', targetFinishDate:'', status:'not_started', notes:'', startProgress:0, targetProgress:1, currentProgress:0, unit:'pages' };
   if (!plan) return;
   openGenericSheet(isEdit ? 'Edit Study Plan' : 'Add Study Plan', `
     <div class="field"><label>Title</label><input id="rpTitle" value="${esc(plan.title||'')}" placeholder="e.g. Grammar Book" /></div>
     <div class="field"><label>Milestone</label><select id="rpMilestone">${getOrderedMilestones().map(m=>`<option value="${m.id}" ${m.id===(plan.milestoneId||milestoneId)?'selected':''}>${esc(m.title)}</option>`).join('')}</select></div>
     <div class="field"><label>Subject</label><select id="rpSubject">${roadmapSubjectOptions(plan.subject || appState.currentSubject)}</select></div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;"><div class="field"><label>Start Date</label><input id="rpStart" type="date" value="${plan.startDate||''}" /></div><div class="field"><label>Target Finish Date</label><input id="rpFinish" type="date" value="${plan.targetFinishDate||''}" /></div></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;"><div class="field"><label>Start Goal</label><input id="rpStartProg" type="number" value="${plan.startProgress!==undefined?plan.startProgress:0}" /></div><div class="field"><label>Target Goal</label><input id="rpTargetProg" type="number" value="${plan.targetProgress!==undefined?plan.targetProgress:1}" /></div><div class="field"><label>Unit</label><input id="rpUnit" type="text" value="${esc(plan.unit||'pages')}" placeholder="pages, words..." /></div></div>
     <div class="field"><label>Status</label><select id="rpStatus"><option value="not_started" ${plan.status==='not_started'?'selected':''}>Not Started</option><option value="in_progress" ${plan.status==='in_progress'?'selected':''}>In Progress</option><option value="completed" ${plan.status==='completed'?'selected':''}>Completed</option></select></div>
     <div class="field"><label>Notes</label><textarea id="rpNotes" rows="3" placeholder="Optional notes">${esc(plan.notes||'')}</textarea></div>
   `, [
@@ -5894,9 +6274,9 @@ function openRoadmapPlanModal(id='', milestoneId='') {
 }
 function saveRoadmapPlanFromModal(id) {
   const isEdit=!!id; const title=document.getElementById('rpTitle').value.trim(); if(!title){toast('Title required');return;}
-  const data={ title, milestoneId:document.getElementById('rpMilestone').value, subject:document.getElementById('rpSubject').value, startDate:document.getElementById('rpStart').value, targetFinishDate:document.getElementById('rpFinish').value, status:document.getElementById('rpStatus').value, notes:document.getElementById('rpNotes').value.trim() };
+  const data={ title, milestoneId:document.getElementById('rpMilestone').value, subject:document.getElementById('rpSubject').value, startDate:document.getElementById('rpStart').value, targetFinishDate:document.getElementById('rpFinish').value, status:document.getElementById('rpStatus').value, notes:document.getElementById('rpNotes').value.trim(), startProgress: Number(document.getElementById('rpStartProg').value||0), targetProgress: Number(document.getElementById('rpTargetProg').value||1), unit: document.getElementById('rpUnit').value.trim()||'pages' };
   if(isEdit) Object.assign(roadmapPlans.find(p=>p.id===id), data);
-  else { const orders=roadmapPlans.map(p=>p.order||0); roadmapPlans.push({id:uid('rp'), ...data, order:orders.length?Math.max(...orders)+1:0, createdAt:todayISO()}); }
+  else { const orders=roadmapPlans.map(p=>p.order||0); roadmapPlans.push({id:uid('rp'), ...data, currentProgress:data.startProgress, order:orders.length?Math.max(...orders)+1:0, createdAt:todayISO()}); }
   normalizeRoadmapPlans(); saveRoadmap(); closeSheet('genericSheet'); render(); toast(isEdit?'Plan updated':'Plan added');
 }
 function duplicateRoadmapPlan(id) { const p=roadmapPlans.find(x=>x.id===id); if(!p)return; const orders=roadmapPlans.map(x=>x.order||0); roadmapPlans.push({...p,id:uid('rp'),title:p.title+' Copy',order:orders.length?Math.max(...orders)+1:0,createdAt:todayISO()}); saveRoadmap(); closeSheet('genericSheet'); render(); toast('Plan duplicated'); }
@@ -5923,150 +6303,100 @@ function milestoneDragOver(ev,id){ if(!milestoneDraggedId||milestoneDraggedId===
 function milestoneDragLeave(ev,id){ const el=document.getElementById('milestone_'+id); if(el)el.classList.remove('drag-over'); }
 function milestoneDrop(ev,targetId){ ev.preventDefault(); document.querySelectorAll('.roadmap-milestone-card').forEach(el=>el.classList.remove('drag-over','dragging')); const sourceId=milestoneDraggedId||(ev.dataTransfer&&ev.dataTransfer.getData('text/plain')); milestoneDraggedId=null; if(!sourceId||sourceId===targetId)return; const ordered=getOrderedMilestones(); const sIdx=ordered.findIndex(m=>m.id===sourceId), tIdx=ordered.findIndex(m=>m.id===targetId); if(sIdx<0||tIdx<0)return; const [moved]=ordered.splice(sIdx,1); ordered.splice(tIdx,0,moved); ordered.forEach((m,i)=>m.order=i); roadmapMilestones=ordered; saveRoadmap(); render(); toast('Milestone order saved'); }
 function milestoneDragEnd(){ milestoneDraggedId=null; document.querySelectorAll('.roadmap-milestone-card').forEach(el=>el.classList.remove('drag-over','dragging')); }
-function openGenerateRoadmapModal() {
-  openGenericSheet('🤖 Generate Roadmap', `
-    <div style="font-size:13px;color:var(--ink-secondary);line-height:1.5;margin-bottom:14px;">
-      Fill in your study profile below. We will generate a structured AI prompt for you to paste into ChatGPT or Claude.
-    </div>
-    <div class="field"><label>Learning Goal</label><input id="genGoal" placeholder="e.g. IELTS Academic" /></div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-      <div class="field"><label>Target Score</label><input id="genScore" placeholder="e.g. 7.5" /></div>
-      <div class="field"><label>Study Duration</label><input id="genDuration" placeholder="e.g. 3 Months" /></div>
-    </div>
-    <div class="field"><label>Current Level</label><input id="genLevel" placeholder="e.g. Intermediate" /></div>
-    <div class="field">
-      <label>Focus Areas</label>
-      <div style="display:grid;grid-template-columns:repeat(2, minmax(120px, 1fr));gap:8px;margin-top:6px;">
-        ${['Reading', 'Writing', 'Listening', 'Speaking', 'Vocabulary', 'Grammar'].map(fa => `
-          <label style="display:flex;gap:8px;align-items:center;font-size:13px;color:var(--ink);cursor:pointer;">
-            <input type="checkbox" class="gen-focus" value="${fa}" checked />
-            <span>${fa}</span>
-          </label>
-        `).join('')}
-      </div>
-    </div>
-  `, [
-    {text:'Cancel', onclick:()=>closeSheet('genericSheet')},
-    {text:'Generate Prompt', cls:'primary', onclick:()=>executeGenerateRoadmapPrompt()}
-  ]);
-}
+const _ROADMAP_AI_PROMPT = `You are generating study roadmap data.
 
-function executeGenerateRoadmapPrompt() {
-  const goal = document.getElementById('genGoal')?.value.trim() || 'IELTS Academic';
-  const score = document.getElementById('genScore')?.value.trim() || '7.5';
-  const duration = document.getElementById('genDuration')?.value.trim() || '3 Months';
-  const level = document.getElementById('genLevel')?.value.trim() || 'Intermediate';
-  
-  const focusElements = Array.from(document.querySelectorAll('.gen-focus:checked'));
-  const focusList = focusElements.map(el => el.value).filter(Boolean);
-  const focusStr = focusList.length ? focusList.join(', ') : 'Reading, Writing, Listening, Speaking, Vocabulary, Grammar';
+Return ONLY valid JSON.
 
-  const promptText = `You are an expert AI study planner and curriculum coach.
-Please generate a comprehensive, structured Study Roadmap for my study preparation based on the following profile:
+Do not use markdown.
+Do not wrap with \`\`\`json.
+Do not include explanations.
 
-- Learning Goal: ${goal}
-- Target Score: ${score}
-- Study Duration: ${duration}
-- Current Level: ${level}
-- Focus Areas: ${focusStr}
+Return an array of milestone objects.
 
-Please output ONLY valid JSON without any markdown formatting, backticks, comments, or introductory text.
-The JSON must strictly follow this exact array structure:
+Each milestone contains:
+
+- milestone
+- description
+- startDate
+- targetFinishDate
+- status
+- subjects
+
+Each subject contains:
+
+- name
+- progress
+- tasks
+
+Each task contains:
+
+- title
+- completed
+
+Example format:
 
 [
   {
-    "milestone": "Foundation",
-    "subjects": [
+    "milestone":"Foundation",
+    "description":"Build basic knowledge",
+    "startDate":"2026-07-01",
+    "targetFinishDate":"2026-08-01",
+    "status":"Not Started",
+    "subjects":[
       {
-        "name": "Grammar",
-        "tasks": [
-          "Basic Tenses",
-          "Sentence Structure",
-          "Articles"
-        ],
-        "status": "Not Started",
-        "target": "Week 1-2"
-      },
-      {
-        "name": "Vocabulary",
-        "tasks": [
-          "Academic Word List 1-500",
-          "Synonym grouping for essays"
-        ],
-        "status": "Not Started",
-        "target": "Week 1-2"
-      }
-    ]
-  },
-  {
-    "milestone": "Skill Building",
-    "subjects": [
-      {
-        "name": "Reading",
-        "tasks": [
-          "Skimming and scanning techniques",
-          "True/False/Not Given drills"
-        ],
-        "status": "Not Started",
-        "target": "Week 3-6"
+        "name":"English",
+        "progress":0,
+        "tasks":[
+          {
+            "title":"Finish Cambridge Reading Test 1",
+            "completed":false
+          },
+          {
+            "title":"Memorize Vocabulary Unit 1",
+            "completed":false
+          }
+        ]
       }
     ]
   }
 ]
 
-Requirements:
-1. Divide the total study duration (${duration}) into logical study milestones (e.g. Foundation, Skill Building, Intensive Practice, Mock Exams, Final Review).
-2. Cover the selected focus areas (${focusStr}) across the milestones.
-3. For each subject inside a milestone, list specific, actionable study tasks in the "tasks" array.
-4. Set realistic target timeframe strings for each subject (e.g. "Week 1-2", "Month 2").
-5. Only output the JSON array.`;
+Return ONLY the JSON array.`;
 
-  if (typeof AI_WIZARD_PROMPTS !== 'undefined') {
-    AI_WIZARD_PROMPTS.study_roadmap = promptText;
-    AI_WIZARD_PROMPTS.roadmap = promptText;
-  }
-  const promptBox = document.getElementById('aiWizardPromptBox');
-  if (promptBox && (typeof _aiWizardTab !== 'undefined' && (_aiWizardTab === 'study_roadmap' || _aiWizardTab === 'roadmap'))) {
-    promptBox.textContent = promptText;
-  }
-
+function _copyRoadmapPrompt() {
+  const btn = document.getElementById('roadmapCopyPromptBtn');
+  const doFallback = () => {
+    const ta = document.createElement('textarea');
+    ta.value = _ROADMAP_AI_PROMPT;
+    ta.style.cssText = 'position:fixed;left:-9999px;';
+    document.body.appendChild(ta);
+    ta.focus(); ta.select();
+    try { document.execCommand('copy'); toast('Prompt copied!'); } catch(e) { toast('Copy failed'); }
+    document.body.removeChild(ta);
+  };
   if (navigator.clipboard && window.isSecureContext) {
-    navigator.clipboard.writeText(promptText).then(() => {
-      toast('Prompt copied successfully.');
-    }).catch(() => {
-      fallbackCopyPromptRoadmapGen(promptText);
-    });
-  } else {
-    fallbackCopyPromptRoadmapGen(promptText);
-  }
-
-  closeSheet('genericSheet');
-}
-
-function fallbackCopyPromptRoadmapGen(text) {
-  const ta = document.createElement('textarea');
-  ta.value = text;
-  ta.style.position = 'fixed';
-  ta.style.left = '-9999px';
-  document.body.appendChild(ta);
-  ta.focus();
-  ta.select();
-  try {
-    document.execCommand('copy');
-    toast('Prompt copied successfully.');
-  } catch(e) {
-    toast('Copy failed');
-  }
-  document.body.removeChild(ta);
+    navigator.clipboard.writeText(_ROADMAP_AI_PROMPT).then(() => {
+      toast('Prompt copied!');
+      if (btn) { const orig = btn.textContent; btn.textContent = '✓ Copied'; setTimeout(() => { btn.textContent = orig; }, 1800); }
+    }).catch(doFallback);
+  } else { doFallback(); }
 }
 
 function openRoadmapAIImportModal() {
-  openGenericSheet('Import from AI', `
-    <div style="font-size:13px;color:var(--ink-secondary);line-height:1.5;margin-bottom:12px;">
-      Paste the AI-generated JSON below to replace your current Study Roadmap.
+  openGenericSheet('🤖 AI Import', `
+    <div style="margin-bottom:16px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+        <span style="font-size:12px;font-weight:600;color:var(--ink-secondary);letter-spacing:0.04em;text-transform:uppercase;">AI Prompt</span>
+        <button id="roadmapCopyPromptBtn" onclick="_copyRoadmapPrompt()" style="font-size:12px;font-weight:500;padding:5px 14px;border-radius:8px;border:1px solid var(--separator);background:var(--surface);color:var(--accent);cursor:pointer;display:flex;align-items:center;gap:5px;">⎘ Copy Prompt</button>
+      </div>
+      <div style="background:var(--surface-2,#f5f5f7);border:1px solid var(--separator);border-radius:10px;padding:12px 14px;font-family:monospace;font-size:11.5px;color:var(--ink-secondary);line-height:1.65;max-height:180px;overflow-y:auto;white-space:pre-wrap;word-break:break-word;">${_ROADMAP_AI_PROMPT.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
+      <div style="margin-top:8px;font-size:12px;color:var(--ink-tertiary,#999);line-height:1.5;">Copy → Paste into ChatGPT or Claude → Paste the returned JSON below → Import</div>
     </div>
-    <div class="field" style="margin:0;">
-      <textarea id="roadmapAIImportText" rows="14" style="width:100%;font-family:monospace;font-size:12px;" placeholder="Paste the AI-generated JSON here..."></textarea>
+    <div>
+      <div style="font-size:12px;font-weight:600;color:var(--ink-secondary);letter-spacing:0.04em;text-transform:uppercase;margin-bottom:6px;">Paste JSON</div>
+      <div class="field" style="margin:0;">
+        <textarea id="roadmapAIImportText" rows="10" style="width:100%;font-family:monospace;font-size:12px;border-radius:10px;border:1px solid var(--separator);padding:10px 12px;background:var(--surface);color:var(--ink);resize:vertical;" placeholder="Paste the JSON array here..."></textarea>
+      </div>
     </div>
   `, [
     {text:'Cancel', onclick:()=>closeSheet('genericSheet')},
@@ -6120,7 +6450,7 @@ function executeRoadmapAIImport() {
       if (sItem.notes) notesArr.push(sItem.notes);
       const planNotes = notesArr.join(' · ');
 
-      const tasksArr = Array.isArray(sItem.tasks) ? sItem.tasks : (sItem.task ? [sItem.task] : (sItem.title ? [sItem.title] : (rawSubj ? [rawSubj] : ['Untitled Task'])));
+      const tasksArr = (Array.isArray(sItem.tasks) ? sItem.tasks : (sItem.task ? [sItem.task] : (sItem.title ? [sItem.title] : (rawSubj ? [rawSubj] : ['Untitled Task'])))).map(t => (t && typeof t === 'object') ? (t.title || t.name || t.label || 'Untitled Task') : t);
       tasksArr.forEach(taskTitle => {
         newPlans.push({
           id: uid('rp'),
@@ -6469,6 +6799,14 @@ function renderResFilterBar() {
 
 // Resource Card — Compact Grid Card
 function resourceCard(r) {
+  if (r.currentPage === undefined || r.currentPage === null || r.currentPage === '') r.currentPage = 0;
+  if (r.totalPages === undefined || r.totalPages === null || r.totalPages === '' || Number(r.totalPages) <= 0) r.totalPages = 100;
+  const cp = Number(r.currentPage || 0);
+  const tp = Number(r.totalPages || 100);
+  let resPct = tp > 0 ? Math.round((cp / tp) * 100) : 0;
+  if (r.status === 'completed' || cp >= tp) resPct = 100;
+  resPct = Math.max(0, Math.min(100, resPct));
+
   const isDone = r.status==='completed';
   const isNotStarted = r.status==='not_started'||(r.startDate&&r.startDate>todayISO());
   const pathText = String(r.path || '');
@@ -6487,10 +6825,6 @@ function resourceCard(r) {
   const tags = Array.isArray(r.tags) ? r.tags.filter(Boolean) : [];
   const dateVal = r.createdAt || r.startDate || '';
   const dateText = dateVal ? `${r.createdAt ? 'Added' : 'Start'} ${formatDate(dateVal)}` : 'Added date not set';
-  const numericProgress = Number(r.progress ?? r.percent ?? r.completion);
-  let progressPct = isDone ? 100 : (isNotStarted ? 0 : 50);
-  if (Number.isFinite(numericProgress)) progressPct = numericProgress <= 1 ? Math.round(numericProgress * 100) : Math.round(numericProgress);
-  progressPct = Math.max(0, Math.min(100, progressPct));
   const safePath = encodeURIComponent(pathText);
 
   return `<div class="res-card subtask-draggable ${isDone?'completed':''}" data-resid="${r.id}">
@@ -6515,18 +6849,88 @@ function resourceCard(r) {
       </div>
     </div>
 
-    <div class="res-resource-meta-row">
-      ${tags.length ? `<div class="res-tags">${tags.map(t=>`<span class="pill-tag">${esc(t)}</span>`).join('')}</div><span class="res-meta-dot">•</span>` : ''}
-      <span class="res-subject-label">${esc(subjectLabel)}</span>
+    <!-- 第二行：科目标识与 Pages 控制行合并 -->
+    <div class="res-resource-meta-row" style="display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; margin-top: 6px;">
+      <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+        ${tags.length ? `<div class="res-tags">${tags.map(t=>`<span class="pill-tag">${esc(t)}</span>`).join('')}</div><span class="res-meta-dot">•</span>` : ''}
+        <span class="res-subject-label">${esc(subjectLabel)}</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 11px; color: var(--ink-tertiary);" onclick="event.stopPropagation()">
+        <span style="display: flex; align-items: center; gap: 4px;">Pages: <input aria-label="Current page" type="number" value="${cp}" onchange="updateResourcePageField('${esc(r.id)}', 'currentPage', +this.value||0)" style="font-size:11px;width:38px;text-align:center;border:1px solid var(--line);border-radius:4px;padding:1px 3px;background:var(--bg-card);color:var(--ink);"> / <input aria-label="Total pages" type="number" value="${tp}" onchange="updateResourcePageField('${esc(r.id)}', 'totalPages', +this.value||100)" style="font-size:11px;width:38px;text-align:center;border:1px solid var(--line);border-radius:4px;padding:1px 3px;background:var(--bg-card);color:var(--ink);"></span>
+        <div style="display: flex; gap: 4px; align-items: center;">
+          <button class="apple-btn small" type="button" onclick="updateResourcePageProgress('${esc(r.id)}', 1)">+1</button>
+          <button class="apple-btn small" type="button" onclick="updateResourcePageProgress('${esc(r.id)}', -1)">-1</button>
+          <button class="apple-btn small" type="button" onclick="markResourcePageDone('${esc(r.id)}')">Done</button>
+        </div>
+      </div>
     </div>
 
-    <div class="res-resource-date">${esc(dateText)}</div>
+    <!-- 第三行：进度条与百分比 -->
+    <div style="display: flex; align-items: center; gap: 8px; margin-top: 6px; margin-bottom: 6px;">
+      <div class="progress-bar" style="flex: 1; height: 4px; border-radius: 999px; background: var(--bg-elev); overflow: hidden;"><div class="progress-fill" style="width: ${resPct}%; height: 100%; border-radius: 999px; background: var(--accent); transition: width 0.3s ease;"></div></div>
+      <span style="font-size: 11px; font-weight: 700; color: var(--ink-tertiary); min-width: 32px; text-align: right;">${resPct}%</span>
+    </div>
 
-    ${(r.status || Number.isFinite(numericProgress)) ? `<div class="res-resource-progress-row" title="${isDone?'Done':isNotStarted?'Not Started':'In Progress'}">
-      <div class="res-resource-progress"><div style="width:${progressPct}%"></div></div>
-      <span>${progressPct}%</span>
-    </div>` : ''}
+    <!-- 第四行：日期 -->
+    <div class="res-resource-date">${esc(dateText)}</div>
   </div>`;
+}
+
+function updateResourcePageField(resId, field, value) {
+  const r = (resources || []).find(x => x.id === resId);
+  if (r) {
+    r[field] = Number(value || 0);
+    const cp = Number(r.currentPage || 0);
+    const tp = Number(r.totalPages || 100);
+    r.currentPage = Math.max(0, Math.min(tp, cp));
+    if (tp > 0) {
+      const pct = Math.round((r.currentPage / tp) * 100);
+      r.progress = pct;
+      r.percent = pct;
+    }
+    if (r.currentPage >= tp && tp > 0) r.status = 'completed';
+    else if (r.status === 'completed' && r.currentPage < tp) r.status = 'in_progress';
+    syncResourceToTasks(r);
+    saveResState();
+    render();
+  }
+}
+
+function updateResourcePageProgress(resId, delta) {
+  const r = (resources || []).find(x => x.id === resId);
+  if (r) {
+    const cp = Number(r.currentPage || 0);
+    const tp = Number(r.totalPages || 100);
+    if (delta > 0) {
+      r.currentPage = Math.min(tp, cp + delta);
+    } else {
+      r.currentPage = Math.max(0, cp + delta);
+    }
+    if (tp > 0) {
+      const pct = Math.round((r.currentPage / tp) * 100);
+      r.progress = pct;
+      r.percent = pct;
+    }
+    if (r.currentPage >= tp && tp > 0) r.status = 'completed';
+    else if (r.status === 'completed' && r.currentPage < tp) r.status = 'in_progress';
+    syncResourceToTasks(r);
+    saveResState();
+    render();
+  }
+}
+
+function markResourcePageDone(resId) {
+  const r = (resources || []).find(x => x.id === resId);
+  if (r) {
+    const tp = Number(r.totalPages || 100);
+    r.currentPage = tp;
+    r.progress = 100;
+    r.percent = 100;
+    r.status = 'completed';
+    syncResourceToTasks(r);
+    saveResState();
+    render();
+  }
 }
 
 // Resource Actions
@@ -6535,6 +6939,12 @@ function toggleResourceStatus(id) {
     const r = (resources || []).find(x => x.id === id);
     if (r) {
       r.status = r.status === 'completed' ? 'pending' : 'completed';
+      if (r.status === 'completed') {
+        if (r.totalPages > 0) r.currentPage = r.totalPages;
+        r.progress = 100;
+        r.percent = 100;
+      }
+      syncResourceToTasks(r);
       saveResState();
       render();
     }
@@ -6595,6 +7005,7 @@ function openResourceModal(subject) {
     <div class="field"><label>Subject</label><select id="resSubject">${subjOpts}</select></div>
     <div class="field"><label>Title</label><input id="resTitle" placeholder="e.g. Grammar Guide"/></div>
     <div class="field"><label>File Path / Link</label><input id="resPath" placeholder="D:/Study/file.pdf"/></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;"><div class="field"><label>Current Page</label><input id="resCurrentPage" type="number" value="0"/></div><div class="field"><label>Total Pages</label><input id="resTotalPages" type="number" value="100"/></div></div>
     <div class="field"><label>Status</label><select id="resStatus"><option value="not_started">Not Started</option><option value="pending" selected>In Progress</option><option value="completed">Completed</option></select></div>
     <div class="field"><label>Start Date</label><input id="resStartDate" type="date" value="${todayISO()}"/></div>
     <div class="field"><label>Tags (comma separated)</label><input id="resTags" placeholder="Grammar, Reading"/></div>
@@ -6603,7 +7014,12 @@ function openResourceModal(subject) {
     {
       text: 'Add', cls: 'primary', onclick: () => {
         const title = document.getElementById('resTitle').value.trim(); if (!title) { toast('Title required'); return; }
-        resources.push({ id: 'r' + Date.now(), subject: document.getElementById('resSubject').value, title, path: document.getElementById('resPath').value.trim(), status: document.getElementById('resStatus').value, startDate: document.getElementById('resStartDate').value, tags: document.getElementById('resTags').value.split(',').map(t => t.trim()).filter(Boolean), createdAt: todayISO() });
+        const cp = Number(document.getElementById('resCurrentPage').value || 0);
+        const tp = Number(document.getElementById('resTotalPages').value || 100);
+        const pct = tp > 0 ? Math.round((cp / tp) * 100) : 0;
+        const newRes = { id: 'r' + Date.now(), subject: document.getElementById('resSubject').value, title, path: document.getElementById('resPath').value.trim(), status: document.getElementById('resStatus').value, startDate: document.getElementById('resStartDate').value, tags: document.getElementById('resTags').value.split(',').map(t => t.trim()).filter(Boolean), createdAt: todayISO(), currentPage: cp, totalPages: tp, progress: pct, percent: pct };
+        resources.push(newRes);
+        syncResourceToTasks(newRes);
         saveResState(); closeSheet('genericSheet'); render();
       }
     }
@@ -6617,6 +7033,7 @@ function openEditResourceModal(id) {
     <div class="field"><label>Subject</label><select id="resSubject">${subjOpts}</select></div>
     <div class="field"><label>Title</label><input id="resTitle" value="${esc(r.title)}"/></div>
     <div class="field"><label>File Path</label><input id="resPath" value="${esc(r.path || '')}"/></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;"><div class="field"><label>Current Page</label><input id="resCurrentPage" type="number" value="${r.currentPage !== undefined ? r.currentPage : 0}"/></div><div class="field"><label>Total Pages</label><input id="resTotalPages" type="number" value="${r.totalPages !== undefined ? r.totalPages : 100}"/></div></div>
     <div class="field"><label>Status</label><select id="resStatus"><option value="not_started" ${r.status === 'not_started' ? 'selected' : ''}>Not Started</option><option value="pending" ${r.status === 'pending' ? 'selected': ''}>In Progress</option><option value="completed" ${r.status === 'completed' ? 'selected' : ''}>Completed</option></select></div>
     <div class="field"><label>Start Date</label><input id="resStartDate" type="date" value="${r.startDate || r.createdAt}"/></div>
     <div class="field"><label>Tags</label><input id="resTags" value="${esc((r.tags || []).join(', '))}"/></div>
@@ -6625,6 +7042,15 @@ function openEditResourceModal(id) {
     {
       text: 'Save', cls: 'primary', onclick: () => {
         r.subject = document.getElementById('resSubject').value; r.title = document.getElementById('resTitle').value.trim(); r.path = document.getElementById('resPath').value.trim(); r.status = document.getElementById('resStatus').value; r.startDate = document.getElementById('resStartDate').value; r.tags = document.getElementById('resTags').value.split(',').map(t => t.trim()).filter(Boolean);
+        r.currentPage = Number(document.getElementById('resCurrentPage').value || 0);
+        r.totalPages = Number(document.getElementById('resTotalPages').value || 100);
+        if (r.totalPages > 0) {
+          const pct = Math.round((r.currentPage / r.totalPages) * 100);
+          r.progress = pct; r.percent = pct;
+        }
+        if (r.status === 'completed' && r.currentPage < r.totalPages) { r.currentPage = r.totalPages; r.progress = 100; r.percent = 100; }
+        else if (r.currentPage >= r.totalPages && r.totalPages > 0) r.status = 'completed';
+        syncResourceToTasks(r);
         saveResState(); closeSheet('genericSheet'); render();
       }
     }
@@ -6921,155 +7347,71 @@ function exportSelectedModules() {
 
 
 
-function removeDemoDataConfirm() {
-  openGenericSheet('Remove Demo Data', `
-    <div style="font-size:14px;color:var(--ink-secondary);line-height:1.6;padding:8px 0;">
-      This will permanently remove all built-in demo data.<br><br>Your own data will remain unchanged.
-    </div>
-  `, [
-    {text:'Cancel', onclick:()=>closeSheet('genericSheet')},
-    {text:'Remove', cls:'danger', onclick:()=>{ closeSheet('genericSheet'); executeRemoveDemoData(); }}
-  ]);
-}
+function removeDemoData() {
+  if (!confirm("⚠️ 确定要清空所有已添加的数据吗？此操作无法撤销！")) return;
 
-function executeRemoveDemoData() {
-  let foundDemo = false;
+  // ===== 清空 Study Resources =====
+  resources = resources.filter(r => r.isSample === true);
+  exercises = exercises.filter(e => e.isSample === true);
+  studyTasks = studyTasks.filter(t => t.isSample === true);
+  learningItems = learningItems.filter(l => l.isSample === true);
 
-  if (customSubjects && typeof customSubjects === 'object') {
-    Object.keys(customSubjects).forEach(k => {
-      if (customSubjects[k] && customSubjects[k].isSample === true) {
-        delete customSubjects[k];
-        foundDemo = true;
-      }
-    });
-  }
-  if (subjectScores && typeof subjectScores === 'object') {
-    Object.keys(subjectScores).forEach(k => {
-      if (subjectScores[k] && subjectScores[k].isSample === true) {
-        delete subjectScores[k];
-        foundDemo = true;
-      }
-    });
-  }
-  if (customSubjects && !customSubjects[appState.currentSubject]) {
-    appState.currentSubject = Object.keys(customSubjects)[0] || '';
+  // ===== 清空 Study Roadmap =====
+  roadmapMilestones = roadmapMilestones.filter(m => m.isSample === true);
+  roadmapPlans = roadmapPlans.filter(p => p.isSample === true);
+  roadmapExams = roadmapExams.filter(e => e.isSample === true);
+
+  // ===== 清空 Weekly Planner =====
+  weeklyPlan.tasks = weeklyPlan.tasks.filter(t => t.isSample === true);
+  weeklyPlan.history = weeklyPlan.history.filter(h => h.isSample === true);
+  weeklyPlan.suggestion = 'Data has been reset. Click AI Regenerate to create a new plan.';
+  weeklyPlan.currentWeek = 1;
+
+  // ===== 清空 Progress Check 历史 =====
+  if (progressCheckState) {
+    progressCheckState.history = progressCheckState.history.filter(h => h.isSample === true);
+    progressCheckState.active = null;
   }
 
-  if (Array.isArray(resources)) {
-    const len = resources.length;
-    resources = resources.filter(r => r && r.isSample !== true);
-    if (resources.length < len) foundDemo = true;
+  // ===== 清空 Study Suggest 中的自定义链接 =====
+  if (studySuggest) {
+    studySuggest.links = studySuggest.links.filter(l => l.isSample === true);
+    // 保留笔记内容不清空，因为可能是用户手动输入的
   }
 
-  if (Array.isArray(exercises)) {
-    const len = exercises.length;
-    exercises = exercises.filter(e => e && e.isSample !== true);
-    if (exercises.length < len) foundDemo = true;
-  }
-
-  if (Array.isArray(learningItems)) {
-    const len = learningItems.length;
-    learningItems = learningItems.filter(l => l && l.isSample !== true);
-    if (learningItems.length < len) foundDemo = true;
-  }
-
-  if (Array.isArray(studyTasks)) {
-    const len = studyTasks.length;
-    studyTasks = studyTasks.filter(t => t && t.isSample !== true);
-    if (studyTasks.length < len) foundDemo = true;
-  }
-
-  if (Array.isArray(roadmapMilestones)) {
-    const len = roadmapMilestones.length;
-    roadmapMilestones = roadmapMilestones.filter(m => m && m.isSample !== true);
-    if (roadmapMilestones.length < len) foundDemo = true;
-  }
-  if (Array.isArray(roadmapPlans)) {
-    const len = roadmapPlans.length;
-    roadmapPlans = roadmapPlans.filter(p => p && p.isSample !== true);
-    if (roadmapPlans.length < len) foundDemo = true;
-  }
-  if (Array.isArray(roadmapExams)) {
-    const len = roadmapExams.length;
-    roadmapExams = roadmapExams.filter(e => e && e.isSample !== true);
-    if (roadmapExams.length < len) foundDemo = true;
-  }
-
-  if (weeklyPlan && typeof weeklyPlan === 'object') {
-    if (Array.isArray(weeklyPlan.tasks)) {
-      const len = weeklyPlan.tasks.length;
-      weeklyPlan.tasks = weeklyPlan.tasks.filter(t => t && t.isSample !== true);
-      if (weeklyPlan.tasks.length < len) foundDemo = true;
+  // ===== 清空 Subject Scores 中的自定义科目 =====
+  // 保留默认科目，只删除用户手动添加的科目
+  const defaultKeys = ['english', 'chinese', 'politic', 'collegeEnglish'];
+  Object.keys(customSubjects).forEach(key => {
+    if (!defaultKeys.includes(key)) {
+      delete customSubjects[key];
+      delete subjectScores[key];
     }
-    if (Array.isArray(weeklyPlan.history)) {
-      const len = weeklyPlan.history.length;
-      weeklyPlan.history = weeklyPlan.history.filter(h => h && h.isSample !== true);
-      if (weeklyPlan.history.length < len) foundDemo = true;
-    }
-    if (weeklyPlan.isSample === true) {
-      weeklyPlan.isSample = false;
-      foundDemo = true;
-    }
+  });
+
+  // ===== 重置当前科目到 English =====
+  if (!customSubjects[appState.currentSubject]) {
+    appState.currentSubject = 'english';
   }
 
-  if (typeof studyMilestones !== 'undefined' && Array.isArray(studyMilestones)) {
-    const len = studyMilestones.length;
-    studyMilestones = studyMilestones.filter(m => m && m.isSample !== true);
-    if (studyMilestones.length < len) foundDemo = true;
-  }
-  if (typeof progressCheckState !== 'undefined' && progressCheckState && Array.isArray(progressCheckState.history)) {
-    const len = progressCheckState.history.length;
-    progressCheckState.history = progressCheckState.history.filter(h => h && h.isSample !== true);
-    if (progressCheckState.history.length < len) foundDemo = true;
-  }
-
-  if (quizState && typeof quizState === 'object') {
-    ['passages', 'quizSets', 'grammarQuestions', 'vocabularyQuestions', 'wordBook', 'synonymLibrary', 'highlights', 'wrongBook'].forEach(prop => {
-      if (Array.isArray(quizState[prop])) {
-        const len = quizState[prop].length;
-        quizState[prop] = quizState[prop].filter(x => x && x.isSample !== true);
-        if (quizState[prop].length < len) foundDemo = true;
-      }
-    });
-    if (quizState.passages && !quizState.passages.find(p => p.id === quizState.currentPassageId)) {
-      quizState.currentPassageId = quizState.passages[0]?.id || null;
-    }
-  }
-
-  if (countdownConfig && countdownConfig.isSample === true) {
-    countdownConfig = { title: '', targetDate: '' };
-    foundDemo = true;
-  }
-
-  if (foundDemo) {
-    localStorage.setItem('study_demo_data_removed', 'true');
-  }
-
-  localStorage.setItem('study_subjects_pro', JSON.stringify(customSubjects || {}));
-  localStorage.setItem('study_scores_pro', JSON.stringify(subjectScores || {}));
-  localStorage.setItem('study_resources_pro', JSON.stringify(resources || []));
-  localStorage.setItem('study_exercises_pro', JSON.stringify(exercises || []));
-  localStorage.setItem('study_tasks_pro', JSON.stringify(studyTasks || []));
-  if (typeof saveLearning === 'function') saveLearning(); else localStorage.setItem('study_learning_pro', JSON.stringify(learningItems || []));
-  if (typeof saveRoadmap === 'function') saveRoadmap();
-  if (typeof saveWeeklyPlan === 'function') saveWeeklyPlan();
-  if (typeof saveStudyMilestones === 'function') saveStudyMilestones();
+  // ===== 保存所有数据 =====
+  saveResState();
+  saveLearning();
+  saveWeeklyPlan();
+  saveRoadmap();
+  saveSuggest();
   if (typeof saveProgressCheck === 'function') saveProgressCheck();
-  if (typeof saveQuiz === 'function') saveQuiz();
-  if (typeof saveAppState === 'function') saveAppState();
-  if (typeof saveResState === 'function') saveResState();
-  if (typeof saveSuggest === 'function') saveSuggest();
+  if (typeof saveStudyMilestones === 'function') saveStudyMilestones();
 
-  if (typeof renderSharedStats === 'function') renderSharedStats();
-  if (typeof renderSidebar === 'function') renderSidebar();
-  render();
-
-  if (foundDemo) {
-    toast('Demo data removed successfully.');
+  // ===== 重新渲染 =====
+  if (appState.currentModule === 'weekly_planner') {
+    renderWeeklyPlanner(document.getElementById('moduleContentMount'));
   } else {
-    toast('No demo data found.');
+    render();
   }
+  toast('✅ 所有手动添加的数据已清空，仅保留示例数据！');
 }
+
 
 function resetSelectedModules() {
   localStorage.removeItem('study_demo_data_removed');
@@ -7450,14 +7792,18 @@ function renderPromptEditor() {
     <div class="roadmap-section">
       <div class="roadmap-section-head">
         <h3>AI Planning Customization</h3>
+        <div style="display:flex;gap:8px;">
+          <button class="apple-btn small primary" onclick="openPlannerAIImportModal()">🤖 AI Import</button>
+          <button class="apple-btn small" onclick="copyAIPrompt()">Copy AI Prompt</button>
+        </div>
       </div>
       <div style="margin-bottom: 16px; font-size: 13px; color: var(--ink-secondary); line-height: 1.6;">
-        Customize how the AI generates your weekly plans. Your instructions will be combined with system data (Roadmap, Word Book, etc.) to create your schedule.
+        Customize how the AI generates your weekly plans. Copy the AI Prompt, paste it into ChatGPT or Claude, then paste the returned JSON below to import.
       </div>
-      <textarea id="plannerCustomPrompt" style="width: 100%; height: 200px; padding: 16px; border-radius: 12px; border: 1px solid var(--line); background: var(--bg-card); font-size: 14px; line-height: 1.6;" 
+      <textarea id="plannerCustomPrompt" style="width: 100%; height: 140px; padding: 16px; border-radius: 12px; border: 1px solid var(--line); background: var(--bg-card); font-size: 14px; line-height: 1.6;" 
         placeholder="e.g. Study English every day. Reserve Sunday for review. Focus more on Grammar than Vocabulary."
         oninput="weeklyPlan.customPrompt = this.value; saveWeeklyPlan();">${esc(weeklyPlan.customPrompt || '')}</textarea>
-      <div style="margin-top: 12px; font-size: 11px; color: var(--ink-tertiary);">Auto-saved. Click "AI Regenerate" in Current Plan to apply changes.</div>
+      <div style="margin-top: 12px; font-size: 11px; color: var(--ink-tertiary);">Auto-saved. These instructions are included in the AI Prompt when you click "Copy AI Prompt".</div>
     </div>
   `;
 }
@@ -7517,6 +7863,7 @@ function addCustomWeeklyTask() {
     id: 'w_custom_' + Date.now(),
     title: 'New Task',
     category: 'Custom',
+    subject: appState.currentSubject || 'english',
     startProgress: 0,
     currentProgress: 0,
     targetProgress: 1,
@@ -7544,6 +7891,7 @@ function toggleWeeklyTaskCompletion(id) {
     task.status = task.status === 'completed' ? 'in_progress' : 'completed';
     if (task.status === 'completed') task.currentProgress = task.targetProgress;
     else task.currentProgress = task.startProgress;
+    syncProgressToResource(task.title, task.currentProgress, task.targetProgress, task.status, task.startProgress);
     saveWeeklyPlan();
     render();
   }
@@ -8053,6 +8401,7 @@ function updateWeeklyTaskProgress(id, delta) {
   if (task) {
     task.currentProgress = Math.max(task.startProgress, task.currentProgress + delta);
     task.status = task.currentProgress >= task.targetProgress ? 'completed' : 'in_progress';
+    syncProgressToResource(task.title, task.currentProgress, task.targetProgress, task.status, task.startProgress);
     saveWeeklyPlan(); render();
   }
 }
@@ -8062,6 +8411,7 @@ function markWeeklyTaskStatus(id, status) {
   if (task) {
     task.status = status;
     if (status === 'completed') task.currentProgress = task.targetProgress;
+    syncProgressToResource(task.title, task.currentProgress, task.targetProgress, task.status, task.startProgress);
     saveWeeklyPlan(); render();
   }
 }
@@ -8281,6 +8631,47 @@ function generateStudyPlanningPrompt(){
   const weeklyGoals = safeArray(weeklyPlan.tasks).map(t=>`- [${t.status==='completed'?'x':' '}] ${t.title} — ${t.date || ''} ${t.time || ''}, ${t.priority || 'Medium'} priority`).join('\n') || 'No weekly tasks yet.';
   return `You are my study-planning coach. Create a practical next-week study plan using my current StudyHub data.\n\nExam date: ${exam.date || 'Not set'}\nDays remaining: ${exam.days === null ? 'Not available' : exam.days}\nCurrent study stage: ${stage.title || 'General Preparation'}\n\nStudy Roadmap:\n${roadmap}\n\nCurrent study resources:\n${resourceText}\n\nCurrent progress:\n${progress}\nQuiz questions completed: ${Object.keys(quizState.answerLog || {}).length}\nVocabulary learned: ${safeArray(quizState.wordBook).length}\nWrong questions in review: ${safeArray(quizState.wrongBook).length}\n\nWeekly goals / this week tasks:\n${weeklyGoals}\n\nPlease produce: (1) priorities, (2) a day-by-day weekly schedule, (3) review checkpoints, and (4) suggested focus areas. Do not assume access to StudyHub beyond the data above.`;
 }
+const _PLANNER_AI_PROMPT = `You are generating a weekly study plan.
+
+Return ONLY valid JSON.
+
+Do not use markdown.
+Do not wrap with \`\`\`json.
+Do not include explanations.
+
+Return a JSON object with this exact structure:
+
+{
+  "startDate": "YYYY-MM-DD",
+  "endDate": "YYYY-MM-DD",
+  "suggestion": "Brief AI analysis of the week's focus",
+  "tasks": [
+    {
+      "title": "Task name",
+      "category": "Grammar|Reading|Vocabulary|Practice|Review|Custom",
+      "date": "YYYY-MM-DD",
+      "time": "HH:MM",
+      "priority": "Low|Medium|High",
+      "startProgress": 0,
+      "targetProgress": 1,
+      "unit": "pages|words|session|test|questions"
+    }
+  ]
+}
+
+Field rules:
+- title: required, describe the specific study action
+- category: one of Grammar, Reading, Vocabulary, Practice, Review, Custom
+- date: must fall within startDate to endDate range
+- time: 24-hour format HH:MM
+- priority: Low, Medium, or High
+- startProgress: always 0
+- targetProgress: numeric goal (pages to read, words to review, etc.)
+- unit: pages, words, session, test, or questions
+- suggestion: 1-2 sentence summary of the week strategy
+
+Return ONLY the JSON object.`;
+
 function copyAIPrompt(){
   const prompt = generateStudyPlanningPrompt();
   const oldToast = 'Prompt copied.';
@@ -8293,7 +8684,109 @@ function fallbackCopyPrompt(text){
   document.body.removeChild(ta);
 }
 
+function openPlannerAIImportModal() {
+  openGenericSheet('🤖 AI Import Weekly Plan', `
+    <div style="margin-bottom:16px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+        <span style="font-size:12px;font-weight:600;color:var(--ink-secondary);letter-spacing:0.04em;text-transform:uppercase;">AI Prompt</span>
+        <button onclick="navigator.clipboard.writeText(_PLANNER_AI_PROMPT).then(()=>toast('Prompt copied!')).catch(()=>toast('Copy failed'))" style="font-size:12px;font-weight:500;padding:5px 14px;border-radius:8px;border:1px solid var(--separator);background:var(--surface);color:var(--accent);cursor:pointer;display:flex;align-items:center;gap:5px;">⎘ Copy Prompt</button>
+      </div>
+      <div style="background:var(--surface-2,#f5f5f7);border:1px solid var(--separator);border-radius:10px;padding:12px 14px;font-family:monospace;font-size:11.5px;color:var(--ink-secondary);line-height:1.65;max-height:180px;overflow-y:auto;white-space:pre-wrap;word-break:break-word;">${_PLANNER_AI_PROMPT.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
+      <div style="margin-top:8px;font-size:12px;color:var(--ink-tertiary,#999);line-height:1.5;">Copy → Paste into ChatGPT or Claude → Paste the returned JSON below → Import</div>
+    </div>
+    <div>
+      <div style="font-size:12px;font-weight:600;color:var(--ink-secondary);letter-spacing:0.04em;text-transform:uppercase;margin-bottom:6px;">Paste JSON</div>
+      <div class="field" style="margin:0;">
+        <textarea id="plannerAIImportText" rows="10" style="width:100%;font-family:monospace;font-size:12px;border-radius:10px;border:1px solid var(--separator);padding:10px 12px;background:var(--surface);color:var(--ink);resize:vertical;" placeholder="Paste the JSON object here..."></textarea>
+      </div>
+    </div>
+  `, [
+    {text:'Cancel', onclick:()=>closeSheet('genericSheet')},
+    {text:'Import', cls:'primary', onclick:()=>executePlannerAIImport()}
+  ]);
+}
+
+function executePlannerAIImport() {
+  const text = document.getElementById('plannerAIImportText')?.value.trim();
+  if (!text) { toast('Please paste JSON first.'); return; }
+  let data = null;
+  try { data = JSON.parse(text); } catch(e) { toast('Invalid JSON: ' + e.message); return; }
+  if (!data || typeof data !== 'object') { toast('Invalid JSON format.'); return; }
+
+  const tasks = Array.isArray(data.tasks) ? data.tasks : [];
+  if (!tasks.length) { toast('No tasks found in JSON.'); return; }
+
+  if (data.startDate) weeklyPlan.startDate = String(data.startDate);
+  if (data.endDate) weeklyPlan.endDate = String(data.endDate);
+  if (data.suggestion) weeklyPlan.suggestion = String(data.suggestion);
+
+  const today = todayISO();
+  weeklyPlan.tasks = tasks.map((t, i) => ({
+    id: 'w_ai_' + Date.now() + '_' + i,
+    title: String(t.title || 'Untitled Task'),
+    category: String(t.category || 'Custom'),
+    startProgress: Number(t.startProgress) || 0,
+    currentProgress: Number(t.startProgress) || 0,
+    targetProgress: Number(t.targetProgress) || 1,
+    unit: String(t.unit || 'session'),
+    status: 'in_progress',
+    date: String(t.date || today),
+    time: String(t.time || '19:00'),
+    priority: ['Low','Medium','High'].includes(t.priority) ? t.priority : 'Medium',
+    list: 'Study'
+  }));
+
+  weeklyPlan.status = 'In Progress';
+  saveWeeklyPlan();
+  closeSheet('genericSheet');
+  render();
+  toast('Weekly plan imported successfully');
+}
+
 // Override current plan render to add editable tasks, prompt copy, weekly review, motivation, summary, and milestones.
+function _renderGroupedWeeklyTasks() {
+  const tasks = safeArray(weeklyPlan.tasks);
+  if (!tasks.length) return '<div class="empty-state" style="padding:24px 14px;">No tasks this week.</div>';
+  const groups = {};
+  tasks.forEach((task, idx) => {
+    let subj = task.subject || task.category || 'uncategorized';
+    if (!customSubjects[subj]) {
+      const detected = detectSubjectKey(subj);
+      if (detected && customSubjects[detected]) subj = detected;
+      else {
+        subj = 'uncategorized';
+        if (!customSubjects[subj]) {
+          customSubjects[subj] = { label: task.category || 'Uncategorized', color: '#999', tint: 'rgba(0,0,0,0.04)', text: '#999' };
+        }
+      }
+    }
+    if (!groups[subj]) groups[subj] = [];
+    groups[subj].push({ task, idx });
+  });
+  const order = getSidebarSubjectKeys ? getSidebarSubjectKeys() : Object.keys(customSubjects);
+  const sortedKeys = [];
+  order.forEach(k => { if (groups[k]) sortedKeys.push(k); });
+  Object.keys(groups).forEach(k => { if (!sortedKeys.includes(k)) sortedKeys.push(k); });
+  return sortedKeys.map(key => {
+    const items = groups[key];
+    const subjLabel = customSubjects[key]?.label || key;
+    const subjColor = customSubjects[key]?.color || '#999';
+    return `<div class="wk-group" data-subject="${esc(key)}">
+      <div class="wk-group-head" onclick="this.parentElement.classList.toggle('collapsed')">
+        <span class="wk-group-arrow">▼</span>
+        <span class="wk-group-label" style="display:flex;align-items:center;gap:6px;">
+          <span style="width:8px;height:8px;border-radius:3px;background:${subjColor};display:inline-block;"></span>
+          ${esc(subjLabel)}
+        </span>
+        <span class="wk-group-count">${items.filter(i=>i.task.status==='completed').length}/${items.length}</span>
+      </div>
+      <div class="wk-group-body">
+        ${items.map(i => renderWeeklyTaskCard(i.task, i.idx)).join('')}
+      </div>
+    </div>`;
+  }).join('');
+}
+
 function renderCurrentPlan(completedCount, totalTasks, completionRate, estimatedTime) {
   const daysToExam = getClosestExamDays();
   const examText = daysToExam !== null ? `${daysToExam} days` : '--';
@@ -8330,10 +8823,10 @@ function renderCurrentPlan(completedCount, totalTasks, completionRate, estimated
     </div>
     <div class="roadmap-hero" style="grid-template-columns: 1fr; margin-bottom: 24px;"><div class="roadmap-card"><div class="roadmap-kicker">Week Overview — ${weeklyPlan.status}</div><div style="display:flex; justify-content:space-between; align-items:baseline;"><div class="roadmap-days" style="font-size: 28px;">Week ${weeklyPlan.currentWeek}</div><div class="roadmap-days-sub" style="display:flex;align-items:center;gap:4px;"><input type="date" value="${weeklyPlan.startDate||''}" onchange="weeklyPlan.startDate=this.value;saveWeeklyPlan();" style="font-size:12px;font-weight:600;border:1px solid var(--line);border-radius:6px;padding:2px 6px;background:var(--bg-card);color:var(--ink);"> <span style="color:var(--ink-tertiary);">—</span> <input type="date" value="${weeklyPlan.endDate||''}" onchange="weeklyPlan.endDate=this.value;saveWeeklyPlan();" style="font-size:12px;font-weight:600;border:1px solid var(--line);border-radius:6px;padding:2px 6px;background:var(--bg-card);color:var(--ink);"></div></div></div></div>
     <div class="roadmap-section">
-      <div class="roadmap-section-head"><h3>This Week Tasks</h3><div style="display:flex; gap:8px; flex-wrap:wrap;"><button class="apple-btn small" onclick="addCustomWeeklyTask()">+ Add Task</button><button class="apple-btn small primary" onclick="copyAIPrompt()">Copy AI Prompt</button><button class="apple-btn small" onclick="regenerateWeeklyPlan()">AI Regenerate</button></div></div>
-      <div class="exercise-list" id="weeklyTaskList">${safeArray(weeklyPlan.tasks).map((task, idx) => renderWeeklyTaskCard(task, idx)).join('')}</div>
+      <div class="roadmap-section-head"><h3>This Week Tasks</h3><div style="display:flex; gap:8px; flex-wrap:wrap;"><button class="apple-btn small" onclick="addCustomWeeklyTask()">+ Add Task</button><button class="apple-btn small primary" onclick="openPlannerAIImportModal()">🤖 AI Import</button><button class="apple-btn small" onclick="copyAIPrompt()">Copy AI Prompt</button><button class="apple-btn small" onclick="regenerateWeeklyPlan()">AI Regenerate</button></div></div>
+      <div class="exercise-list" id="weeklyTaskList">${_renderGroupedWeeklyTasks()}</div>
     </div>
-    <div class="roadmap-section" style="background: var(--bg-elev); margin-top: 24px;"><div class="roadmap-section-head"><h3>AI Suggestion</h3><button class="apple-btn small primary" onclick="copyAIPrompt()">Copy AI Prompt</button></div><div class="score-note-box" style="background: var(--bg-card); border-color: var(--line);">${weeklyPlan.suggestion || 'Generating suggestions...'}</div></div>
+    <div class="roadmap-section" style="background: var(--bg-elev); margin-top: 24px;"><div class="roadmap-section-head"><h3>AI Suggestion</h3><button class="apple-btn small primary" onclick="openPlannerAIImportModal()">🤖 AI Import</button></div><div class="score-note-box" style="background: var(--bg-card); border-color: var(--line);">${weeklyPlan.suggestion || 'Generating suggestions...'}</div></div>
     ${renderWeeklyReviewCard()}
     ${renderAIWeeklySummary()}
   `;
@@ -8341,26 +8834,45 @@ function renderCurrentPlan(completedCount, totalTasks, completionRate, estimated
 function renderWeeklyTaskCard(task, idx) {
   const progress = (Number(task.targetProgress||0) - Number(task.startProgress||0)) > 0 ? Math.round(((Number(task.currentProgress||0) - Number(task.startProgress||0)) / (Number(task.targetProgress||0) - Number(task.startProgress||0))) * 100) : (task.status === 'completed' ? 100 : 0);
   const displayProgress = clampNum(progress,0,100);
+  const subjectOptions = getSidebarSubjectKeys ? getSidebarSubjectKeys() : Object.keys(customSubjects);
+  const subjectSelect = `<select onchange="updateWeeklyTaskField('${esc(task.id)}', 'subject', this.value, true)" style="border:none; background:transparent; font-size:12px; font-weight:600; padding:0; color:var(--ink); outline:none;">
+    ${subjectOptions.map(k => `<option value="${k}" ${task.subject === k ? 'selected' : ''}>${esc(customSubjects[k]?.label || k)}</option>`).join('')}
+    <option value="uncategorized" ${task.subject === 'uncategorized' ? 'selected' : ''}>Uncategorized</option>
+  </select>`;
+  const matchedRes = findMatchingResource(task.title);
+  const syncedBadge = matchedRes ? `<span class="pill-tag" style="font-size:10px;padding:1px 6px;background:rgba(0,122,255,0.1);color:var(--blue);border-color:rgba(0,122,255,0.3);display:inline-flex;align-items:center;gap:3px;" title="Synced with Study Resource: ${esc(matchedRes.title)}">📄 Synced</span>` : '';
   return `<div class="ex-card subtask-draggable" style="padding: 16px; background: var(--bg-card); margin-bottom: 8px; border:1px solid var(--line); border-radius:var(--radius-sm);" data-task-id="${esc(task.id)}">
     <div style="display:flex; align-items:flex-start; gap:12px;"><div class="st-drag-grip" style="margin-top: 4px; touch-action:none;"><span></span><span></span><span></span></div>
       <div class="ex-check ${task.status === 'completed' ? 'checked' : ''}" onclick="toggleWeeklyTaskCompletion('${esc(task.id)}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5L19 7"/></svg></div>
       <div style="flex:1; min-width:0;"><div style="display:flex; justify-content:space-between; gap:8px; align-items:flex-start;">
-        <input aria-label="Task title" type="text" value="${esc(task.title)}" oninput="updateWeeklyTaskField('${esc(task.id)}', 'title', this.value, true)" style="font-size: 15px; font-weight: 700; color: var(--ink); border:none; background:transparent; padding:2px 0; width:100%; outline:none;">
+        <div style="display:flex;align-items:center;gap:6px;width:100%;">
+          <input aria-label="Task title" type="text" value="${esc(task.title)}" oninput="updateWeeklyTaskField('${esc(task.id)}', 'title', this.value, true)" style="font-size: 15px; font-weight: 700; color: var(--ink); border:none; background:transparent; padding:2px 0; width:100%; outline:none;">
+          ${syncedBadge}
+        </div>
         <button class="res-tool-btn" title="Delete task" onclick="deleteWeeklyTask('${esc(task.id)}')">✕</button></div>
-        <div style="font-size: 11px; color: var(--ink-tertiary); margin-top: 2px;">Goal: <input type="number" value="${task.startProgress||0}" onchange="updateWeeklyTaskField('${esc(task.id)}', 'startProgress', +this.value||0)" style="font-size:11px;width:38px;text-align:center;border:1px solid var(--line);border-radius:4px;padding:1px 3px;background:var(--bg-card);color:var(--ink);"> → <input type="number" value="${task.targetProgress||1}" onchange="updateWeeklyTaskField('${esc(task.id)}', 'targetProgress', +this.value||1)" style="font-size:11px;width:38px;text-align:center;border:1px solid var(--line);border-radius:4px;padding:1px 3px;background:var(--bg-card);color:var(--ink);"> ${esc(task.unit||'task')}</div>
+        <div style="font-size: 11px; color: var(--ink-tertiary); margin-top: 2px;">
+          Goal: <input type="number" value="${task.startProgress||0}" onchange="updateWeeklyTaskField('${esc(task.id)}', 'startProgress', +this.value||0)" style="font-size:11px;width:38px;text-align:center;border:1px solid var(--line);border-radius:4px;padding:1px 3px;background:var(--bg-card);color:var(--ink);"> → <input type="number" value="${task.targetProgress||1}" onchange="updateWeeklyTaskField('${esc(task.id)}', 'targetProgress', +this.value||1)" style="font-size:11px;width:38px;text-align:center;border:1px solid var(--line);border-radius:4px;padding:1px 3px;background:var(--bg-card);color:var(--ink);"> ${esc(task.unit||'task')}
+          <span style="margin-left:12px;font-weight:600;">Subject: ${subjectSelect}</span>
+        </div>
         <div style="margin-top: 8px;"><div class="progress-bar"><div class="progress-fill" style="width: ${displayProgress}%; background: var(--accent);"></div></div></div>
         <div class="apple-picker-group">
           <div class="apple-picker-item" style="min-width:110px;"><label>Date</label><input type="date" value="${task.date || todayISO()}" onchange="updateWeeklyTaskField('${esc(task.id)}', 'date', this.value, true)"></div>
           <div class="apple-picker-item" style="min-width:80px;"><label>Time</label><input type="time" value="${task.time || '19:00'}" onchange="updateWeeklyTaskField('${esc(task.id)}', 'time', this.value, true)"></div>
           <div class="apple-picker-item" style="min-width:90px;"><label>Priority</label><select onchange="updateWeeklyTaskField('${esc(task.id)}', 'priority', this.value, true)" style="border:none; background:transparent; font-size:12px; font-weight:600; padding:0;"><option value="Low" ${task.priority==='Low'?'selected':''}>Low</option><option value="Medium" ${task.priority==='Medium'?'selected':''}>Medium</option><option value="High" ${task.priority==='High'?'selected':''}>High</option></select></div>
-          <div class="apple-picker-item" style="min-width:100px;"><label>List</label><input type="text" value="${esc(task.list || 'Study')}" oninput="updateWeeklyTaskField('${esc(task.id)}', 'list', this.value, true)"></div>
         </div>
         <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;"><button class="apple-btn small" onclick="updateWeeklyTaskProgress('${esc(task.id)}', 1)">+1</button><button class="apple-btn small" onclick="updateWeeklyTaskProgress('${esc(task.id)}', -1)">-1</button><button class="apple-btn small" onclick="markWeeklyTaskStatus('${esc(task.id)}', 'completed')">Mark Done</button></div>
       </div></div></div>`;
 }
 function updateWeeklyTaskField(taskId, field, value, noRender) {
   const task = safeArray(weeklyPlan.tasks).find(t => t.id === taskId);
-  if (task) { task[field] = value; saveWeeklyPlan(); if (!noRender && (field === 'priority' || field === 'title' || field === 'startProgress' || field === 'targetProgress')) render(); }
+  if (task) {
+    task[field] = value;
+    if (field === 'startProgress' || field === 'targetProgress' || field === 'currentProgress' || field === 'title') {
+      syncProgressToResource(task.title, task.currentProgress, task.targetProgress, task.status, task.startProgress);
+    }
+    saveWeeklyPlan();
+    if (!noRender && (field === 'priority' || field === 'title' || field === 'startProgress' || field === 'targetProgress')) render();
+  }
 }
 function completeCurrentWeek() {
   if (!confirm('Finish this week and generate Review? This will move the current plan to Archive.')) return;
@@ -8509,5 +9021,5 @@ window.addEventListener('orientationchange', handleResponsiveViewportChange);
 render();
 </script>
 <script defer src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ==" data-cf-beacon='{"version":"2024.11.0","token":"1954b47c125f43f8b4338b3c4f804e4f","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a16c066f0a70d79b',t:'MTc4MzMxMzgwOQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a16c1e0eea861314',t:'MTc4MzMxNDc3Nw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a16c36f39dc5e377',t:'MTc4MzMxNTc5Nw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a16ce673adbcdc98',t:'MTc4MzMyMjk4NQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a16d1d2f5e4e3802',t:'MTc4MzMyNTIyNw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a16d56df287607da',t:'MTc4MzMyNzU5MA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a16c066f0a70d79b',t:'MTc4MzMxMzgwOQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a16c1e0eea861314',t:'MTc4MzMxNDc3Nw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a16c36f39dc5e377',t:'MTc4MzMxNTc5Nw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a16ce673adbcdc98',t:'MTc4MzMyMjk4NQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a16d1d2f5e4e3802',t:'MTc4MzMyNTIyNw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a16d56df287607da',t:'MTc4MzMyNzU5MA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a174229bfbf4e7b0',t:'MTc4MzM5ODg0OQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a1742f76caa6dc50',t:'MTc4MzM5OTM3Ng=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a17446370b9bd22e',t:'MTc4MzQwMDMwOA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a1746927ee62dbb5',t:'MTc4MzQwMTczOQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a17474e0da899f32',t:'MTc4MzQwMjIxOQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a174a7c06fe9366f',t:'MTc4MzQwNDMwMw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a174b12a2996360e',t:'MTc4MzQwNDY4OA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a174d9f5398a6e1d',t:'MTc4MzQwNjM1OQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a174e65cb9ebdc4c',t:'MTc4MzQwNjg2Nw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a174ed0a1f218f2d',t:'MTc4MzQwNzE0MQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a17549988d10dcb2',t:'MTc4MzQxMDkzMg=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a175510e9d33d2c6',t:'MTc4MzQxMTIzOA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a17565e7d90b1d9c',t:'MTc4MzQxMjA5Mg=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a17570a85ad47aef',t:'MTc4MzQxMjUzMg=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
