@@ -2801,6 +2801,216 @@ img, svg, video, canvas, iframe, table, pre, code {
   opacity: 0;
   pointer-events: none;
 }
+
+.home-quotes-section {
+  margin-top: 24px;
+  border: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
+.home-quotes-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+.home-quotes-title {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--ink);
+  letter-spacing: -0.01em;
+}
+.home-quote-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.home-quotes-group {
+  margin-top: 14px;
+}
+.home-quotes-group:first-of-type {
+  margin-top: 0;
+}
+.home-quotes-group-title {
+  margin-bottom: 8px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--ink-tertiary);
+}
+.home-quote-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 6px 0;
+}
+.home-quote-item.done .home-quote-text {
+  text-decoration: line-through;
+  color: var(--ink-tertiary);
+}
+.home-quote-item.focus .home-quote-text {
+  color: var(--ink);
+}
+.home-quote-item.dragging {
+  opacity: 0.7;
+}
+.home-quote-item.drag-over {
+  background: rgba(0,0,0,0.02);
+}
+.home-quote-dot {
+  color: var(--ink-tertiary);
+  font-size: 18px;
+  line-height: 1.4;
+  flex-shrink: 0;
+}
+.home-quote-grip {
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+}
+.home-quote-grip:active {
+  cursor: grabbing;
+}
+.home-quote-body {
+  flex: 1;
+  min-width: 0;
+}
+.home-quote-text {
+  min-width: 0;
+  font-size: 15px;
+  color: var(--ink-secondary);
+  line-height: 1.8;
+  word-break: break-word;
+  cursor: pointer;
+}
+.home-quote-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+}
+.home-quote-badge {
+  display: inline-flex;
+  align-items: center;
+  height: 20px;
+  padding: 0 8px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 800;
+  border: 1px solid var(--line-light);
+  color: var(--ink-tertiary);
+  background: var(--bg-elev);
+}
+.home-quote-badge.focus {
+  color: var(--ink);
+  background: rgba(0,0,0,0.06);
+  border-color: rgba(0,0,0,0.10);
+}
+.home-quote-badge.done {
+  color: #FFFFFF;
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.home-quote-editor {
+  width: 100%;
+  min-height: 34px;
+  padding: 0;
+  border: none !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  color: var(--ink);
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.8;
+  resize: none;
+  overflow: hidden;
+}
+.home-quote-editor:focus {
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+.home-quote-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  margin-left: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+.home-quote-flag,
+.home-quote-pin {
+  height: 24px;
+  padding: 0 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--ink-tertiary);
+  background: transparent;
+  border: 1px solid transparent;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+.home-quote-flag:hover,
+.home-quote-pin:hover {
+  background: var(--bg-card-hover);
+  color: var(--ink);
+}
+.home-quote-flag.active,
+.home-quote-pin.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #FFFFFF;
+}
+.home-quote-delete {
+  opacity: 0;
+  pointer-events: none;
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  color: var(--ink-tertiary);
+  background: transparent;
+  transition: opacity 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+.home-quote-item:hover .home-quote-delete,
+.home-quote-item:focus-within .home-quote-delete {
+  opacity: 1;
+  pointer-events: auto;
+}
+.home-quote-delete:hover {
+  background: var(--bg-card-hover);
+  color: var(--ink);
+}
+.home-quotes-empty {
+  font-size: 14px;
+  color: var(--ink-tertiary);
+  line-height: 1.7;
+  padding: 4px 0;
+}
+@media (max-width: 768px) {
+  .home-quote-text,
+  .home-quote-editor {
+    font-size: 14px;
+  }
+  .home-quote-delete {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .home-quote-grip {
+    opacity: 0.8;
+  }
+  .home-quote-actions {
+    gap: 4px;
+  }
+}
+
 </style>
 </head>
 <body>
@@ -2822,6 +3032,9 @@ img, svg, video, canvas, iframe, table, pre, code {
         </div>
         <div class="sidebar-ia-content">
           <div class="capsule-menu">
+            <div class="capsule-item" data-module="home" onclick="switchModule('home')">
+              <span class="icon" style="font-weight:800;font-size:13px;width:20px;text-align:center;">H</span> Home
+            </div>
             <div class="capsule-item" data-module="weekly_planner" onclick="switchModule('weekly_planner')">
               <span class="icon" style="font-weight:800;font-size:13px;width:20px;text-align:center;">W</span> Weekly AI Planner
             </div>
@@ -3111,6 +3324,45 @@ let studySuggest = JSON.parse(localStorage.getItem(SUGGEST_KEY)) || {
   links: []
 };
 
+const STUDY_QUOTES_KEY = 'study_quotes';
+const DEFAULT_STUDY_QUOTES = [
+  { id: 'q1', text: 'The secret of getting ahead is getting started.', createdAt: Date.now(), pinned: false, done: false, focus: true },
+  { id: 'q2', text: 'Success is the sum of small efforts repeated day in and day out.', createdAt: Date.now(), pinned: false, done: false, focus: false },
+  { id: 'q3', text: "Believe you can and you're halfway there.", createdAt: Date.now(), pinned: false, done: false, focus: false }
+];
+function normalizeStudyQuotes(quotes) {
+  const list = Array.isArray(quotes) ? quotes.filter(item => item && typeof item === 'object') : [];
+  return [
+    ...list.filter(item => !!item.pinned),
+    ...list.filter(item => !item.pinned)
+  ];
+}
+function getStudyQuotes() {
+  try {
+    const raw = localStorage.getItem(STUDY_QUOTES_KEY);
+    if (raw === null) {
+      saveStudyQuotes(DEFAULT_STUDY_QUOTES);
+      return DEFAULT_STUDY_QUOTES.slice();
+    }
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) throw new Error('Invalid study quotes data');
+    return normalizeStudyQuotes(parsed.filter(item => item && typeof item === 'object' && typeof item.text === 'string').map(item => ({
+      id: item.id || uid('quote'),
+      text: String(item.text),
+      createdAt: typeof item.createdAt === 'number' ? item.createdAt : Date.now(),
+      pinned: !!item.pinned,
+      done: !!item.done,
+      focus: !!item.focus
+    })));
+  } catch (e) {
+    saveStudyQuotes(DEFAULT_STUDY_QUOTES);
+    return DEFAULT_STUDY_QUOTES.slice();
+  }
+}
+function saveStudyQuotes(quotes) {
+  localStorage.setItem(STUDY_QUOTES_KEY, JSON.stringify(normalizeStudyQuotes(Array.isArray(quotes) ? quotes : [])));
+}
+
 // === RESOURCE VIEW STATE ===
 let resViewState = { filterSubject:'all', filterType:'all', filterStatus:'all', filterPriority:'all', resTab:'all' };
 
@@ -3162,6 +3414,18 @@ const ROADMAP_MILESTONES_KEY = 'study_roadmap_milestones_pro';
 const ROADMAP_MILESTONE_EXPANDED_KEY = 'study_roadmap_milestone_expanded_pro';
 const ROADMAP_SUBJECT_EXPANDED_KEY = 'study_roadmap_subject_expanded_pro';
 const WEEKLY_PLAN_KEY = 'study_weekly_planner_pro';
+
+const WEEKLY_MILESTONES_KEY = 'study_weekly_milestones_pro';
+
+let studyMilestones = JSON.parse(localStorage.getItem(WEEKLY_MILESTONES_KEY) || '[]');
+
+if (!Array.isArray(studyMilestones)) studyMilestones = [];
+
+function saveStudyMilestones() {
+
+  localStorage.setItem(WEEKLY_MILESTONES_KEY, JSON.stringify(studyMilestones || []));
+
+}
 
 let weeklyPlan = JSON.parse(localStorage.getItem(WEEKLY_PLAN_KEY)) || {
   currentWeek: 1,
@@ -3403,6 +3667,7 @@ function syncResourceToTasks(res) {
 //  MODULE SWITCHING
 // ================================================================
 function getModuleTitle(mod) {
+  if (mod === 'home') return 'Home';
   if (mod === 'quiz') return 'Quiz Hub';
   if (mod === 'roadmap') return 'Study Roadmap';
   if (mod === 'weekly_planner') return 'Weekly AI Planner';
@@ -3426,6 +3691,486 @@ function toggleSidebarIASection(key) {
   saveSidebarIAState();
   updateNavigationActive();
 }
+function getCurrentMonthArchives() {
+  const now = new Date();
+  const month = now.getMonth();
+  const year = now.getFullYear();
+  return (weeklyPlan.history || []).filter(h => {
+    const d = new Date(h.startDate + 'T00:00:00');
+    return !isNaN(d.getTime()) && d.getMonth() === month && d.getFullYear() === year;
+  });
+}
+
+function getWeekCompletionRate() {
+  const tasks = weeklyPlan.tasks || [];
+  if (!tasks.length) return 0;
+  const completed = tasks.filter(t => t.status === 'completed').length;
+  return Math.round((completed / tasks.length) * 100);
+}
+
+function getMonthCompletionRate() {
+  const archives = getCurrentMonthArchives();
+  if (!archives.length) return 0;
+  const total = archives.reduce((sum, h) => sum + (h.completionRate || 0), 0);
+  return Math.round(total / archives.length);
+}
+
+let homeQuoteDragState = null;
+let homeQuoteEditingId = null;
+let homeQuoteSkipBlur = false;
+
+function renderSingleQuoteItem(q) {
+  const qid = esc(String(q.id)).replace(/'/g, "\'");
+  return `
+    <div class="home-quote-item ${q.done ? 'done' : ''} ${q.focus ? 'focus' : ''}" data-quote-id="${esc(String(q.id))}">
+      <span class="home-quote-dot home-quote-grip" title="Drag to reorder">•</span>
+      <div class="home-quote-body">
+        ${homeQuoteEditingId === String(q.id)
+          ? `<textarea id="homeQuoteEditor" class="home-quote-editor" oninput="autoSizeHomeQuoteEditor(this)" onkeydown="handleHomeQuoteEditorKeydown(event, '${qid}')" onblur="handleHomeQuoteEditorBlur('${qid}', this)">${esc(q.text)}</textarea>`
+          : `<div class="home-quote-text" ondblclick="startInlineQuoteEdit('${qid}')" title="Double-click to edit">${esc(q.text)}</div>`}
+        <div class="home-quote-meta">
+          ${q.focus ? `<span class="home-quote-badge focus">Today</span>` : ''}
+          ${q.done ? `<span class="home-quote-badge done">Done</span>` : ''}
+        </div>
+      </div>
+      <div class="home-quote-actions">
+        <button class="home-quote-flag ${q.focus ? 'active' : ''}" onclick="toggleQuoteFocus('${qid}')" title="${q.focus ? 'Remove today focus' : 'Mark as today focus'}">${q.focus ? 'Today' : 'Focus'}</button>
+        <button class="home-quote-flag ${q.done ? 'active' : ''}" onclick="toggleQuoteDone('${qid}')" title="${q.done ? 'Mark as not done' : 'Mark as done'}">${q.done ? 'Done' : 'Check'}</button>
+        <button class="home-quote-pin ${q.pinned ? 'active' : ''}" onclick="togglePinQuote('${qid}')" title="${q.pinned ? 'Unpin quote' : 'Pin quote to top'}">${q.pinned ? 'Pinned' : 'Pin'}</button>
+        <button class="home-quote-delete" onclick="deleteQuote('${qid}')" title="Delete quote">✕</button>
+      </div>
+    </div>
+  `;
+}
+
+function renderQuotesSection() {
+  const quotes = getStudyQuotes();
+  const pinnedQuotes = quotes.filter(q => q.pinned);
+  const regularQuotes = quotes.filter(q => !q.pinned);
+  return `
+    <div class="home-quotes-section">
+      <div class="home-quotes-head">
+        <div class="home-quotes-title">📚 Study Notes</div>
+        <button class="apple-btn small" onclick="addQuote()">+ Add</button>
+      </div>
+      ${quotes.length ? `
+        ${pinnedQuotes.length ? `<div class="home-quotes-group"><div class="home-quotes-group-title">Pinned</div><div class="home-quote-list" data-quote-group="pinned">${pinnedQuotes.map(renderSingleQuoteItem).join('')}</div></div>` : ''}
+        ${regularQuotes.length ? `<div class="home-quotes-group"><div class="home-quotes-group-title">Notes</div><div class="home-quote-list" data-quote-group="regular">${regularQuotes.map(renderSingleQuoteItem).join('')}</div></div>` : ''}
+      ` : `<div class="home-quotes-empty">No study notes yet. Add one to keep yourself motivated.</div>`}
+    </div>
+  `;
+}
+
+function addQuote() {
+  const text = prompt('Add a study note or motivational quote:');
+  if (text === null) return;
+  const value = text.trim();
+  if (!value) return;
+  const quotes = getStudyQuotes();
+  quotes.unshift({ id: 'q_' + Date.now(), text: value, createdAt: Date.now(), pinned: false, done: false, focus: false });
+  saveStudyQuotes(quotes);
+  render();
+}
+
+function startInlineQuoteEdit(id) {
+  homeQuoteEditingId = String(id);
+  render();
+}
+
+function focusHomeQuoteEditor() {
+  const editor = document.getElementById('homeQuoteEditor');
+  if (!editor) return;
+  autoSizeHomeQuoteEditor(editor);
+  editor.focus();
+  const len = editor.value.length;
+  if (editor.setSelectionRange) editor.setSelectionRange(len, len);
+}
+
+function autoSizeHomeQuoteEditor(el) {
+  if (!el) return;
+  el.style.height = 'auto';
+  el.style.height = Math.max(el.scrollHeight, 34) + 'px';
+}
+
+function saveInlineQuoteEdit(id, value) {
+  const quotes = getStudyQuotes();
+  const target = quotes.find(q => String(q.id) === String(id));
+  homeQuoteEditingId = null;
+  if (!target) {
+    render();
+    return;
+  }
+  const nextValue = String(value || '').trim();
+  if (!nextValue) {
+    toast('Quote cannot be empty');
+    render();
+    return;
+  }
+  target.text = nextValue;
+  saveStudyQuotes(quotes);
+  render();
+}
+
+function cancelInlineQuoteEdit() {
+  homeQuoteSkipBlur = true;
+  homeQuoteEditingId = null;
+  render();
+  setTimeout(() => { homeQuoteSkipBlur = false; }, 0);
+}
+
+function handleHomeQuoteEditorKeydown(event, id) {
+  if (event.key === 'Enter' && !event.shiftKey) {
+    event.preventDefault();
+    saveInlineQuoteEdit(id, event.target.value);
+  } else if (event.key === 'Escape') {
+    event.preventDefault();
+    cancelInlineQuoteEdit();
+  }
+}
+
+function handleHomeQuoteEditorBlur(id, el) {
+  if (homeQuoteSkipBlur) return;
+  saveInlineQuoteEdit(id, el.value);
+}
+
+function togglePinQuote(id) {
+  const quotes = getStudyQuotes();
+  const idx = quotes.findIndex(q => String(q.id) === String(id));
+  if (idx === -1) return;
+  const target = quotes[idx];
+  quotes.splice(idx, 1);
+  target.pinned = !target.pinned;
+  if (target.pinned) {
+    quotes.unshift(target);
+  } else {
+    const firstUnpinned = quotes.findIndex(q => !q.pinned);
+    if (firstUnpinned === -1) quotes.push(target);
+    else quotes.splice(firstUnpinned, 0, target);
+  }
+  saveStudyQuotes(quotes);
+  render();
+}
+
+function toggleQuoteDone(id) {
+  const quotes = getStudyQuotes();
+  const target = quotes.find(q => String(q.id) === String(id));
+  if (!target) return;
+  target.done = !target.done;
+  saveStudyQuotes(quotes);
+  render();
+}
+
+function toggleQuoteFocus(id) {
+  const quotes = getStudyQuotes();
+  const target = quotes.find(q => String(q.id) === String(id));
+  if (!target) return;
+  target.focus = !target.focus;
+  saveStudyQuotes(quotes);
+  render();
+}
+
+function deleteQuote(id) {
+  const quotes = getStudyQuotes();
+  const target = quotes.find(q => String(q.id) === String(id));
+  if (!target) return;
+  if (!confirm('Delete this study note?')) return;
+  homeQuoteEditingId = homeQuoteEditingId === String(id) ? null : homeQuoteEditingId;
+  saveStudyQuotes(quotes.filter(q => String(q.id) !== String(id)));
+  render();
+}
+
+function initHomeQuoteDrag() {
+  document.querySelectorAll('.home-quote-list[data-quote-group]').forEach(list => {
+    list.querySelectorAll('.home-quote-grip').forEach(grip => {
+      grip.onpointerdown = e => {
+        if (e.button !== undefined && e.button !== 0) return;
+        const item = e.target.closest('.home-quote-item');
+        if (!item) return;
+        e.preventDefault();
+        homeQuoteDragState = { item, group: list.dataset.quoteGroup || 'regular' };
+        item.classList.add('dragging');
+
+        const onMove = me => {
+          if (!homeQuoteDragState) return;
+          const siblings = Array.from(list.querySelectorAll('.home-quote-item:not(.dragging)'));
+          siblings.forEach(el => el.classList.remove('drag-over'));
+          const over = siblings.find(s => {
+            const r = s.getBoundingClientRect();
+            return me.clientY > r.top && me.clientY < r.bottom;
+          });
+          if (over) {
+            over.classList.add('drag-over');
+            const r = over.getBoundingClientRect();
+            if (me.clientY < r.top + r.height / 2) over.before(item);
+            else over.after(item);
+          }
+        };
+
+        const onUp = () => {
+          const dragging = list.querySelector('.home-quote-item.dragging');
+          if (dragging) dragging.classList.remove('dragging');
+          list.querySelectorAll('.home-quote-item.drag-over').forEach(el => el.classList.remove('drag-over'));
+          window.removeEventListener('pointermove', onMove);
+          window.removeEventListener('pointerup', onUp);
+          const orderIds = Array.from(list.querySelectorAll('.home-quote-item')).map(el => String(el.dataset.quoteId || ''));
+          const quotes = getStudyQuotes();
+          const moving = [];
+          orderIds.forEach(id => {
+            const found = quotes.find(q => String(q.id) === id);
+            if (found) moving.push(found);
+          });
+          const untouched = quotes.filter(q => homeQuoteDragState.group === 'pinned' ? !q.pinned : q.pinned);
+          if (moving.length) {
+            saveStudyQuotes(homeQuoteDragState.group === 'pinned' ? [...moving, ...untouched] : [...untouched, ...moving]);
+          }
+          homeQuoteDragState = null;
+          render();
+        };
+
+        window.addEventListener('pointermove', onMove);
+        window.addEventListener('pointerup', onUp);
+      };
+    });
+  });
+}
+
+function renderDonutChart(percentage, title, labelCompleted, labelIncomplete, completedCount, totalCount) {
+  const radius = 60;
+  const circumference = 2 * Math.PI * radius;
+  const safePct = Math.max(0, Math.min(100, percentage || 0));
+  const offset = circumference - (safePct / 100) * circumference;
+
+  return `
+    <div class="roadmap-card" style="display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; min-height:300px;">
+      <div style="font-weight:800; font-size:15px; margin-bottom:20px; color:var(--ink);">${esc(title)}</div>
+      <div style="position:relative; width:150px; height:150px;">
+        <svg width="150" height="150" viewBox="0 0 150 150">
+          <circle cx="75" cy="75" r="${radius}" fill="transparent" stroke="var(--bg-elev)" stroke-width="30" />
+          <circle cx="75" cy="75" r="${radius}" fill="transparent" stroke="var(--accent)" stroke-width="30"
+            stroke-dasharray="${circumference}"
+            stroke-dashoffset="${offset}"
+            stroke-linecap="round"
+            style="transition: stroke-dashoffset 0.8s ease-out; transform: rotate(-90deg); transform-origin: center;"
+            data-offset="${offset}"
+          />
+        </svg>
+        <div style="position:absolute; top:0; left:0; width:100%; height:100%; display:flex; align-items:center; justify-content:center; pointer-events:none;">
+          <div style="font-size:28px; font-weight:800; color:var(--ink);">${safePct}%</div>
+        </div>
+      </div>
+      <div style="margin-top:20px; display:flex; gap:12px; font-size:12px; font-weight:600; color:var(--ink-secondary);">
+        <div style="display:flex; align-items:center; gap:4px;">
+          <span style="width:8px; height:8px; border-radius:50%; background:var(--accent);"></span> ${esc(labelCompleted)} ${completedCount || 0}
+        </div>
+        <div style="display:flex; align-items:center; gap:4px;">
+          <span style="width:8px; height:8px; border-radius:50%; background:var(--bg-elev); border:1px solid var(--line);"></span> ${esc(labelIncomplete)} ${(totalCount || 0) - (completedCount || 0)}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function renderHomePage(container) {
+
+  // ===== 安全初始化 weeklyPlan =====
+
+  if (!weeklyPlan || typeof weeklyPlan !== 'object') {
+
+    weeklyPlan = {
+
+      currentWeek: 1,
+
+      startDate: '',
+
+      endDate: '',
+
+      status: 'In Progress',
+
+      tasks: [],
+
+      suggestion: '',
+
+      customPrompt: '',
+
+      history: [],
+
+      overallStats: {
+
+        totalWeeks: 0,
+
+        totalStudyTime: 0,
+
+        vocabAdded: 0,
+
+        quizzesCompleted: 0,
+
+        wrongQuestionsReviewed: 0,
+
+        longestStreak: 0,
+
+        currentStreak: 0
+
+      },
+
+      plannerTab: 'current',
+
+      isSample: true
+
+    };
+
+    saveWeeklyPlan();
+
+  }
+
+  // ===== 安全初始化 studyMilestones =====
+
+  if (typeof studyMilestones === 'undefined' || !Array.isArray(studyMilestones)) {
+
+    studyMilestones = [];
+
+    saveStudyMilestones();
+
+  }
+
+  // ===== 安全获取数据 =====
+
+  const username = localStorage.getItem('study_username') || 'Scholar';
+
+  const tasks = weeklyPlan.tasks || [];
+
+  const completed = tasks.filter(t => t.status === 'completed').length;
+
+  const total = tasks.length;
+
+  const weekRate = total > 0 ? Math.round((completed / total) * 100) : 0;
+
+  const history = weeklyPlan.history || [];
+
+  const monthArchives = history.filter(h => {
+
+    try {
+
+      const d = new Date(h.startDate + 'T00:00:00');
+
+      const now = new Date();
+
+      return !isNaN(d.getTime()) && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+
+    } catch {
+
+      return false;
+
+    }
+
+  });
+
+  let monthRate = 0;
+
+  let monthTotal = 0;
+
+  let monthCompleted = 0;
+
+  if (monthArchives.length > 0) {
+
+    monthTotal = monthArchives.reduce((sum, h) => sum + (h.tasks?.length || 0), 0);
+
+    monthCompleted = monthArchives.reduce((sum, h) => sum + (h.tasks?.filter(t => t.status === 'completed').length || 0), 0);
+
+    monthRate = monthTotal > 0 ? Math.round((monthCompleted / monthTotal) * 100) : 0;
+
+  }
+
+  // ===== 渲染 HTML =====
+
+  let html = `
+
+    <div class="roadmap-page">
+
+      <div style="margin-bottom:32px;">
+
+        <div style="font-size:28px; font-weight:800; color:var(--ink); cursor:pointer;" onclick="editUsername()">
+
+          Welcome back, ${esc(username)} 🫧
+
+        </div>
+
+        <div style="font-size:14px; color:var(--ink-secondary); margin-top:4px;">Here is your study progress at a glance.</div>
+
+      </div>
+
+      <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap:20px;">`;
+
+  // 本周进度卡片
+
+  if (total > 0) {
+
+    html += renderDonutChart(weekRate, "This Week Progress", "Completed", "Pending", completed, total);
+
+  } else {
+
+    html += `<div class="roadmap-card" style="display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:300px; text-align:center; gap:16px;">
+
+      <div style="font-size:16px; color:var(--ink-secondary);">📭 No tasks this week</div>
+
+      <button class="apple-btn primary" onclick="switchModule('weekly_planner')">Go to Weekly Planner</button>
+
+    </div>`;
+
+  }
+
+  // 本月进度卡片
+
+  if (monthArchives.length > 0 && monthTotal > 0) {
+
+    html += renderDonutChart(monthRate, "This Month Progress", "Completed (Avg)", "Pending (Avg)", Math.round((monthRate / 100) * monthTotal), monthTotal);
+
+  } else {
+
+    html += `<div class="roadmap-card" style="display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:300px; text-align:center; gap:16px;">
+
+      <div style="font-size:16px; color:var(--ink-secondary);">📭 No archived data for this month</div>
+
+      <button class="apple-btn primary" onclick="switchModule('weekly_planner')">Start Your First Week</button>
+
+    </div>`;
+
+  }
+
+  html += `</div>${renderQuotesSection()}</div>`;
+
+  container.innerHTML = html;
+
+  // 触发 SVG 动画
+
+  setTimeout(() => {
+
+    document.querySelectorAll('[data-offset]').forEach(el => {
+
+      el.style.strokeDashoffset = el.dataset.offset;
+
+    });
+
+  }, 100);
+
+  initHomeQuoteDrag();
+
+  if (homeQuoteEditingId) {
+    setTimeout(() => {
+      focusHomeQuoteEditor();
+    }, 0);
+  }
+
+}
+
+function editUsername() {
+  const current = localStorage.getItem('study_username') || 'Scholar';
+  const newName = prompt('Enter your name:', current);
+  if (newName !== null && newName.trim() !== '') {
+    localStorage.setItem('study_username', newName.trim());
+    render();
+  }
+}
+
 function switchModule(mod) {
   appState.currentModule = mod;
   if (mod !== 'resources') appState.resourceFocus = 'resource';
@@ -3493,6 +4238,12 @@ function render() {
   renderSidebar();
   renderSharedStats();
   const main = document.getElementById('mainContent');
+  
+  if (appState.currentModule === 'home') {
+    renderHomePage(main);
+    return;
+  }
+  
   main.innerHTML = `${renderStudyOverviewDashboard()}<div class="module-content-stack" id="moduleContentMount"></div>`;
   const moduleMain = document.getElementById('moduleContentMount');
 
@@ -5283,10 +6034,16 @@ function openQuizSettings() {
       </div>
       <div style="padding:16px;background:var(--bg-card);border:1px solid var(--line);border-radius:var(--radius-lg);">
         <div style="font-weight:800;font-size:15px;margin-bottom:10px;letter-spacing:-0.01em;">Exam Countdown</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:end;">
-          <div class="field" style="margin:0;"><label>Exam Name</label><input id="settingsCdTitle" value="${esc(countdownConfig.title||'Exam')}" /></div>
-          <div class="field" style="margin:0;"><label>Exam Date</label><input id="settingsCdDate" type="date" value="${countdownConfig.targetDate||''}" /></div>
-          <button class="apple-btn primary" onclick="countdownConfig.title=document.getElementById('settingsCdTitle').value.trim()||'Exam';countdownConfig.targetDate=document.getElementById('settingsCdDate').value;saveResState();render();toast('Exam date saved');">Save</button>
+        <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:10px;align-items:end;">
+          <div class="field" style="margin:0;">
+            <label style="display:block;font-size:11px;font-weight:700;color:var(--ink-tertiary);text-transform:uppercase;letter-spacing:0.03em;margin-bottom:5px;">Exam Name</label>
+            <input id="settingsCdTitle" value="${esc(countdownConfig.title||'Exam')}" style="width:100%;padding:9px 12px;border-radius:var(--radius-sm);border:1px solid var(--line);background:var(--bg-card);font-size:13px;color:var(--ink);box-sizing:border-box;" />
+          </div>
+          <div class="field" style="margin:0;">
+            <label style="display:block;font-size:11px;font-weight:700;color:var(--ink-tertiary);text-transform:uppercase;letter-spacing:0.03em;margin-bottom:5px;">Exam Date</label>
+            <input id="settingsCdDate" type="date" value="${countdownConfig.targetDate||''}" style="width:100%;min-width:0;padding:9px 12px;border-radius:var(--radius-sm);border:1px solid var(--line);background:var(--bg-card);font-size:13px;color:var(--ink);box-sizing:border-box;-webkit-appearance:none;appearance:none;" />
+          </div>
+          <button class="apple-btn primary" onclick="countdownConfig.title=document.getElementById('settingsCdTitle').value.trim()||'Exam';countdownConfig.targetDate=document.getElementById('settingsCdDate').value;saveResState();render();toast('Exam date saved');" style="padding:9px 20px;height:40px;white-space:nowrap;flex-shrink:0;">Save</button>
         </div>
       </div>
       <div class="ai-studio-panel">
@@ -5425,14 +6182,6 @@ function getSeedData() {
     ],
     synonymLibrary:[{isSample: true, groupName:'Depend Group',words:['depend on','rely on','count on','hinge on'],notes:'表示依赖',srsBox:0,srsNext:Date.now(),srsReviews:0,srsLapses:0}]
   };
-}
-
-function copyAIPrompt() {
-  const prompt = `You are a JSON conversion assistant. Convert the following questions into this JSON format:
-{"version":"2.0","passages":[{"id":"sec_001","customName":"Section Name","title":"","content":""}],"quizSets":[{"id":"qs_001","passageId":"sec_001","name":"1"}],"grammarQuestions":[{"id":"g_001","passageId":"sec_001","quizSetId":"qs_001","question":"...","options":["A. ...","B. ...","C. ...","D. ..."],"answer":"A","explanation":"..."}],"vocabularyQuestions":[],"vocabularyBook":[],"synonymLibrary":[],"highlights":[]}
-Rules: Output ONLY valid JSON. Each question needs passageId and quizSetId. Options start with A./B./C./D. Answer is single uppercase letter. Explanation in Chinese.
-Paste your questions below:`;
-  navigator.clipboard.writeText(prompt).then(()=>toast('Prompt copied OK')).catch(()=>toast('Copy failed'));
 }
 
 // ================================================================
@@ -7664,148 +8413,11 @@ function switchPlannerTab(tab) {
   render();
 }
 
-function renderCurrentPlan(completedCount, totalTasks, completionRate, estimatedTime) {
-  const daysToExam = getClosestExamDays();
-  const examText = daysToExam !== null ? `${daysToExam} days` : '--';
-  
-  // Dynamic Stage and Focus
-  const currentStage = roadmapMilestones.find(m => {
-    const today = todayISO();
-    return m.startDate <= today && today <= m.targetFinishDate;
-  }) || { title: 'General Preparation' };
-
-  let suggestedFocus = "Foundation · Grammar · Vocabulary";
-  if (daysToExam !== null) {
-    if (daysToExam <= 30) suggestedFocus = "Mock Tests · Error Review · Simulation";
-    else if (daysToExam <= 90) suggestedFocus = "Subject Practice · Intensive Review";
-    else if (daysToExam <= 180) suggestedFocus = "Skill Building · Topic Mastery";
-  }
-
-  return `
-    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px; margin-bottom:20px;">
-      <!-- Exam Countdown Integration -->
-      <div class="roadmap-card" style="background: var(--bg-elev); border-color: var(--line);">
-        <div class="roadmap-kicker">Exam Countdown</div>
-        <div class="roadmap-days" style="font-size: 32px;">${examText} <span style="font-size: 14px; font-weight:600; letter-spacing:0;">Remaining</span></div>
-        <div style="margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line-light);">
-          <div style="font-size: 11px; font-weight:700; color:var(--ink-tertiary); text-transform:uppercase;">Current Stage</div>
-          <div style="font-size: 14px; font-weight:800; color:var(--ink);">${esc(currentStage.title)}</div>
-          <div style="font-size: 11px; font-weight:700; color:var(--ink-tertiary); text-transform:uppercase; margin-top:8px;">Suggested Focus</div>
-          <div style="font-size: 13px; font-weight:600; color:var(--accent);">${suggestedFocus}</div>
-        </div>
-      </div>
-
-      <div class="roadmap-card">
-        <div class="roadmap-kicker">Weekly Progress</div>
-        <div class="roadmap-progress-number">${completionRate}%</div>
-        <div class="progress-bar" style="height: 8px;"><div class="progress-fill" style="width: ${completionRate}%; background: var(--accent);"></div></div>
-        <div class="roadmap-progress-stats">
-          <div class="roadmap-mini-stat"><div class="num">Week ${weeklyPlan.currentWeek}</div><div class="label">Current Plan</div></div>
-          <div class="roadmap-mini-stat"><div class="num">~${estimatedTime}h</div><div class="label">Est. Time</div></div>
-          <div class="roadmap-mini-stat" style="cursor:pointer; background:var(--bg-card-hover);" onclick="completeCurrentWeek()"><div class="num">Finish</div><div class="label">Week</div></div>
-        </div>
-      </div>
-    </div>
-
-    <div class="roadmap-hero" style="grid-template-columns: 1fr; margin-bottom: 24px;">
-      <div class="roadmap-card">
-        <div class="roadmap-kicker">Week Overview — ${weeklyPlan.status}</div>
-        <div style="display:flex; justify-content:space-between; align-items:baseline;">
-           <div class="roadmap-days" style="font-size: 28px;">Week ${weeklyPlan.currentWeek}</div>
-           <div class="roadmap-days-sub">${weeklyPlan.startDate} — ${weeklyPlan.endDate}</div>
-        </div>
-      </div>
-    </div>
-
-    <div class="roadmap-section">
-      <div class="roadmap-section-head">
-        <h3>This Week Tasks</h3>
-        <div style="display:flex; gap:8px;">
-          <button class="apple-btn small" onclick="addCustomWeeklyTask()">+ Add Task</button>
-          <button class="apple-btn small" onclick="regenerateWeeklyPlan()">AI Regenerate</button>
-        </div>
-      </div>
-      <div class="exercise-list" id="weeklyTaskList">
-        ${weeklyPlan.tasks.map((task, idx) => renderWeeklyTaskCard(task, idx)).join('')}
-      </div>
-    </div>
-
-    <div class="roadmap-section" style="background: var(--bg-elev); margin-top: 24px;">
-      <div class="roadmap-section-head">
-        <h3>AI Suggestion</h3>
-      </div>
-      <div class="score-note-box" style="background: var(--bg-card); border-color: var(--line);">
-        ${weeklyPlan.suggestion || 'Generating suggestions...'}
-      </div>
-    </div>
-  `;
-}
-
-function renderWeeklyTaskCard(task, idx) {
-  const progress = (task.targetProgress - task.startProgress) > 0 ? Math.round(((task.currentProgress - task.startProgress) / (task.targetProgress - task.startProgress)) * 100) : (task.status === 'completed' ? 100 : 0);
-  const displayProgress = Math.max(0, Math.min(100, progress));
-  
-  return `
-    <div class="ex-card subtask-draggable" style="padding: 16px; background: var(--bg-card); margin-bottom: 8px;" data-task-id="${task.id}">
-      <div style="display:flex; align-items:flex-start; gap:12px;">
-        <div class="st-drag-grip" style="margin-top: 4px;"><span></span><span></span><span></span></div>
-        <div class="ex-check ${task.status === 'completed' ? 'checked' : ''}" onclick="toggleWeeklyTaskCompletion('${task.id}')">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5L19 7"/></svg>
-        </div>
-        <div style="flex:1;">
-          <div style="display:flex; justify-content:space-between;">
-             <input type="text" value="${esc(task.title)}" onblur="updateWeeklyTaskField('${task.id}', 'title', this.value)" style="font-size: 15px; font-weight: 700; color: var(--ink); border:none; background:transparent; padding:0; width:100%;">
-             <button class="res-tool-btn" onclick="deleteWeeklyTask('${task.id}')">✕</button>
-          </div>
-          <div style="font-size: 11px; color: var(--ink-tertiary); margin-top: 2px;">Goal: ${task.startProgress} → ${task.targetProgress} ${task.unit}</div>
-          
-          <div style="margin-top: 8px;">
-            <div class="progress-bar"><div class="progress-fill" style="width: ${displayProgress}%; background: var(--accent);"></div></div>
-          </div>
-
-          <div class="apple-picker-group">
-            <div class="apple-picker-item" style="min-width:110px;">
-              <label>Date</label>
-              <input type="date" value="${task.date || todayISO()}" onchange="updateWeeklyTaskField('${task.id}', 'date', this.value)">
-            </div>
-            <div class="apple-picker-item" style="min-width:80px;">
-              <label>Time</label>
-              <input type="time" value="${task.time || '19:00'}" onchange="updateWeeklyTaskField('${task.id}', 'time', this.value)">
-            </div>
-            <div class="apple-picker-item" style="min-width:80px;">
-              <label>Priority</label>
-              <select onchange="updateWeeklyTaskField('${task.id}', 'priority', this.value)" style="border:none; background:transparent; font-size:12px; font-weight:600; padding:0;">
-                <option value="Low" ${task.priority==='Low'?'selected':''}>Low</option>
-                <option value="Medium" ${task.priority==='Medium'?'selected':''}>Medium</option>
-                <option value="High" ${task.priority==='High'?'selected':''}>High</option>
-              </select>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  `;
-}
-
-function renderPromptEditor() {
-  return `
-    <div class="roadmap-section">
-      <div class="roadmap-section-head">
-        <h3>AI Planning Customization</h3>
-        <div style="display:flex;gap:8px;">
-          <button class="apple-btn small primary" onclick="openPlannerAIImportModal()">🤖 AI Import</button>
-          <button class="apple-btn small" onclick="copyAIPrompt()">Copy AI Prompt</button>
-        </div>
-      </div>
-      <div style="margin-bottom: 16px; font-size: 13px; color: var(--ink-secondary); line-height: 1.6;">
-        Customize how the AI generates your weekly plans. Copy the AI Prompt, paste it into ChatGPT or Claude, then paste the returned JSON below to import.
-      </div>
-      <textarea id="plannerCustomPrompt" style="width: 100%; height: 140px; padding: 16px; border-radius: 12px; border: 1px solid var(--line); background: var(--bg-card); font-size: 14px; line-height: 1.6;" 
-        placeholder="e.g. Study English every day. Reserve Sunday for review. Focus more on Grammar than Vocabulary."
-        oninput="weeklyPlan.customPrompt = this.value; saveWeeklyPlan();">${esc(weeklyPlan.customPrompt || '')}</textarea>
-      <div style="margin-top: 12px; font-size: 11px; color: var(--ink-tertiary);">Auto-saved. These instructions are included in the AI Prompt when you click "Copy AI Prompt".</div>
-    </div>
-  `;
+function getDayOfWeek(dateStr) {
+  if (!dateStr) return null;
+  const d = new Date(dateStr + 'T00:00:00');
+  if (isNaN(d.getTime())) return null;
+  return ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][d.getDay()];
 }
 
 function renderPlannerStats() {
@@ -7828,34 +8440,6 @@ function calculateOverallCompletion() {
   if (!weeklyPlan.history.length) return 0;
   const sum = weeklyPlan.history.reduce((a, b) => a + (b.completionRate || 0), 0);
   return Math.round(sum / weeklyPlan.history.length);
-}
-
-function renderPlannerArchive() {
-  if (!weeklyPlan.history || weeklyPlan.history.length === 0) {
-    return `<div class="empty-state">No archived weeks yet. Complete a week to see it here.</div>`;
-  }
-
-  return `
-    <div class="roadmap-section">
-      <div class="roadmap-section-head"><h3>History Archive</h3></div>
-      <div class="exercise-list">
-        ${weeklyPlan.history.map(h => `
-          <div class="ex-card" style="padding: 16px; cursor:pointer;" onclick="viewArchivedWeek('${h.startDate}')">
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-              <div>
-                <div style="font-weight:700;">Week ${h.week}</div>
-                <div style="font-size:12px; color:var(--ink-tertiary);">${h.startDate} — ${h.endDate}</div>
-              </div>
-              <div style="text-align:right;">
-                <div style="font-size:18px; font-weight:800;">${h.completionRate}%</div>
-                <div style="font-size:10px; color:var(--ink-tertiary);">Completion</div>
-              </div>
-            </div>
-          </div>
-        `).join('')}
-      </div>
-    </div>
-  `;
 }
 
 function addCustomWeeklyTask() {
@@ -7895,47 +8479,6 @@ function toggleWeeklyTaskCompletion(id) {
     saveWeeklyPlan();
     render();
   }
-}
-
-function completeCurrentWeek() {
-  if (!confirm('Finish this week and generate Review? This will move the current plan to Archive.')) return;
-  
-  const tasks = weeklyPlan.tasks;
-  const completedCount = tasks.filter(t => t.status === 'completed').length;
-  const completionRate = tasks.length > 0 ? Math.round((completedCount / tasks.length) * 100) : 0;
-  
-  const review = {
-    week: weeklyPlan.currentWeek,
-    startDate: weeklyPlan.startDate,
-    endDate: weeklyPlan.endDate,
-    tasks: JSON.parse(JSON.stringify(tasks)),
-    completionRate: completionRate,
-    vocabAdded: (quizState.wordBook || []).length,
-    quizzesCompleted: Object.keys(quizState.answerLog || {}).length,
-    wrongReviewed: (quizState.wrongBook || []).length, 
-    suggestion: weeklyPlan.suggestion,
-    reflection: '',
-    achievement: ''
-  };
-
-  weeklyPlan.history.unshift(review);
-  
-  // Update Overall Stats
-  weeklyPlan.overallStats.totalWeeks++;
-  weeklyPlan.overallStats.totalStudyTime += tasks.length * 0.75;
-  weeklyPlan.overallStats.vocabAdded = (quizState.wordBook || []).length;
-
-  if (completionRate >= 80) {
-    weeklyPlan.overallStats.currentStreak++;
-    if (weeklyPlan.overallStats.currentStreak > weeklyPlan.overallStats.longestStreak) {
-      weeklyPlan.overallStats.longestStreak = weeklyPlan.overallStats.currentStreak;
-    }
-  } else {
-    weeklyPlan.overallStats.currentStreak = 0;
-  }
-
-  // Show "Generate Next Week" Modal
-  openNextWeekGenerationModal(tasks);
 }
 
 function openNextWeekGenerationModal(lastWeekTasks) {
@@ -8113,35 +8656,58 @@ function initResourceDrag() {
 function exportWeekPlanToReminder() {
   const tasks = (weeklyPlan.tasks || []).filter(t => t.status !== 'completed');
   if (tasks.length === 0) {
-    toast('No pending tasks to export');
+    toast('没有待完成的任务可导出');
     return;
   }
 
-  // Format: Title|Date|Time|Priority|List
-  let exportLines = tasks.map(t => {
-    const title = t.title;
-    const date = t.date || todayISO();
-    const time = t.time || "19:00";
-    const priority = t.priority || "Medium";
-    const list = t.list || "Study";
-    return `${title}|${date}|${time}|${priority}|${list}`;
+  const exportData = tasks.map(t => {
+    // 获取科目名称
+    let subject = t.subject || t.category || t.list || 'Uncategorized';
+
+    // 如果 subject 是 key（如 'english'），转为显示名称
+    if (customSubjects && customSubjects[subject]) {
+      subject = customSubjects[subject].label || subject;
+    }
+
+    // 如果 subject 是 'Study' 或 'Uncategorized'，尝试从 title 推断
+    if (subject === 'Study' || subject === 'Uncategorized') {
+      const lowerTitle = (t.title || '').toLowerCase();
+      if (customSubjects) {
+        for (const [key, val] of Object.entries(customSubjects)) {
+          if (lowerTitle.includes(key) || lowerTitle.includes((val.label || '').toLowerCase())) {
+            subject = val.label || key;
+            break;
+          }
+        }
+      }
+    }
+
+    return {
+      title: t.title,
+      subject: subject,
+      dueDate: t.date || todayISO(),
+      priority: t.priority || 'Medium',
+      notes: t.list || 'Study'
+    };
   });
 
-  const exportContent = exportLines.join('\n');
+  const jsonString = JSON.stringify(exportData, null, 2);
 
+  // 使用 iOS 共享表单
   if (navigator.share && window.isSecureContext) {
     navigator.share({
-      title: 'StudyHub Weekly Plan',
-      text: exportContent
+      title: 'StudyHub 周任务',
+      text: jsonString
     }).then(() => {
-      toast('✓ Shared successfully');
+      toast('✅ 已分享，请在快捷指令中导入');
     }).catch((err) => {
       if (err.name !== 'AbortError') {
-        copyTextToClipboard(exportContent);
+        fallbackCopyText(jsonString);
       }
     });
   } else {
-    copyTextToClipboard(exportContent);
+    fallbackCopyText(jsonString);
+    toast('✅ 已复制 JSON，请运行快捷指令导入');
   }
 }
 
@@ -8173,107 +8739,6 @@ function fallbackCopyText(text) {
     toast('Copy failed');
   }
   document.body.removeChild(textArea);
-}
-
-function renderWeeklyTaskCard(task) {
-  const progress = (task.targetProgress - task.startProgress) > 0 ? Math.round(((task.currentProgress - task.startProgress) / (task.targetProgress - task.startProgress)) * 100) : (task.status === 'completed' ? 100 : 0);
-  const displayProgress = Math.max(0, Math.min(100, progress));
-  
-  return `
-    <div class="ex-card" style="padding: 16px; background: var(--bg-card); border: 1px solid var(--line); border-radius: var(--radius-sm); margin-bottom: 12px;">
-      <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px;">
-        <div>
-          <div style="font-size: 15px; font-weight: 700; color: var(--ink);">${esc(task.title)}</div>
-          <div style="font-size: 12px; color: var(--ink-tertiary); margin-top: 4px;">Goal: ${task.startProgress} → ${task.targetProgress} ${task.unit}</div>
-        </div>
-        <div class="roadmap-status ${task.status}">${roadmapStatusLabel(task.status)}</div>
-      </div>
-      
-      <div style="margin-top: 10px;">
-        <div style="display:flex; justify-content:space-between; font-size: 11px; font-weight: 600; margin-bottom: 5px;">
-          <span>Current: ${task.currentProgress} / ${task.targetProgress}</span>
-          <span>${displayProgress}%</span>
-        </div>
-        <div class="progress-bar"><div class="progress-fill" style="width: ${displayProgress}%; background: var(--accent);"></div></div>
-      </div>
-
-      <div class="apple-picker-group">
-        <div class="apple-picker-item">
-          <label>Date</label>
-          <input type="date" value="${task.date || todayISO()}" onchange="updateWeeklyTaskField('${task.id}', 'date', this.value)">
-        </div>
-        <div class="apple-picker-item">
-          <label>Time</label>
-          <input type="time" value="${task.time || '19:00'}" onchange="updateWeeklyTaskField('${task.id}', 'time', this.value)">
-        </div>
-        <div class="apple-picker-item">
-          <label>Reminder List</label>
-          <input type="text" value="${esc(task.list || 'Study')}" onblur="updateWeeklyTaskField('${task.id}', 'list', this.value)" style="padding-top: 2px;">
-        </div>
-      </div>
-
-      <div style="margin-top: 12px;">
-        <label style="display: block; font-size: 10px; font-weight: 700; text-transform: uppercase; color: var(--ink-tertiary); margin-bottom: 6px;">Priority</label>
-        <div class="segmented-control">
-          <div class="segment ${task.priority === 'Low' ? 'active' : ''}" onclick="updateWeeklyTaskField('${task.id}', 'priority', 'Low')">Low</div>
-          <div class="segment ${task.priority === 'Medium' ? 'active' : ''}" onclick="updateWeeklyTaskField('${task.id}', 'priority', 'Medium')">Medium</div>
-          <div class="segment ${task.priority === 'High' ? 'active' : ''}" onclick="updateWeeklyTaskField('${task.id}', 'priority', 'High')">High</div>
-        </div>
-      </div>
-
-      <div style="margin-top: 16px; display: flex; gap: 8px;">
-        <button class="apple-btn small" onclick="updateWeeklyTaskProgress('${task.id}', 1)">+1</button>
-        <button class="apple-btn small" onclick="updateWeeklyTaskProgress('${task.id}', -1)">-1</button>
-        <button class="apple-btn small" style="margin-left:auto;" onclick="markWeeklyTaskStatus('${task.id}', 'completed')">Mark Done</button>
-        <button class="apple-btn small danger" onclick="markWeeklyTaskStatus('${task.id}', 'in_progress')">Reset</button>
-      </div>
-    </div>
-  `;
-}
-
-function viewArchivedWeek(startDate) {
-  const week = weeklyPlan.history.find(h => h.startDate === startDate);
-  if (!week) return;
-
-  const tasksHtml = (week.tasks || []).map(t => `
-    <div class="list-item" style="opacity: 0.8; margin-bottom:8px; padding:10px; border:1px solid var(--line); border-radius:8px;">
-      <div style="display:flex; justify-content:space-between; align-items:center;">
-        <span style="font-weight:700; font-size:13px;">${esc(t.title)}</span>
-        <span class="roadmap-status ${t.status}" style="font-size:10px;">${roadmapStatusLabel(t.status)}</span>
-      </div>
-      <div style="font-size:11px; color:var(--ink-tertiary); margin-top:4px;">${t.date} ${t.time} · ${t.priority} Priority</div>
-    </div>
-  `).join('');
-
-  openGenericSheet(`Week ${week.week} Review`, `
-    <div style="display:flex; flex-direction:column; gap:16px;">
-      <div class="roadmap-card" style="background:var(--bg-elev); border:none;">
-        <div class="roadmap-kicker">Review Performance</div>
-        <div class="roadmap-progress-number" style="font-size:36px;">${week.completionRate}%</div>
-        <div style="font-size:12px; color:var(--ink-secondary); margin-top:10px; line-height:1.6;">
-          Vocabulary Added: <b>${week.vocabAdded}</b><br>
-          Quizzes Completed: <b>${week.quizzesCompleted}</b><br>
-          Wrong Reviewed: <b>${week.wrongReviewed}</b>
-        </div>
-      </div>
-      <div class="roadmap-section" style="padding:0; border:none; box-shadow:none;">
-        <div class="roadmap-section-head"><h3>Task Snapshot</h3></div>
-        <div style="max-height:240px; overflow-y:auto; padding-right:4px;">${tasksHtml}</div>
-      </div>
-      <div class="score-note-box" style="background:var(--bg-elev); font-style:italic; font-size:12px; border:none;">
-        <b>AI Feedback:</b><br>${week.suggestion || 'No AI summary for this week.'}
-      </div>
-    </div>
-  `, [{text:'Close', cls:'primary', onclick:()=>closeSheet('genericSheet')}]);
-}
-
-function updateWeeklyTaskField(taskId, field, value) {
-  const task = weeklyPlan.tasks.find(t => t.id === taskId);
-  if (task) {
-    task[field] = value;
-    saveWeeklyPlan();
-    if (field === 'priority' || field === 'title') render(); 
-  }
 }
 
 function initWeeklyPlanData() {
@@ -8428,12 +8893,8 @@ function getClosestExamDays() {
 // ================================================================
 //  WEEKLY AI PLANNER ENHANCEMENTS + PROGRESS CHECK
 // ================================================================
-const WEEKLY_MILESTONES_KEY = 'study_weekly_milestones_pro';
 const PROGRESS_CHECK_KEY = 'study_progress_checks_pro';
-let studyMilestones = JSON.parse(localStorage.getItem(WEEKLY_MILESTONES_KEY) || '[]');
-if (!Array.isArray(studyMilestones)) studyMilestones = [];
 let progressCheckState = JSON.parse(localStorage.getItem(PROGRESS_CHECK_KEY) || 'null') || { mode:'weekly', active:null, history:[] };
-function saveStudyMilestones(){ localStorage.setItem(WEEKLY_MILESTONES_KEY, JSON.stringify(studyMilestones || [])); }
 function saveProgressCheck(){ localStorage.setItem(PROGRESS_CHECK_KEY, JSON.stringify(progressCheckState)); }
 function pct(n,d){ return d ? Math.round((n/d)*100) : 0; }
 function clampNum(n,a,b){ return Math.max(a, Math.min(b, n)); }
@@ -8660,9 +9121,9 @@ Return a JSON object with this exact structure:
 }
 
 Field rules:
-- title: required, describe the specific study action
+- title: required, describe the specific study action, and include the day of the week (e.g., 'Monday: Review Non-finite Verbs')
 - category: one of Grammar, Reading, Vocabulary, Practice, Review, Custom
-- date: must fall within startDate to endDate range
+- date: 必须是该周内的具体日期，格式 YYYY-MM-DD。根据任务安排在星期几填入对应的日期。示例：如果任务安排在周一，date 填入该周一的日期。
 - time: 24-hour format HH:MM
 - priority: Low, Medium, or High
 - startProgress: always 0
@@ -8684,14 +9145,41 @@ function fallbackCopyPrompt(text){
   document.body.removeChild(ta);
 }
 
+function switchPlannerPrompt(value) {
+  const display = document.getElementById('plannerPromptDisplay');
+  if (!display) return;
+  if (value === 'planning') {
+    display.textContent = generateStudyPlanningPrompt();
+  } else {
+    display.textContent = _PLANNER_AI_PROMPT;
+  }
+}
+
+function copyPlannerPrompt() {
+  const display = document.getElementById('plannerPromptDisplay');
+  if (!display) return;
+  const prompt = display.textContent;
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(prompt).then(() => toast('Prompt copied!')).catch(() => fallbackCopyPrompt(prompt));
+  } else {
+    fallbackCopyPrompt(prompt);
+  }
+}
+
 function openPlannerAIImportModal() {
   openGenericSheet('🤖 AI Import Weekly Plan', `
     <div style="margin-bottom:16px;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
-        <span style="font-size:12px;font-weight:600;color:var(--ink-secondary);letter-spacing:0.04em;text-transform:uppercase;">AI Prompt</span>
-        <button onclick="navigator.clipboard.writeText(_PLANNER_AI_PROMPT).then(()=>toast('Prompt copied!')).catch(()=>toast('Copy failed'))" style="font-size:12px;font-weight:500;padding:5px 14px;border-radius:8px;border:1px solid var(--separator);background:var(--surface);color:var(--accent);cursor:pointer;display:flex;align-items:center;gap:5px;">⎘ Copy Prompt</button>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span style="font-size:12px;font-weight:600;color:var(--ink-secondary);letter-spacing:0.04em;text-transform:uppercase;">AI Prompt</span>
+          <select id="plannerPromptSelect" onchange="switchPlannerPrompt(this.value)" style="font-size:12px;padding:4px 10px;border-radius:6px;border:1px solid var(--line);background:var(--bg-card);color:var(--ink);">
+            <option value="planning">Study Planning Prompt</option>
+            <option value="json">JSON Format Prompt</option>
+          </select>
+        </div>
+        <button onclick="copyPlannerPrompt()" style="font-size:12px;font-weight:500;padding:5px 14px;border-radius:8px;border:1px solid var(--line);background:var(--bg-card);color:var(--accent);cursor:pointer;display:flex;align-items:center;gap:5px;">⎘ Copy Prompt</button>
       </div>
-      <div style="background:var(--surface-2,#f5f5f7);border:1px solid var(--separator);border-radius:10px;padding:12px 14px;font-family:monospace;font-size:11.5px;color:var(--ink-secondary);line-height:1.65;max-height:180px;overflow-y:auto;white-space:pre-wrap;word-break:break-word;">${_PLANNER_AI_PROMPT.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
+      <div id="plannerPromptDisplay" style="background:var(--bg-elev);border:1px solid var(--line);border-radius:10px;padding:12px 14px;font-family:monospace;font-size:11.5px;color:var(--ink-secondary);line-height:1.65;max-height:180px;overflow-y:auto;white-space:pre-wrap;word-break:break-word;">${esc(generateStudyPlanningPrompt())}</div>
       <div style="margin-top:8px;font-size:12px;color:var(--ink-tertiary,#999);line-height:1.5;">Copy → Paste into ChatGPT or Claude → Paste the returned JSON below → Import</div>
     </div>
     <div>
@@ -8798,7 +9286,6 @@ function renderCurrentPlan(completedCount, totalTasks, completionRate, estimated
     else if (daysToExam <= 180) suggestedFocus = "Skill Building · Topic Mastery";
   }
   return `
-    ${renderStudyMotivation()}
     <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px; margin-bottom:20px;">
       <div class="roadmap-card" style="background: var(--bg-elev); border-color: var(--line);">
         <div class="roadmap-kicker">Exam Countdown</div>
@@ -8823,7 +9310,7 @@ function renderCurrentPlan(completedCount, totalTasks, completionRate, estimated
     </div>
     <div class="roadmap-hero" style="grid-template-columns: 1fr; margin-bottom: 24px;"><div class="roadmap-card"><div class="roadmap-kicker">Week Overview — ${weeklyPlan.status}</div><div style="display:flex; justify-content:space-between; align-items:baseline;"><div class="roadmap-days" style="font-size: 28px;">Week ${weeklyPlan.currentWeek}</div><div class="roadmap-days-sub" style="display:flex;align-items:center;gap:4px;"><input type="date" value="${weeklyPlan.startDate||''}" onchange="weeklyPlan.startDate=this.value;saveWeeklyPlan();" style="font-size:12px;font-weight:600;border:1px solid var(--line);border-radius:6px;padding:2px 6px;background:var(--bg-card);color:var(--ink);"> <span style="color:var(--ink-tertiary);">—</span> <input type="date" value="${weeklyPlan.endDate||''}" onchange="weeklyPlan.endDate=this.value;saveWeeklyPlan();" style="font-size:12px;font-weight:600;border:1px solid var(--line);border-radius:6px;padding:2px 6px;background:var(--bg-card);color:var(--ink);"></div></div></div></div>
     <div class="roadmap-section">
-      <div class="roadmap-section-head"><h3>This Week Tasks</h3><div style="display:flex; gap:8px; flex-wrap:wrap;"><button class="apple-btn small" onclick="addCustomWeeklyTask()">+ Add Task</button><button class="apple-btn small primary" onclick="openPlannerAIImportModal()">🤖 AI Import</button><button class="apple-btn small" onclick="copyAIPrompt()">Copy AI Prompt</button><button class="apple-btn small" onclick="regenerateWeeklyPlan()">AI Regenerate</button></div></div>
+      <div class="roadmap-section-head"><h3>This Week Tasks</h3><div style="display:flex; gap:8px; flex-wrap:wrap;"><button class="apple-btn small" onclick="addCustomWeeklyTask()">+ Add Task</button><button class="apple-btn small primary" onclick="openPlannerAIImportModal()">🤖 AI Import</button><button class="apple-btn small" onclick="regenerateWeeklyPlan()">AI Regenerate</button><button class="apple-btn small danger" onclick="removeDemoData()">Remove Data</button></div></div>
       <div class="exercise-list" id="weeklyTaskList">${_renderGroupedWeeklyTasks()}</div>
     </div>
     <div class="roadmap-section" style="background: var(--bg-elev); margin-top: 24px;"><div class="roadmap-section-head"><h3>AI Suggestion</h3><button class="apple-btn small primary" onclick="openPlannerAIImportModal()">🤖 AI Import</button></div><div class="score-note-box" style="background: var(--bg-card); border-color: var(--line);">${weeklyPlan.suggestion || 'Generating suggestions...'}</div></div>
@@ -8846,6 +9333,7 @@ function renderWeeklyTaskCard(task, idx) {
       <div class="ex-check ${task.status === 'completed' ? 'checked' : ''}" onclick="toggleWeeklyTaskCompletion('${esc(task.id)}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12l5 5L19 7"/></svg></div>
       <div style="flex:1; min-width:0;"><div style="display:flex; justify-content:space-between; gap:8px; align-items:flex-start;">
         <div style="display:flex;align-items:center;gap:6px;width:100%;">
+          ${task.date ? `<span style="font-size:11px;font-weight:700;color:var(--ink-tertiary);background:var(--bg-elev);padding:2px 8px;border-radius:4px;margin-right:6px;flex-shrink:0;">${getDayOfWeek(task.date)}</span>` : ''}
           <input aria-label="Task title" type="text" value="${esc(task.title)}" oninput="updateWeeklyTaskField('${esc(task.id)}', 'title', this.value, true)" style="font-size: 15px; font-weight: 700; color: var(--ink); border:none; background:transparent; padding:2px 0; width:100%; outline:none;">
           ${syncedBadge}
         </div>
@@ -8929,7 +9417,20 @@ function viewArchivedWeek(startDate) {
       <div class="roadmap-section-head"><h3>Achievement</h3></div>
       <textarea ${ae} placeholder="Record your achievements for this week..." oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px';weeklyPlan.history[${wIdx}].achievement=this.value;saveWeeklyPlan();">${esc(week.achievement)}</textarea>
     </div>
-  </div>`, [{text:'Close', cls:'primary', onclick:()=>closeSheet('genericSheet')}]);
+  </div>`, [
+    {text:'Delete', cls:'danger', onclick:()=>{
+      if (!confirm(`确定要删除第 ${week.week} 周 (${week.startDate}) 的归档记录吗？此操作不可撤销。`)) return;
+      const idx = weeklyPlan.history.indexOf(week);
+      if (idx !== -1) {
+        weeklyPlan.history.splice(idx, 1);
+        saveWeeklyPlan();
+        closeSheet('genericSheet');
+        render();
+        toast('已删除归档记录');
+      }
+    }},
+    {text:'Close', cls:'primary', onclick:()=>closeSheet('genericSheet')}
+  ]);
   setTimeout(()=>{document.querySelectorAll('#genericSheetBody textarea').forEach(ta=>{ta.style.height='auto';ta.style.height=ta.scrollHeight+'px';});},60);
 }
 function renderPromptEditor() {
@@ -9020,6 +9521,5 @@ window.addEventListener('resize', handleResponsiveViewportChange);
 window.addEventListener('orientationchange', handleResponsiveViewportChange);
 render();
 </script>
-<script defer src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ==" data-cf-beacon='{"version":"2024.11.0","token":"1954b47c125f43f8b4338b3c4f804e4f","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a16c066f0a70d79b',t:'MTc4MzMxMzgwOQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a16c1e0eea861314',t:'MTc4MzMxNDc3Nw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a16c36f39dc5e377',t:'MTc4MzMxNTc5Nw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a16ce673adbcdc98',t:'MTc4MzMyMjk4NQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a16d1d2f5e4e3802',t:'MTc4MzMyNTIyNw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a16d56df287607da',t:'MTc4MzMyNzU5MA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a174229bfbf4e7b0',t:'MTc4MzM5ODg0OQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a1742f76caa6dc50',t:'MTc4MzM5OTM3Ng=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a17446370b9bd22e',t:'MTc4MzQwMDMwOA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a1746927ee62dbb5',t:'MTc4MzQwMTczOQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a17474e0da899f32',t:'MTc4MzQwMjIxOQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a174a7c06fe9366f',t:'MTc4MzQwNDMwMw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a174b12a2996360e',t:'MTc4MzQwNDY4OA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a174d9f5398a6e1d',t:'MTc4MzQwNjM1OQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a174e65cb9ebdc4c',t:'MTc4MzQwNjg2Nw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a174ed0a1f218f2d',t:'MTc4MzQwNzE0MQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a17549988d10dcb2',t:'MTc4MzQxMDkzMg=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a175510e9d33d2c6',t:'MTc4MzQxMTIzOA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a17565e7d90b1d9c',t:'MTc4MzQxMjA5Mg=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a17570a85ad47aef',t:'MTc4MzQxMjUzMg=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a176fd6be87039c4',t:'MTc4MzQyODc4Mw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a1771d6388e9371d',t:'MTc4MzQzMDA5Mw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
