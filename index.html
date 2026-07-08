@@ -3049,20 +3049,6 @@ img, svg, video, canvas, iframe, table, pre, code {
         </div>
       </div>
 
-      <div class="sidebar-ia-section" data-sidebar-section="learning">
-        <div class="sidebar-ia-head" onclick="toggleSidebarIASection('learning')">
-          <div class="sidebar-ia-title">Learning</div>
-          <div class="sidebar-ia-caret">▼</div>
-        </div>
-        <div class="sidebar-ia-content">
-          <div class="capsule-menu">
-            <div class="capsule-item" data-resource-nav="resource" onclick="switchStudyResource()">
-              <span class="icon" style="font-weight:800;font-size:13px;width:20px;text-align:center;">R</span> Study Resource
-            </div>
-          </div>
-        </div>
-      </div>
-
       <div class="sidebar-ia-section" data-sidebar-section="practice">
         <div class="sidebar-ia-head" onclick="toggleSidebarIASection('practice')">
           <div class="sidebar-ia-title">Practice</div>
@@ -3083,6 +3069,16 @@ img, svg, video, canvas, iframe, table, pre, code {
         </div>
       </div>
 
+      <div class="sidebar-ia-section" data-sidebar-section="learning">
+        <div class="sidebar-ia-head" onclick="toggleSidebarIASection('learning')">
+          <div class="sidebar-ia-title">Study Resource</div>
+          <div class="sidebar-ia-caret">▼</div>
+        </div>
+        <div class="sidebar-ia-content">
+          <div class="capsule-menu" id="sidebarResourceSubjects"></div>
+        </div>
+      </div>
+
       <div class="sidebar-ia-section" data-sidebar-section="system">
         <div class="sidebar-ia-head" onclick="toggleSidebarIASection('system')">
           <div class="sidebar-ia-title">System</div>
@@ -3100,16 +3096,10 @@ img, svg, video, canvas, iframe, table, pre, code {
 
     <div class="sidebar-divider"></div>
 
-    <!-- Shared Subjects -->
-    <div>
-      <div class="sidebar-section-title">
-        Subjects
-        <button class="apple-btn small" onclick="openAddSubjectModal()">+ Add</button>
-      </div>
+    <!-- Shared Subjects moved into Study Resource IA section -->
+    <div style="display:none;">
       <div class="sidebar-subjects" id="sidebarSubjects"></div>
     </div>
-
-    <div class="sidebar-divider"></div>
 
     <!-- Progress -->
     <div>
@@ -3192,6 +3182,7 @@ const APP_STATE_KEY = 'study_unified_app';
 let appState = {
   currentModule: 'quiz',       // 'quiz' | 'roadmap' | 'resources'
   resourceFocus: 'resource',   // 'resource' | 'exercise'
+  resourceSubject: 'english',  // subject key shown in Study Resource; use 'all' for aggregated view
   currentSubject: 'english',   // shared subject
   searchQuery: '',
 };
@@ -3200,7 +3191,7 @@ let appState = {
 const SIDEBAR_IA_KEY = 'study_sidebar_ia_sections_pro';
 let sidebarIAState = JSON.parse(localStorage.getItem(SIDEBAR_IA_KEY) || 'null') || {
   planning: true,
-  learning: false,
+  learning: true,
   practice: true,
   system: false
 };
@@ -3678,7 +3669,8 @@ function getModuleTitle(mod) {
 }
 function updateNavigationActive() {
   document.querySelectorAll('.capsule-item[data-module]').forEach(el => el.classList.toggle('active', el.dataset.module === appState.currentModule));
-  document.querySelectorAll('.capsule-item[data-resource-nav]').forEach(el => el.classList.toggle('active', appState.currentModule === 'resources' && appState.resourceFocus === el.dataset.resourceNav));
+  document.querySelectorAll('.capsule-item[data-resource-nav]').forEach(el => el.classList.toggle('active', el.dataset.resourceNav === (appState.resourceFocus || 'resource') && appState.currentModule === 'resources'));
+  document.querySelectorAll('.capsule-item[data-resource-subject]').forEach(el => el.classList.toggle('active', appState.currentModule === 'resources' && (appState.resourceSubject || appState.currentSubject) === el.dataset.resourceSubject));
   document.querySelectorAll('.sidebar-ia-section').forEach(sec => {
     const key = sec.dataset.sidebarSection;
     const open = sidebarIAState[key] !== false;
@@ -4181,14 +4173,23 @@ function switchModule(mod) {
   render();
   initSidebarState();
 }
-function switchStudyResource() {
+function switchStudyResource(subject = null) {
   appState.currentModule = 'resources';
   appState.resourceFocus = 'resource';
+  if (subject) {
+    appState.resourceSubject = subject;
+    if (subject !== 'all') appState.currentSubject = subject;
+  } else if (!appState.resourceSubject) {
+    appState.resourceSubject = appState.currentSubject || getSidebarSubjectKeys()[0] || 'all';
+  }
   updateNavigationActive();
   if (isMobileViewport()) sidebarCollapsed = true;
   saveAppState();
   render();
   initSidebarState();
+}
+function switchStudyResourceSubject(subject) {
+  switchStudyResource(subject);
 }
 function openExerciseBankPage() {
   appState.currentModule = 'resources';
@@ -4215,6 +4216,9 @@ function openSidebarSettings() {
 
 function switchSubject(subj) {
   appState.currentSubject = subj;
+  appState.resourceSubject = subj;
+  appState.currentModule = 'resources';
+  appState.resourceFocus = 'resource';
   if (isMobileViewport()) sidebarCollapsed = true;
   saveAppState();
   render();
@@ -4245,7 +4249,8 @@ function render() {
     return;
   }
   
-  main.innerHTML = `${renderStudyOverviewDashboard()}<div class="module-content-stack" id="moduleContentMount"></div>`;
+  const showDashboard = !(appState.currentModule === 'resources' && appState.resourceSubject !== 'all');
+  main.innerHTML = `${showDashboard ? renderStudyOverviewDashboard() : ''}<div class="module-content-stack" id="moduleContentMount"></div>`;
   const moduleMain = document.getElementById('moduleContentMount');
 
   if (appState.searchQuery) {
@@ -4271,18 +4276,45 @@ function render() {
 //  SIDEBAR
 // ================================================================
 function renderSidebar() {
-  // Subjects
-  const el = document.getElementById('sidebarSubjects');
-  el.innerHTML = getSidebarSubjectKeys().map(key => {
-    const s = customSubjects[key];
-    const isActive = appState.currentSubject === key;
-    const sc = subjectScores[key] || {currentScore:0, maxScore:100};
-    return `<div class="subject-pill ${isActive?'active':''}" onclick="switchSubject('${key}')">
-      <span class="dot" style="background:${s.color}"></span>
-      ${esc(s.label)}
-      <span class="badge">${sc.currentScore}</span>
+  const subjectKeys = getSidebarSubjectKeys();
+  if (!appState.resourceSubject || (appState.resourceSubject !== 'all' && !customSubjects[appState.resourceSubject])) {
+    appState.resourceSubject = appState.currentSubject || subjectKeys[0] || 'all';
+  }
+
+  // Study Resource subjects are now the primary Learning navigation.
+  const resourceEl = document.getElementById('sidebarResourceSubjects');
+  if (resourceEl) {
+    const subjectItems = subjectKeys.map(key => {
+      const s = customSubjects[key] || {};
+      const sc = subjectScores[key] || {currentScore:0, maxScore:100};
+      const isActive = appState.currentModule === 'resources' && appState.resourceSubject === key;
+      return `<div class="capsule-item ${isActive?'active':''}" data-resource-subject="${esc(key)}" onclick="switchStudyResourceSubject('${key}')">
+        <span class="icon" style="display:inline-flex;align-items:center;justify-content:center;width:20px;"><span style="width:8px;height:8px;border-radius:50%;background:${s.color || 'var(--accent)'};display:block;"></span></span>
+        <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;">${esc(s.label || key)}</span>
+      </div>`;
+    }).join('');
+    const allActive = appState.currentModule === 'resources' && appState.resourceSubject === 'all';
+    const allItem = `<div class="capsule-item ${allActive?'active':''}" data-resource-subject="all" onclick="switchStudyResourceSubject('all')">
+      <span class="icon" style="font-weight:900;font-size:12px;width:20px;text-align:center;">∑</span>
+      <span style="flex:1;">All</span>
     </div>`;
-  }).join('');
+    resourceEl.innerHTML = subjectItems + allItem;
+  }
+
+  // Legacy hidden subject container retained for compatibility with older CSS/logic.
+  const el = document.getElementById('sidebarSubjects');
+  if (el) {
+    el.innerHTML = subjectKeys.map(key => {
+      const s = customSubjects[key];
+      const isActive = appState.currentSubject === key;
+      const sc = subjectScores[key] || {currentScore:0, maxScore:100};
+      return `<div class="subject-pill ${isActive?'active':''}" onclick="switchSubject('${key}')">
+        <span class="dot" style="background:${s.color}"></span>
+        ${esc(s.label)}
+        <span class="badge">${sc.currentScore}</span>
+      </div>`;
+    }).join('');
+  }
 
   // Progress
   const progEl = document.getElementById('sidebarProgress');
@@ -5567,28 +5599,28 @@ function renderWordBookReviewCard() {
     </div>
   </div>`;
 
-  let mainContent = `<div style="padding:28px 20px;border-radius:var(--radius);text-align:center;margin-bottom:20px;box-shadow:var(--shadow-md);transition:all 0.25s ease;${cardStyle}">
-    <div style="display:flex;justify-content:center;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
-      <span style="font-size:11px;padding:3px 10px;border-radius:4px;background:${sColor}18;color:${sColor};font-weight:700;">${esc(sLabel)}</span>
-      ${cur.source ? `<span style="font-size:11px;color:var(--ink-secondary);background:var(--bg-card);padding:3px 10px;border-radius:4px;border:1px solid var(--line);">Src: ${esc(cur.source)}</span>` : ''}
-      ${isHl ? `<span style="font-size:11px;background:#A2845E;color:#fff;padding:3px 10px;border-radius:12px;font-weight:700;">Highlighted (浅棕高亮)</span>` : ''}
+  let mainContent = `<div style="padding:44px 36px;min-height:360px;border-radius:var(--radius-lg);text-align:center;margin-bottom:24px;box-shadow:var(--shadow-md);transition:all 0.25s ease;box-sizing:border-box;${cardStyle}">
+    <div style="display:flex;justify-content:center;gap:10px;margin-bottom:24px;flex-wrap:wrap;">
+      <span style="font-size:12px;padding:5px 12px;border-radius:999px;background:${sColor}18;color:${sColor};font-weight:800;">${esc(sLabel)}</span>
+      ${cur.source ? `<span style="font-size:12px;color:var(--ink-secondary);background:var(--bg-card);padding:5px 12px;border-radius:999px;border:1px solid var(--line);">Src: ${esc(cur.source)}</span>` : ''}
+      ${isHl ? `<span style="font-size:12px;background:#A2845E;color:#fff;padding:5px 12px;border-radius:999px;font-weight:800;">Highlighted (浅棕高亮)</span>` : ''}
     </div>
-    <div style="font-size:32px;font-weight:800;color:var(--ink);margin:24px 0;letter-spacing:-0.5px;">${esc(cur.text)}</div>`;
+    <div style="font-size:46px;font-weight:850;color:var(--ink);margin:34px 0;letter-spacing:-0.8px;line-height:1.16;word-break:break-word;">${esc(cur.text)}</div>`;
 
   if (!wbkReviewSession.showMeaning) {
-    mainContent += `<div style="margin-top:30px;">
-      <button class="apple-btn primary" style="width:100%;padding:14px;font-size:16px;font-weight:700;box-shadow:var(--shadow-sm);" onclick="wbkReviewSession.showMeaning = true; renderWordBookReviewCard();">👁 显示释义与例句 (Show Meaning)</button>
+    mainContent += `<div style="margin-top:38px;">
+      <button class="apple-btn primary" style="width:100%;padding:18px 20px;font-size:17px;font-weight:800;box-shadow:var(--shadow-sm);border-radius:var(--radius);" onclick="wbkReviewSession.showMeaning = true; renderWordBookReviewCard();">👁 显示释义与例句 (Show Meaning)</button>
     </div>`;
   } else {
-    mainContent += `<div style="margin-top:20px;padding-top:18px;border-top:1px dashed var(--line);text-align:left;background:var(--bg-card);padding:18px;border-radius:var(--radius-sm);box-shadow:var(--shadow-sm);">
-      <div style="font-size:13px;color:var(--ink-tertiary);font-weight:700;margin-bottom:4px;">释义 (Meaning):</div>
-      <div style="font-size:18px;font-weight:700;color:var(--ink);margin-bottom:12px;">${esc(cur.meaning || '暂无释义')}</div>
-      ${cur.example ? `<div style="font-size:13px;color:var(--ink-tertiary);font-weight:700;margin-bottom:4px;">例句 (Example):</div>
-      <div style="font-size:15px;color:var(--ink-secondary);font-style:italic;line-height:1.5;">"${esc(cur.example)}"</div>` : ''}
+    mainContent += `<div style="margin-top:28px;padding-top:22px;border-top:1px dashed var(--line);text-align:left;background:var(--bg-card);padding:24px;border-radius:var(--radius);box-shadow:var(--shadow-sm);">
+      <div style="font-size:13px;color:var(--ink-tertiary);font-weight:800;margin-bottom:8px;text-transform:uppercase;letter-spacing:.03em;">释义 (Meaning):</div>
+      <div style="font-size:22px;font-weight:800;color:var(--ink);margin-bottom:18px;line-height:1.45;">${esc(cur.meaning || '暂无释义')}</div>
+      ${cur.example ? `<div style="font-size:13px;color:var(--ink-tertiary);font-weight:800;margin-bottom:8px;text-transform:uppercase;letter-spacing:.03em;">例句 (Example):</div>
+      <div style="font-size:17px;color:var(--ink-secondary);font-style:italic;line-height:1.75;">"${esc(cur.example)}"</div>` : ''}
     </div>
-    <div style="display:flex;gap:12px;margin-top:20px;">
-      <button class="apple-btn danger" style="flex:1;padding:12px;font-size:15px;font-weight:700;" onclick="markWordBookReviewItem('${cur.id}', 'forgot')">不会 (重复复习)</button>
-      <button class="apple-btn primary" style="flex:1;padding:12px;font-size:15px;font-weight:700;background:var(--green);border-color:var(--green);" onclick="markWordBookReviewItem('${cur.id}', 'remembered')">✓ 记住了 (完成 / 增加间隔)</button>
+    <div style="display:flex;gap:14px;margin-top:24px;">
+      <button class="apple-btn danger" style="flex:1;padding:16px 14px;font-size:16px;font-weight:800;" onclick="markWordBookReviewItem('${cur.id}', 'forgot')">不会 (重复复习)</button>
+      <button class="apple-btn primary" style="flex:1;padding:16px 14px;font-size:16px;font-weight:800;background:var(--green);border-color:var(--green);" onclick="markWordBookReviewItem('${cur.id}', 'remembered')">✓ 记住了 (完成 / 增加间隔)</button>
     </div>`;
   }
   mainContent += `</div>`;
@@ -6047,16 +6079,22 @@ function openQuizSettings() {
       <div style="padding:16px;background:var(--bg-card);border:1px solid var(--line);border-radius:var(--radius-lg);">
         <div style="font-weight:800;font-size:15px;margin-bottom:4px;letter-spacing:-0.01em;">Data Management Panel</div>
         <div style="font-size:12px;color:var(--ink-tertiary);line-height:1.5;margin-bottom:14px;">Select the module data you want to export or reset. Quiz Hub remains an independent module and is managed here only for backup and restore.</div>
-        <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap;">
-          <label style="font-size:12px;font-weight:700;color:var(--ink-secondary);white-space:nowrap;">模块：</label>
-          <select id="controlModuleSelect">
-            ${moduleRows.map(([key,label])=>`<option value="${key}">${label}</option>`).join('')}
-          </select>
-        </div>
-        <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;">
-          <button class="apple-btn primary" onclick="exportSelectedModules()">⬆ Export</button>
-          <button class="apple-btn danger" onclick="resetSelectedModules()">Reset</button>
-          <button class="apple-btn danger" onclick="removeDemoData()">Remove data</button>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;">
+            <span style="font-size:12px;font-weight:700;color:var(--ink-secondary);margin-right:4px;white-space:nowrap;">Select modules to reset:</span>
+            <select id="resetModuleSelect" multiple style="width:auto;min-width:140px;max-width:100%;height:70px;padding:3px 6px;border:1px solid var(--line);border-radius:var(--radius-sm);background:var(--bg-card);color:var(--ink);font-size:12px;line-height:1.3;">
+              <option value="study_resource">Study Resource</option>
+              <option value="weekly_planner">Weekly AI Planner</option>
+              <option value="quiz_hub">Quiz Hub</option>
+              <option value="word_book">Word Book</option>
+              <option value="synonyms">Synonyms</option>
+            </select>
+            <span style="font-size:10px;color:var(--ink-tertiary);white-space:nowrap;margin-left:2px;">⌘ 多选</span>
+          </div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;">
+            <button class="apple-btn primary" onclick="exportSelectedModules()">⬆ Export</button>
+            <button class="apple-btn danger" onclick="resetSelectedModules()">Reset Selected</button>
+          </div>
         </div>
       </div>
       <div style="padding:16px;background:var(--bg-card);border:1px solid var(--line);border-radius:var(--radius-lg);">
@@ -6107,6 +6145,13 @@ function openQuizSettings() {
             <label>导入方式：</label>
             <label><input type="radio" name="aiImportMode" value="merge" checked> 合并（保留现有数据）</label>
             <label><input type="radio" name="aiImportMode" value="overwrite"> 覆盖（替换现有数据）</label>
+          </div>
+          <div style="margin-bottom:8px;">
+            <button class="apple-btn" style="width:100%;display:flex;align-items:center;justify-content:center;gap:6px;" onclick="importAIStudioFromFile()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              Import JSON File
+            </button>
+            <input type="file" id="aiStudioFileInput" accept=".json" style="display:none;" onchange="handleAIStudioFileImport(event)">
           </div>
           <textarea id="aiJsonPasteArea" class="ai-studio-import-textarea" placeholder="在这里粘贴 AI 生成的 JSON..."></textarea>
           <div class="ai-studio-actions">
@@ -6292,37 +6337,193 @@ const AI_WIZARD_PROMPTS = {
 请将以下内容转换：
 [在这里粘贴你的学习资料列表]`,
 
-  study_roadmap: `你是一个 JSON 转换助手。请将我粘贴的学习路线图计划转换成以下格式，直接输出 JSON，不要任何多余文字或代码块标记。
+  study_roadmap: `You are generating study roadmap data.
 
-（这里放你的 Prompt）
+Return ONLY valid JSON.
 
-格式：
-{"roadmapMilestones":[{"id":"rm_001","title":"阶段名称","startDate":"2026-07-01","targetFinishDate":"2026-08-31","status":"in_progress","notes":"阶段说明","order":0,"createdAt":"2026-07-06"}],"roadmapPlans":[{"id":"rp_001","milestoneId":"rm_001","subject":"english","title":"任务名称","startDate":"2026-07-01","targetFinishDate":"2026-08-31","status":"in_progress","notes":"任务备注","order":0,"createdAt":"2026-07-06"}]}
+Do not use markdown.
 
-规则：
-- 只输出合法 JSON
-- milestoneId 必须与 roadmapMilestones 中的 id 对应
-- status 可选值："not_started"、"in_progress"、"completed"
-- subject 填对应的科目，如 "english"、"chinese"、"politic"
+Do not wrap with \`\`\`json.
 
-请将以下内容转换：
-[在这里粘贴你的路线图内容]`,
+Do not include explanations.
 
-  roadmap: `你是一个 JSON 转换助手。请将我粘贴的学习路线图计划转换成以下格式，直接输出 JSON，不要任何多余文字或代码块标记。
+Return an array of milestone objects.
 
-（这里放你的 Prompt）
+Each milestone contains:
 
-格式：
-{"roadmapMilestones":[{"id":"rm_001","title":"阶段名称","startDate":"2026-07-01","targetFinishDate":"2026-08-31","status":"in_progress","notes":"阶段说明","order":0,"createdAt":"2026-07-06"}],"roadmapPlans":[{"id":"rp_001","milestoneId":"rm_001","subject":"english","title":"任务名称","startDate":"2026-07-01","targetFinishDate":"2026-08-31","status":"in_progress","notes":"任务备注","order":0,"createdAt":"2026-07-06"}]}
+- milestone
 
-规则：
-- 只输出合法 JSON
-- milestoneId 必须与 roadmapMilestones 中的 id 对应
-- status 可选值："not_started"、"in_progress"、"completed"
-- subject 填对应的科目，如 "english"、"chinese"、"politic"
+- description
 
-请将以下内容转换：
-[在这里粘贴你的路线图内容]`
+- startDate
+
+- targetFinishDate
+
+- status
+
+- subjects
+
+Each subject contains:
+
+- name
+
+- progress
+
+- tasks
+
+Each task contains:
+
+- title
+
+- completed
+
+Example format:
+
+[
+
+  {
+
+    "milestone":"Foundation",
+
+    "description":"Build basic knowledge",
+
+    "startDate":"2026-07-01",
+
+    "targetFinishDate":"2026-08-01",
+
+    "status":"Not Started",
+
+    "subjects":[
+
+      {
+
+        "name":"English",
+
+        "progress":0,
+
+        "tasks":[
+
+          {
+
+            "title":"Finish Cambridge Reading Test 1",
+
+            "completed":false
+
+          },
+
+          {
+
+            "title":"Memorize Vocabulary Unit 1",
+
+            "completed":false
+
+          }
+
+        ]
+
+      }
+
+    ]
+
+  }
+
+]
+
+Return ONLY the JSON array.`,
+
+  roadmap: `You are generating study roadmap data.
+
+Return ONLY valid JSON.
+
+Do not use markdown.
+
+Do not wrap with \`\`\`json.
+
+Do not include explanations.
+
+Return an array of milestone objects.
+
+Each milestone contains:
+
+- milestone
+
+- description
+
+- startDate
+
+- targetFinishDate
+
+- status
+
+- subjects
+
+Each subject contains:
+
+- name
+
+- progress
+
+- tasks
+
+Each task contains:
+
+- title
+
+- completed
+
+Example format:
+
+[
+
+  {
+
+    "milestone":"Foundation",
+
+    "description":"Build basic knowledge",
+
+    "startDate":"2026-07-01",
+
+    "targetFinishDate":"2026-08-01",
+
+    "status":"Not Started",
+
+    "subjects":[
+
+      {
+
+        "name":"English",
+
+        "progress":0,
+
+        "tasks":[
+
+          {
+
+            "title":"Finish Cambridge Reading Test 1",
+
+            "completed":false
+
+          },
+
+          {
+
+            "title":"Memorize Vocabulary Unit 1",
+
+            "completed":false
+
+          }
+
+        ]
+
+      }
+
+    ]
+
+  }
+
+]
+
+Return ONLY the JSON array.`
 };
 
 const AI_STUDIO_MODULES = [
@@ -6331,8 +6532,7 @@ const AI_STUDIO_MODULES = [
   {key:'weekly_planner', label:'Weekly Planner'},
   {key:'wordbook', label:'Word Book'},
   {key:'synonyms', label:'Synonyms'},
-  {key:'quiz', label:'Quiz Hub'},
-  {key:'passage', label:'Reading Passage'}
+  {key:'quiz', label:'Quiz Hub'}
 ];
 
 let _aiWizardTab = 'study_resource';
@@ -6447,6 +6647,49 @@ function executeAIStudioImport() {
   }
 
   confirmAIImport(tab);
+}
+
+function importAIStudioFromFile() {
+  const inp = document.getElementById('aiStudioFileInput');
+  if (inp) { inp.value = ''; inp.click(); }
+}
+
+function handleAIStudioFileImport(event) {
+  const file = event.target.files && event.target.files[0];
+  if (!file) return;
+  const prev = document.getElementById('aiImportPreview');
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const text = e.target.result;
+      if (!text || !text.trim()) {
+        const msg = '文件为空，请选择有效的 JSON 文件';
+        toast(msg);
+        if (prev) prev.textContent = '❌ ' + msg;
+        return;
+      }
+      // Validate JSON before filling textarea
+      JSON.parse(text);
+      const ta = document.getElementById('aiJsonPasteArea');
+      if (ta) {
+        ta.value = text;
+        ta.dispatchEvent(new Event('input'));
+      }
+      if (prev) prev.textContent = '✅ 文件已读取，点击「预览」确认或直接点击「Import」导入。';
+      toast('✅ 文件读取成功，请点击 Import');
+    } catch(err) {
+      const msg = 'JSON 格式错误：' + err.message;
+      toast('❌ ' + msg);
+      if (prev) prev.textContent = '❌ ' + msg;
+    }
+  };
+  reader.onerror = function() {
+    const msg = '文件读取失败，请重试';
+    toast('❌ ' + msg);
+    const prev = document.getElementById('aiImportPreview');
+    if (prev) prev.textContent = '❌ ' + msg;
+  };
+  reader.readAsText(file);
 }
 
 function openAIJSONImport() {
@@ -7473,29 +7716,34 @@ function downloadText(text, filename, type='text/plain') { const blob=new Blob([
 // ================================================================
 function renderStudyResources(container) {
   try {
-    const subj = appState.currentSubject;
-    const meta = customSubjects[subj];
-    const sc = subjectScores[subj] || {maxScore:100,currentScore:0,targetScore:90,modules:[],note:''};
+    const selectedResourceSubject = appState.resourceSubject || appState.currentSubject || getSidebarSubjectKeys()[0] || 'all';
+    const isAllResourceView = selectedResourceSubject === 'all';
+    const subj = isAllResourceView ? null : selectedResourceSubject;
+    const meta = subj ? customSubjects[subj] : null;
+    const sc = subj ? (subjectScores[subj] || {maxScore:100,currentScore:0,targetScore:90,modules:[],note:''}) : null;
     const prog = getSubjectProgress(subj) || {total:0, done:0, percent:0};
+    
+    const totalMaterials = isAllResourceView ? (resources || []).length : (resources || []).filter(r => r.subject === subj).length;
+    const completedMaterials = isAllResourceView ? (resources || []).filter(r => r.status === 'completed').length : (resources || []).filter(r => r.subject === subj && r.status === 'completed').length;
 
     let html = '';
 
     // Stats Row
     html += `<div class="res-stats-row">
       <div class="res-stat-card">
-        <div class="label">Total Materials</div>
-        <div class="value">${(resources || []).length}</div>
-        <div class="sub">Study resources across all subjects</div>
+        <div class="label">${isAllResourceView ? 'Total Materials' : 'Subject Materials'}</div>
+        <div class="value">${totalMaterials}</div>
+        <div class="sub">${isAllResourceView ? 'Study resources across all subjects' : `Study resources for ${esc(meta?.label || subj)}`}</div>
       </div>
       <div class="res-stat-card">
-        <div class="label">Current Subject</div>
-        <div class="value" style="color:var(--pink)">${(resources || []).filter(r => r.subject === subj).length}</div>
-        <div class="sub">Resources for ${esc(meta?.label || subj)}</div>
+        <div class="label">${isAllResourceView ? 'Selected View' : 'Current Subject'}</div>
+        <div class="value" style="color:var(--pink)">${(resources || []).filter(r => isAllResourceView || r.subject === subj).length}</div>
+        <div class="sub">${isAllResourceView ? 'Resources across all subjects' : `Resources for ${esc(meta?.label || subj)}`}</div>
       </div>
       <div class="res-stat-card">
         <div class="label">Completed</div>
-        <div class="value" style="color:var(--green)">${(resources || []).filter(r => r.status === 'completed').length}</div>
-        <div class="sub">Finished learning materials</div>
+        <div class="value" style="color:var(--green)">${completedMaterials}</div>
+        <div class="sub">${isAllResourceView ? 'Finished learning materials' : `Finished materials for ${esc(meta?.label || subj)}`}</div>
       </div>
       <div class="res-stat-card countdown">
         <div class="label" style="display:flex;justify-content:space-between;align-items:center">Countdown <button class="apple-btn small" style="font-size:10px;padding:2px 6px" onclick="openCountdownEdit()">Edit</button></div>
@@ -7516,33 +7764,40 @@ function renderStudyResources(container) {
             </div>
           </div>
           <div class="sb-scores">
-            <div class="sb-score-box"><div class="sb-label">Current</div><div class="sb-val" style="color:${meta.color}">${sc.currentScore} <span style="font-size:12px;color:var(--ink-tertiary)">/ ${sc.maxScore}</span></div></div>
-            <div class="sb-score-box"><div class="sb-label">Target</div><div class="sb-val" style="color:var(--green)">${sc.targetScore}</div></div>
+            <div class="sb-score-box"><div class="sb-label">Current Score</div><div class="sb-val" style="color:${meta.color}">${sc.currentScore} <span style="font-size:12px;color:var(--ink-tertiary)">/ ${sc.maxScore}</span></div></div>
+            <div class="sb-score-box"><div class="sb-label">Target Score</div><div class="sb-val" style="color:var(--green)">${sc.targetScore}</div></div>
           </div>
         </div>
         <div style="display:flex;gap:8px">
           <button class="apple-btn small" onclick="openScoreModal('${subj}')">Configure Score & Subjects</button>
         </div>
+        ${sc.modules && sc.modules.length ? `<div class="score-module-list">${sc.modules.map(m => `<div class="score-module-item"><span>${esc(m.name)}</span><span>${m.score} pts${m.duration ? ` · ${esc(m.duration)}` : ''}</span></div>`).join('')}</div>` : ''}
         ${sc.note?`<div class="score-note-box" onmouseup="handleNoteSelection('${subj}')">${parseInlineHighlight(subj,sc.note)}</div>`:''}
       </div>`;
     }
 
-    // Score Breakdown Grid
-    html += `<div class="score-overview-grid">
-      ${Object.keys(customSubjects).map(key => {
-        const s = customSubjects[key]; const ssc = subjectScores[key]||{maxScore:100,currentScore:0,targetScore:90,modules:[],note:''};
-        const prog2 = getSubjectProgress(key) || {total:0, done:0, percent:0};
-        return `<div class="score-card" onclick="openScoreModal('${key}')">
-          <div class="score-card-title"><span style="width:8px;height:8px;border-radius:3px;background:${s.color}"></span>${esc(s.label)}</div>
-          <div class="score-numbers"><span class="score-curr" style="color:${s.color}">${ssc.currentScore}</span><span class="score-max">/ ${ssc.maxScore}</span></div>
-          <div class="score-target-pill">Target: ${ssc.targetScore}</div>
-          <div style="margin-top:8px"><div style="display:flex;justify-content:space-between;font-size:10px;font-weight:600;color:var(--ink-tertiary);margin-bottom:3px"><span>${prog2.done}/${prog2.total} done</span><span style="color:${s.color}">${prog2.percent}%</span></div><div class="progress-bar"><div class="progress-fill" style="width:${prog2.percent}%;background:${s.color}"></div></div></div>
-        </div>`;
-      }).join('')}
-    </div>`;
+    // Score Breakdown Grid - only show in All view to prevent duplicates in subject details
+    if (isAllResourceView) {
+      html += `<div class="score-overview-grid">
+        ${Object.keys(customSubjects).map(key => {
+          const s = customSubjects[key]; const ssc = subjectScores[key]||{maxScore:100,currentScore:0,targetScore:90,modules:[],note:''};
+          const prog2 = getSubjectProgress(key) || {total:0, done:0, percent:0};
+          return `<div class="score-card" onclick="openScoreModal('${key}')">
+            <div class="score-card-title"><span style="width:8px;height:8px;border-radius:3px;background:${s.color}"></span>${esc(s.label)}</div>
+            <div class="score-numbers"><span class="score-curr" style="color:${s.color}">${ssc.currentScore}</span><span class="score-max">/ ${ssc.maxScore}</span></div>
+            <div class="score-target-pill">Target: ${ssc.targetScore}</div>
+            <div style="margin-top:8px"><div style="display:flex;justify-content:space-between;font-size:10px;font-weight:600;color:var(--ink-tertiary);margin-bottom:3px"><span>${prog2.done}/${prog2.total} done</span><span style="color:${s.color}">${prog2.percent}%</span></div><div class="progress-bar"><div class="progress-fill" style="width:${prog2.percent}%;background:${s.color}"></div></div></div>
+          </div>`;
+        }).join('')}
+      </div>`;
+    }
+
+    if (isAllResourceView) {
+      html += `<div class="res-section" style="margin-bottom:14px;"><div class="res-section-head"><h3>All Study Resources <span class="count-pill">${(resources || []).length}</span></h3></div><div style="font-size:12px;color:var(--ink-secondary);line-height:1.55;">Aggregated view: resources from every subject are shown together below.</div></div>`;
+    }
 
     // Filter Bar
-    html += renderResFilterBar();
+    html += renderResFilterBar(subj);
 
     // Modular Rendering: Resources Only
     html += renderModResources(subj);
@@ -7586,12 +7841,15 @@ function renderModResources(subj) {
     ${displayed.length ? `<div class="resource-grid resource-list-compact" id="resDragList_${subj||'all'}">${displayed.map(r => resourceCard(r)).join('')}</div>` : `<div class="empty-state">No resources</div>`}
   </div>`;
 }
-function renderResFilterBar() {
+function renderResFilterBar(subj) {
+  const isAllResourceView = !subj;
   return `<div class="res-filter-bar" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:18px;padding:12px 16px;background:var(--bg-elev);border:1px solid var(--line);border-radius:var(--radius);">
     <div style="display:flex;align-items:center;gap:6px;"><label style="font-size:12px;font-weight:700;color:var(--ink-secondary);">Subject</label>
       <select style="padding:4px 8px;font-size:13px;" onchange="resViewState.filterSubject=this.value;render()">
         <option value="all" ${resViewState.filterSubject==='all'?'selected':''}>Current Subject</option>
-        ${Object.keys(customSubjects).map(k=>`<option value="${k}" ${resViewState.filterSubject===k?'selected':''}>${esc(customSubjects[k].label)}</option>`).join('')}
+        ${Object.keys(customSubjects)
+          .filter(k => isAllResourceView || k === subj)
+          .map(k=>`<option value="${k}" ${resViewState.filterSubject===k?'selected':''}>${esc(customSubjects[k].label)}</option>`).join('')}
       </select>
     </div>
     <div style="display:flex;align-items:center;gap:6px;"><label style="font-size:12px;font-weight:700;color:var(--ink-secondary);">Priority</label>
@@ -8129,8 +8387,15 @@ function setControlModuleSelection(checked) {
 }
 
 function getSelectedControlModules() {
-  const sel = document.getElementById('controlModuleSelect');
-  if (sel && sel.value) return [sel.value];
+  const sel = document.getElementById('resetModuleSelect');
+  if (sel) {
+    const selected = Array.from(sel.selectedOptions || []).map(opt => opt.value).filter(Boolean);
+    if (selected.length) return selected;
+  }
+  // Fallback for legacy checkboxes (if present)
+  const cbs = document.querySelectorAll('.reset-module-check:checked');
+  const selected = Array.from(cbs).map(cb => cb.value).filter(Boolean);
+  if (selected.length) return selected;
   return [];
 }
 
@@ -8143,7 +8408,22 @@ function quizExportObject() {
 function buildSelectedModuleBackup(selected) {
   const modules = {};
   if (selected.includes('study_resource')) {
-    modules.study_resource = {customSubjects,resources,exercises,subjectScores,countdownConfig,modOrder,studyTasks,learningItems,roadmapMilestones,roadmapPlans,roadmapExams,roadmapSubjectExpanded,roadmapMilestoneExpanded,studySuggest};
+    modules.study_resource = {
+      customSubjects,
+      resources,
+      exercises,
+      subjectScores,
+      countdownConfig,
+      modOrder,
+      studyTasks,
+      learningItems,
+      roadmapMilestones,
+      roadmapPlans,
+      roadmapExams,
+      roadmapSubjectExpanded,
+      roadmapMilestoneExpanded,
+      studySuggest: studySuggest || { notes: '', links: [] }
+    };
   }
   if (selected.includes('weekly_planner')) {
     modules.weekly_planner = {weeklyPlan,studyMilestones: (typeof studyMilestones !== 'undefined' ? studyMilestones : []),progressCheckState: (typeof progressCheckState !== 'undefined' ? progressCheckState : {mode:'weekly',active:null,history:[]})};
@@ -8156,9 +8436,9 @@ function buildSelectedModuleBackup(selected) {
 
 function exportSelectedModules() {
   const selected = getSelectedControlModules();
-  if (!selected.length) { toast('Select at least one module'); return; }
+  if (!selected.length) { toast('请至少选择一个要导出的模块'); return; }
   downloadJSON(buildSelectedModuleBackup(selected), 'studyhub_selected_backup_' + todayISO() + '.json');
-  toast('Selected data exported');
+  toast('已导出选中的模块数据');
 }
 
 
@@ -8231,9 +8511,11 @@ function removeDemoData() {
 
 function resetSelectedModules() {
   localStorage.removeItem('study_demo_data_removed');
-  const selected = getSelectedControlModules();
-  if (!selected.length) { toast('Select at least one module'); return; }
-  if (!confirm('Reset selected module data? This cannot be undone. Export a backup first if needed.')) return;
+  const select = document.getElementById('resetModuleSelect');
+  const selected = select ? Array.from(select.selectedOptions).map(opt => opt.value) : [];
+  if (!selected.length) { toast('请至少选择一个要重置的模块'); return; }
+  if (!confirm('确定要重置选中的模块数据吗？此操作不可撤销，建议先导出备份。')) return;
+
   if (selected.includes('study_resource')) {
     customSubjects = JSON.parse(JSON.stringify(FIXED_SUBJECT_DEFAULTS));
     resources = JSON.parse(JSON.stringify(sampleResources));
@@ -8252,19 +8534,24 @@ function resetSelectedModules() {
     studySuggest = {notes:'',links:[]};
     ensureFixedSidebarSubjects(); normalizeRoadmapMilestones(); normalizeRoadmapPlans(); normalizeRoadmapExams(); saveResState(); saveLearning(); saveRoadmap(); saveSuggest();
   }
+
   if (selected.includes('weekly_planner')) {
     weeklyPlan = {currentWeek:1,startDate:'',endDate:'',status:'In Progress',tasks:[],suggestion:'',customPrompt:'',history:[],overallStats:{totalWeeks:0,totalStudyTime:0,vocabAdded:0,quizzesCompleted:0,wrongQuestionsReviewed:0,longestStreak:0,currentStreak:0},plannerTab:'current'};
     if (typeof studyMilestones !== 'undefined') studyMilestones = [];
     if (typeof progressCheckState !== 'undefined') progressCheckState = {mode:'weekly',active:null,history:[]};
     initWeeklyPlanData(); saveWeeklyPlan(); if (typeof saveStudyMilestones === 'function') saveStudyMilestones(); if (typeof saveProgressCheck === 'function') saveProgressCheck();
   }
+
   if (selected.includes('quiz_hub')) {
     quizState = {version:'2.0',schemaVersion:QUIZ_SCHEMA,passages:[],quizSets:[],grammarQuestions:[],vocabularyQuestions:[],wordBook:[],synonymLibrary:[],highlights:[],wrongBook:[],wordMemory:{},answerLog:{},currentPassageId:null,currentQuizSetId:{},activeQuizSetIds:{},activeTab:'grammar',activeQIndex:{grammar:{},vocab:{}}};
     saveQuiz();
   }
-  if (!selected.includes('quiz_hub') && selected.includes('word_book')) { quizState.wordBook = []; quizState.wordMemory = {}; saveQuiz(); }
-  if (!selected.includes('quiz_hub') && selected.includes('synonyms')) { quizState.synonymLibrary = []; saveQuiz(); }
-  saveAll(); closeSheet('genericSheet'); render(); toast('Selected data reset');
+
+  if (selected.includes('word_book')) { quizState.wordBook = []; quizState.wordMemory = {}; saveQuiz(); }
+
+  if (selected.includes('synonyms')) { quizState.synonymLibrary = []; saveQuiz(); }
+
+  saveAll(); closeSheet('genericSheet'); render(); toast('已重置选中的模块数据');
 }
 
 // ================================================================
@@ -8308,18 +8595,118 @@ function closeSheet(id) {
   if (id === 'genericSheet') {
     const sheetInner = document.getElementById('genericSheetInner');
     if (sheetInner) {
-      sheetInner.className = 'sheet';
-      sheetInner.style.width = '';
+      // 如果当前在 Review 页面，恢复为内嵌模式，不要重置为弹窗
+      if (appState && appState.currentModule === 'review') {
+        const sheet = document.getElementById('genericSheet');
+        if (sheet) {
+          sheet.className = 'review-main-shell';
+          sheet.style.cssText = 'display:block;position:static;background:transparent;padding:0;';
+        }
+        sheetInner.className = 'review-main-inner';
+        sheetInner.style.cssText = 'width:100%;max-width:100%;max-height:none;display:flex;flex-direction:column;border:none;box-shadow:none;background:transparent;overflow:visible;';
+        const body = document.getElementById('genericSheetBody');
+        if (body) {
+          body.style.padding = '0';
+          body.style.overflow = 'visible';
+          body.style.maxHeight = 'none';
+        }
+        const foot = document.getElementById('genericSheetFoot');
+        if (foot) {
+          foot.style.padding = '12px 0 0';
+          foot.style.marginTop = '8px';
+          foot.style.borderTop = '1px solid var(--line-light)';
+        }
+        // 重新渲染 Review 内容
+        if (typeof renderReviewCenter === 'function') {
+          renderReviewCenter(_reviewCenterActiveTab || 'wordbook');
+        }
+      } else {
+        sheetInner.className = 'sheet';
+        sheetInner.style.width = '';
+        const sheet = document.getElementById('genericSheet');
+        if (sheet) {
+          sheet.className = 'sheet-overlay';
+          sheet.style.cssText = '';
+          sheet.style.display = 'none';
+        }
+      }
     }
   }
 }
 
-function openGenericSheet(title, bodyHTML, buttons) {
-  const sheetInner = document.getElementById('genericSheetInner');
-  if (sheetInner) {
-    sheetInner.className = 'sheet';
-    sheetInner.style.width = '';
+function _isReviewModeActive() {
+  return !!(appState && appState.currentModule === 'review');
+}
+
+function _setGenericSheetAsOverlay(sheet, inner) {
+  if (sheet) {
+    sheet.className = 'sheet-overlay';
+    sheet.style.cssText = '';
+    sheet.classList.remove('open');
   }
+  if (inner) {
+    inner.className = 'sheet';
+    inner.style.cssText = '';
+  }
+  const head = inner ? inner.querySelector('.sheet-head') : document.querySelector('#genericSheet .sheet-head');
+  const body = document.getElementById('genericSheetBody');
+  const foot = document.getElementById('genericSheetFoot');
+  if (head) head.style.display = '';
+  if (body) {
+    body.style.padding = '';
+    body.style.overflow = '';
+    body.style.maxHeight = '';
+  }
+  if (foot) {
+    foot.style.padding = '';
+    foot.style.marginTop = '';
+    foot.style.borderTop = '';
+  }
+}
+
+function _setGenericSheetAsReviewInline(sheet, inner) {
+  if (sheet) {
+    sheet.className = 'review-main-shell';
+    sheet.style.cssText = 'display:block;position:static;background:transparent;padding:0;';
+    sheet.classList.remove('open');
+  }
+  if (inner) {
+    inner.className = 'review-main-inner';
+    inner.style.cssText = 'width:100%;max-width:100%;max-height:none;display:flex;flex-direction:column;border:none;box-shadow:none;background:transparent;overflow:visible;';
+    const head = inner.querySelector('.sheet-head');
+    if (head) head.style.display = 'none';
+  }
+  const body = document.getElementById('genericSheetBody');
+  const foot = document.getElementById('genericSheetFoot');
+  if (body) {
+    body.className = 'sheet-body';
+    body.style.padding = '0';
+    body.style.overflow = 'visible';
+    body.style.maxHeight = 'none';
+  }
+  if (foot) {
+    foot.className = 'sheet-foot';
+    foot.style.padding = '12px 0 0';
+    foot.style.marginTop = '8px';
+    foot.style.borderTop = '1px solid var(--line-light)';
+  }
+}
+
+function openGenericSheet(title, bodyHTML, buttons) {
+  const inReview = _isReviewModeActive();
+  // Review Center normally renders Word Book / Wrong Book / Synonyms inside the page.
+  // Settings is different: when opened from Review it must be a real centered modal.
+  const forceOverlayInReview = inReview && title === 'System Control Panel';
+
+  const sheetInner = document.getElementById('genericSheetInner');
+  const sheet = document.getElementById('genericSheet');
+
+  if (inReview && !forceOverlayInReview) {
+    _setGenericSheetAsReviewInline(sheet, sheetInner);
+  } else {
+    _setGenericSheetAsOverlay(sheet, sheetInner);
+  }
+
   document.getElementById('genericSheetTitle').textContent = title;
   document.getElementById('genericSheetBody').innerHTML = bodyHTML;
   const foot = document.getElementById('genericSheetFoot');
@@ -8331,7 +8718,13 @@ function openGenericSheet(title, bodyHTML, buttons) {
     btn.onclick = b.onclick;
     foot.appendChild(btn);
   });
-  openSheet('genericSheet');
+
+  if (inReview && !forceOverlayInReview) {
+    // Keep Review tab content embedded: no dark overlay, no duplicated modal title row.
+    if (sheet) sheet.classList.remove('open');
+  } else {
+    openSheet('genericSheet');
+  }
 }
 
 // Close sheets on overlay click
@@ -8460,6 +8853,9 @@ function renderWeeklyPlanner(container) {
   if (!weeklyPlan.tasks || weeklyPlan.tasks.length === 0) {
     initWeeklyPlanData();
   }
+  // The top Weekly Planner navigation should only contain Current Plan / Archive / Statistics.
+  // AI Prompt is opened from the This Week Goals action button instead.
+  if (weeklyPlan.plannerTab === 'prompt') weeklyPlan.plannerTab = 'current';
 
   const tasks = weeklyPlan.tasks || [];
   const completedCount = tasks.filter(t => t.status === 'completed').length;
@@ -8474,13 +8870,11 @@ function renderWeeklyPlanner(container) {
         <div class="quiz-tab ${weeklyPlan.plannerTab === 'current' ? 'active' : ''}" onclick="switchPlannerTab('current')">Current Plan</div>
         <div class="quiz-tab ${weeklyPlan.plannerTab === 'archive' ? 'active' : ''}" onclick="switchPlannerTab('archive')">Archive</div>
         <div class="quiz-tab ${weeklyPlan.plannerTab === 'stats' ? 'active' : ''}" onclick="switchPlannerTab('stats')">Statistics</div>
-        <div class="quiz-tab ${weeklyPlan.plannerTab === 'prompt' ? 'active' : ''}" onclick="switchPlannerTab('prompt')">AI Prompt</div>
       </div>
 
       ${weeklyPlan.plannerTab === 'current' ? renderCurrentPlan(completedCount, totalTasks, completionRate, estimatedTime) : ''}
       ${weeklyPlan.plannerTab === 'archive' ? renderPlannerArchive() : ''}
       ${weeklyPlan.plannerTab === 'stats' ? renderPlannerStats() : ''}
-      ${weeklyPlan.plannerTab === 'prompt' ? renderPromptEditor() : ''}
     </div>
   `;
 
@@ -8524,8 +8918,8 @@ function calculateOverallCompletion() {
 }
 
 function addCustomWeeklyTask() {
-  const newTask = {
-    id: 'w_goal_' + Date.now(),
+  const task = {
+    id: 'w_goal_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
     subject: appState.currentSubject || 'english',
     goal: 'New Weekly Goal',
     current: 0,
@@ -8533,11 +8927,18 @@ function addCustomWeeklyTask() {
     unit: 'pages',
     status: 'in_progress',
     weekStart: weeklyPlan.startDate || todayISO(),
-    weekEnd: weeklyPlan.endDate || todayISO()
+    weekEnd: weeklyPlan.endDate || todayISO(),
+    title: 'New Weekly Goal'  // 添加 title 字段，兼容旧格式
   };
-  weeklyPlan.tasks.push(newTask);
+  weeklyPlan.tasks.push(task);
   saveWeeklyPlan();
-  render();
+  // 确保渲染当前模块
+  if (appState.currentModule === 'weekly_planner') {
+    renderWeeklyPlanner(document.getElementById('moduleContentMount'));
+  } else {
+    render();
+  }
+  toast('✅ 已添加新目标');
 }
 
 function deleteWeeklyTask(id) {
@@ -10317,6 +10718,8 @@ function _normalizeReviewMainShell() {
   if (inner) {
     inner.className = 'review-main-inner';
     inner.style.cssText = 'width:100%;max-width:100%;max-height:none;display:flex;flex-direction:column;border:none;box-shadow:none;background:transparent;overflow:visible;';
+    const head = inner.querySelector('.sheet-head');
+    if (head) head.style.display = 'none';
   }
   if (body) {
     body.className = 'sheet-body';
@@ -10378,5 +10781,6 @@ if (_reviewOrigOpenSidebarSynonyms) {
 render();
 </script>
 <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a176fd6be87039c4',t:'MTc4MzQyODc4Mw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a1771d6388e9371d',t:'MTc4MzQzMDA5Mw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a1780a322deadbec',t:'MTc4MzQzOTc5Mg=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a1782a0d69249730',t:'MTc4MzQ0MTA5Nw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a1782f3ffe679f58',t:'MTc4MzQ0MTMxMA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a17c34b1cfa68cac',t:'MTc4MzQ4MzQ3Ng=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a17c3fc42bd2a9f1',t:'MTc4MzQ4MzkzMA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a17c848b8a0cacf2',t:'MTc4MzQ4Njc0Nw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script defer src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ==" data-cf-beacon='{"version":"2024.11.0","token":"1954b47c125f43f8b4338b3c4f804e4f","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a17ca904ca2fd2f5',t:'MTc4MzQ4ODI0MQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a17d5805ad6c326f',t:'MTc4MzQ5NTQwOQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a17d6f7f2868ebb6',t:'MTc4MzQ5NjM3MQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a17ca904ca2fd2f5',t:'MTc4MzQ4ODI0MQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a17d5805ad6c326f',t:'MTc4MzQ5NTQwOQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a17d6f7f2868ebb6',t:'MTc4MzQ5NjM3MQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a17deceefa7294e3',t:'MTc4MzUwMTUwOA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a17e0b677877aace',t:'MTc4MzUwMjc1Nw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a17e133babc9f337',t:'MTc4MzUwMzA3Nw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a17e17c8cff73896',t:'MTc4MzUwMzI2NA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script defer src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ==" data-cf-beacon='{"version":"2024.11.0","token":"1954b47c125f43f8b4338b3c4f804e4f","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a17e76bca9de7aa8',t:'MTc4MzUwNzE1Mw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a17e948f7f60bf5d',t:'MTc4MzUwODM3NA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
