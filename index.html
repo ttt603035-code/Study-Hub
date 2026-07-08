@@ -608,21 +608,20 @@ textarea { resize: vertical; }
 .q-selectable { user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;cursor:text; }
 .q-word-token { display:inline;border-radius:4px;transition:background 0.14s ease, box-shadow 0.14s ease;padding:0 2px;cursor:pointer; }
 .q-word-token:hover { background:rgba(162,132,94,0.12); }
-.q-word-token.qs-selected { background:rgba(162,132,94,0.28);box-shadow:inset 0 -1px 0 rgba(162,132,94,0.35); }
-.q-word-token.qs-hl-persist { background:rgba(162,132,94,0.34);box-shadow:inset 0 -1px 0 rgba(115,88,53,0.45); }
-.q-word-token.qs-memory { background:rgba(162,132,94,0.18);box-shadow:inset 0 -1px 0 rgba(162,132,94,0.30); }
-.q-word-token[data-memory-tip] { position:relative; }
-.q-word-token[data-memory-tip]:hover::after { content:attr(data-memory-tip); position:absolute; left:50%; bottom:100%; transform:translateX(-50%) translateY(-6px); background:rgba(29,29,31,0.92); color:#fff; border-radius:10px; padding:5px 8px; font-size:11px; font-weight:650; white-space:nowrap; z-index:20; pointer-events:none; box-shadow:var(--shadow-lg); }
+.q-word-token.qs-selected { background:#735835; color:#FFFFFF; box-shadow:inset 0 -1px 0 rgba(0,0,0,0.2); }
+.q-word-token.qs-hl-persist { background:#735835; color:#FFFFFF; box-shadow:inset 0 -1px 0 rgba(0,0,0,0.2); }
+/* Word Memory UI styles removed — now merged into Word Book */
 .memory-status-pill { display:inline-flex; align-items:center; height:22px; padding:0 9px; border-radius:999px; font-size:10px; font-weight:800; border:1px solid var(--line); background:var(--bg-card); color:var(--ink-secondary); }
 .memory-status-pill.new { color:var(--ink); background:rgba(162,132,94,0.15); border-color:rgba(162,132,94,0.35); }
 .memory-status-pill.learning { color:var(--ink); background:rgba(0,0,0,0.04); }
 .memory-status-pill.known { color:var(--bg); background:var(--accent); border-color:var(--accent); }
-.qs-float-menu { position:fixed;z-index:8000;background:rgba(29,29,31,0.94);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);border:1px solid rgba(255,255,255,0.12);border-radius:18px;padding:5px;display:flex;gap:4px;box-shadow:0 10px 30px rgba(0,0,0,0.26);animation:floatMenuIn 0.16s cubic-bezier(0.25,1,0.5,1);pointer-events:all;max-width:calc(100vw - 16px);overflow-x:auto; }
+.qs-float-menu { position:fixed;z-index:8000;background:rgba(29,29,31,0.94);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);border:1px solid rgba(255,255,255,0.12);border-radius:18px;padding:5px;display:flex;gap:4px;flex-wrap:wrap;box-shadow:0 10px 30px rgba(0,0,0,0.26);animation:floatMenuIn 0.16s cubic-bezier(0.25,1,0.5,1);pointer-events:all;max-width:calc(100vw - 16px); }
 @keyframes floatMenuIn { from{opacity:0;transform:scale(0.92) translateY(4px)}to{opacity:1;transform:scale(1) translateY(0)} }
 .qs-float-btn { background:transparent;border:1px solid rgba(255,255,255,0.16);color:#fff;border-radius:13px;padding:6px 12px;font-size:12px;font-weight:650;cursor:pointer;white-space:nowrap;transition:background 0.14s ease,border-color 0.14s ease,transform 0.14s ease;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',sans-serif; }
 .qs-float-btn:hover { background:rgba(255,255,255,0.14); }
 .qs-float-btn:active { transform:scale(0.97); }
 .qs-float-btn.added { background:rgba(162,132,94,0.5);border-color:#A2845E; }
+.qs-float-btn.disabled { opacity:0.35; pointer-events:none; cursor:default; }
 
 /* ======= MOBILE RESPONSIVE — Quiz Hub (#8) ======= */
 @media (max-width: 640px) {
@@ -2152,12 +2151,15 @@ img, svg, video, canvas, iframe, table, pre, code {
   right: auto;
 }
 
-.sel-menu button,
-.qs-float-btn {
+.sel-menu button {
   flex: 1 1 110px;
   min-width: 0;
   justify-content: center;
   text-align: center;
+}
+.qs-float-btn {
+  flex: 0 0 auto;
+  min-width: 0;
 }
 
 .word-pop .pop-actions button {
@@ -2578,9 +2580,11 @@ img, svg, video, canvas, iframe, table, pre, code {
 
   .notes-toolbar button,
   .sel-menu button,
-  .qs-float-btn,
   .word-pop .pop-actions button {
     flex: 1 1 100%;
+  }
+  .qs-float-btn {
+    flex: 0 0 auto;
   }
 
   .sel-menu,
@@ -3072,11 +3076,8 @@ img, svg, video, canvas, iframe, table, pre, code {
             <div class="capsule-item" data-module="progress_check" onclick="switchModule('progress_check')">
               <span class="icon" style="font-weight:800;font-size:13px;width:20px;text-align:center;">C</span> Progress Check
             </div>
-            <div class="capsule-item" data-action="wordbook" onclick="openSidebarWordBook()">
-              <span class="icon" style="font-weight:800;font-size:13px;width:20px;text-align:center;">W</span> Word Book
-            </div>
-            <div class="capsule-item" data-action="synonyms" onclick="openSidebarSynonyms()">
-              <span class="icon" style="font-weight:800;font-size:13px;width:20px;text-align:center;">S</span> Synonyms
+            <div class="capsule-item" data-module="review" onclick="openReviewCenter('wordbook')">
+              <span class="icon" style="font-weight:800;font-size:13px;width:20px;text-align:center;">R</span> Review
             </div>
           </div>
         </div>
@@ -4298,6 +4299,9 @@ function renderSidebar() {
 }
 
 function renderSharedStats() {
+  const wrongCount = safeArray(quizState.wrongBook).length;
+  const wrongHtml = wrongCount > 0 ? `<div class="sidebar-stat"><span>❌ Wrong</span><span class="num">${wrongCount}</span></div>` : '';
+
   const el = document.getElementById('sidebarStats');
   if (el) el.innerHTML = '';
 }
@@ -4355,7 +4359,7 @@ function renderQuizHub(container) {
   // Section Pills
   html += `<div class="quiz-toolbar">
     <div class="section-pills" id="sectionPills">${renderSectionPillsHTML()}</div>
-    <button class="apple-btn" onclick="openQuizSettings()">Settings</button>
+
   </div>`;
 
   // Topic Introductory text removed as required (Requirement 8)
@@ -4594,11 +4598,8 @@ function renderQuestionCard(q, num, qType) {
     return String(text || '').split(/([^\s\p{P}]+)/u).map(part => {
       if (!part) return '';
       if (/^[^\s\p{P}]+$/u.test(part)) {
-        const mem = wordMemoryLookup(part);
-        const hl = qsIsHighlighted(part) ? ' qs-hl-persist' : (mem ? ' qs-memory' : '');
-        const tags = mem?.tags?.length ? mem.tags.join(', ') : '';
-        const tip = mem ? ` data-memory-tip="${esc(tags ? 'In Memory: '+tags : 'In Word Memory')}"` : '';
-        return `<span class="q-word-token${hl}" data-area="${areaId}" data-token="${esc(part)}"${tip} onpointerdown="qsWordDown(event,this)" onclick="event.preventDefault();event.stopPropagation();">${esc(part)}</span>`;
+        const hl = qsIsHighlighted(part) ? ' qs-hl-persist' : '';
+        return `<span class="q-word-token${hl}" data-area="${areaId}" data-token="${esc(part)}" onpointerdown="qsWordDown(event,this)" oncontextmenu="qsWordContextMenu(event,this)" onclick="event.preventDefault();event.stopPropagation();">${esc(part)}</span>`;
       }
       return esc(part);
     }).join('');
@@ -4755,6 +4756,20 @@ function submitAnswer(qId, qType) {
   quizState.answerLog[qId] = { correct, chosen, ts: Date.now() };
   wordMemoryUpdateFromQuestion(q, correct);
   if (!correct) {
+    // Auto-add to wrong book
+    const q = quizState.vocabularyQuestions.find(x => x.id === qId) || quizState.grammarQuestions.find(x => x.id === qId);
+    if (q) {
+      const qType = quizState.vocabularyQuestions.find(x => x.id === qId) ? 'vocab' : 'grammar';
+      quizState.wrongBook = safeArray(quizState.wrongBook).filter(w => w.qId !== qId);
+      quizState.wrongBook.push({
+        id: uid('wb'), qType: qType, qId: qId,
+        passageId: q.passageId || null, quizSetId: q.quizSetId || null,
+        question: q.question, options: q.options || [], correctAnswer: q.answer,
+        yourAnswer: chosen, explanation: q.explanation || '', ts: Date.now(),
+        completed: false, reviewed: false, reviewCount: 0, lastReviewedAt: null
+      });
+      saveQuiz(); renderSharedStats();
+    }
     quizState.wrongBook = quizState.wrongBook.filter(w=>w.qId!==qId);
     quizState.wrongBook.push({id:uid('wb'),qType,qId,passageId:q.passageId,quizSetId:q.quizSetId||null,question:q.question,options:q.options,correctAnswer:q.answer,yourAnswer:chosen,explanation:q.explanation||'',ts:Date.now()});
   } else {
@@ -4914,6 +4929,16 @@ function qsWordDown(e, token) {
   }, 300);
 
   window.addEventListener('pointerup', onUp);
+}
+
+function qsWordContextMenu(e, token) {
+  e.preventDefault();
+  e.stopPropagation();
+  qsClearSelection();
+  const area = token.dataset.area;
+  qsHighlightRange(area, token, token);
+  const tokens = Array.from(document.querySelectorAll(`.q-word-token.qs-selected`));
+  if (tokens.length) qsShowFloatMenu(tokens);
 }
 
 function qsHighlightRange(area, a, b) {
@@ -5076,9 +5101,10 @@ function qsShowFloatMenu(tokens) {
 
   addButton('Highlight', () => qsHighlightWord(text), highlighted ? 'added' : '');
   addButton('+ Synonym', () => qsAddToSynGroup(text));
-  addButton(alreadyIn ? 'In Word Book' : '+ Word Book', btn => qsAddToWordBook(btn, text), alreadyIn ? 'added' : '');
-  addButton('Remove Highlight', () => qsRemoveHighlight(text));
-  addButton('Mark as Known', () => wordMemoryMarkKnown(text), mem?.reviewStatus === 'Known' ? 'added' : '');
+  addButton(alreadyIn ? '✓' : '+', btn => qsAddToWordBook(btn, text), alreadyIn ? 'added' : '');
+  if (highlighted) {
+    addButton('Remove', () => qsRemoveHighlight(text));
+  }
 
   document.body.appendChild(menu);
 
@@ -5112,11 +5138,11 @@ function qsAddToWordBook(btn, text) {
   const alreadyIn = (quizState.wordBook||[]).some(w => w.text.toLowerCase() === text.toLowerCase());
   const ctx = wordMemoryContextFromToken(document.querySelector('.q-word-token.qs-selected'));
   wordMemoryEnsure(text, 'Word Book', ctx);
-  if (alreadyIn) { toast('Already in Word Book'); saveQuiz(); qsClearSelection(); return; }
+  if (alreadyIn) { toast('Already in Word Book'); saveQuiz(); qsClearSelection(); openQuizWordBook(); return; }
   addToWordBook(text, { source: ctx.source || 'Quiz Hub', example: ctx.context || '', subject: appState.currentSubject, highlight: true });
   btn.textContent = 'Added';
   btn.classList.add('added');
-  setTimeout(() => qsClearSelection(), 900);
+  setTimeout(() => { qsClearSelection(); openQuizWordBook(); }, 900);
 }
 
 function qsHighlightWord(text) {
@@ -5128,7 +5154,11 @@ function qsHighlightWord(text) {
   }
   wordMemoryEnsure(textVal, 'Highlight', {source:'Quiz Hub', context:p?.title||'', countSeen:false});
   document.querySelectorAll('.q-word-token').forEach(t => {
-    if (qsNorm(t.textContent) === qsNorm(textVal)) t.classList.add('qs-hl-persist');
+    if (qsNorm(t.textContent) === qsNorm(textVal)) {
+      t.classList.add('qs-hl-persist');
+      t.style.backgroundColor = '#735835';
+      t.style.color = '#FFFFFF';
+    }
   });
   saveQuiz();
   toast('Highlighted');
@@ -5141,7 +5171,11 @@ function qsRemoveHighlight(text) {
   const n = qsNorm(textVal);
   quizState.highlights = (quizState.highlights || []).filter(h => qsNorm(h.text || h.selectedText) !== n);
   document.querySelectorAll('.q-word-token').forEach(t => {
-    if (qsNorm(t.textContent) === n) t.classList.remove('qs-hl-persist');
+    if (qsNorm(t.textContent) === n) {
+      t.classList.remove('qs-hl-persist');
+      t.style.backgroundColor = '';
+      t.style.color = '';
+    }
   });
   saveQuiz();
   toast('Highlight removed');
@@ -5387,40 +5421,32 @@ function openQuizWordBook(searchQ = wbkSearchQ, _unused, filterSort = wbkSort, f
     known: all.filter(m=>m.reviewStatus==='Known').length,
     due: all.filter(m=>(m.nextReview||0)<=now).length
   };
-  const topBanner = `<div style="padding:16px;background:var(--bg-elev);border:1px solid var(--line);border-radius:var(--radius);margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
-    <div><div style="font-size:16px;font-weight:800;color:var(--ink);">Memory Center</div><div style="font-size:12px;color:var(--ink-secondary);margin-top:3px;">New ${counts.new} · Learning ${counts.learning} · Known ${counts.known} · Due ${counts.due}</div></div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;"><button class="apple-btn primary" onclick="startWordBookReview('due')">Review Due (${counts.due})</button><button class="apple-btn" onclick="startWordBookReview('all')">Review All</button></div>
-  </div>`;
   const tabBtn = (id,label,count) => `<button class="res-tab-btn ${wbkTab===id?'active':''}" onclick="openQuizWordBook(wbkSearchQ,null,wbkSort,'${id}')">${label} (${count})</button>`;
   const filterBar = `<div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center;">
-    <div style="display:flex;gap:4px;flex-wrap:wrap;background:var(--bg-elev);border:1px solid var(--line);border-radius:var(--radius-sm);padding:3px;">${tabBtn('all','All',counts.all)}${tabBtn('new','New Words',counts.new)}${tabBtn('learning','Learning Words',counts.learning)}${tabBtn('known','Known Words',counts.known)}${tabBtn('due','Due',counts.due)}</div>
-    <div style="flex:1;min-width:160px;display:flex;align-items:center;gap:6px;background:var(--bg-card);border:1px solid var(--line);border-radius:var(--radius-sm);padding:6px 10px;"><span style="font-size:13px;color:var(--ink-tertiary);">⌕</span><input type="text" placeholder="Search memory…" value="${esc(wbkSearchQ)}" style="flex:1;border:none;background:transparent;font-size:13px;font-weight:500;color:var(--ink);outline:none;" oninput="openQuizWordBook(this.value, null, wbkSort, wbkTab)"/></div>
+    <div style="display:flex;gap:4px;flex-wrap:wrap;background:var(--bg-elev);border:1px solid var(--line);border-radius:var(--radius-sm);padding:3px;">${tabBtn('all','All',counts.all)}${tabBtn('new','New',counts.new)}${tabBtn('learning','Learning',counts.learning)}${tabBtn('known','Known',counts.known)}${tabBtn('due','Due',counts.due)}</div>
+    <div style="display:flex;gap:4px;flex-wrap:wrap;"><button class="apple-btn primary small" onclick="startWordBookReview('due')">Review Due (${counts.due})</button><button class="apple-btn small" onclick="startWordBookReview('all')">Review All</button></div>
+    <div style="flex:1;min-width:160px;display:flex;align-items:center;gap:6px;background:var(--bg-card);border:1px solid var(--line);border-radius:var(--radius-sm);padding:6px 10px;"><span style="font-size:13px;color:var(--ink-tertiary);">⌕</span><input type="text" placeholder="Search word book…" value="${esc(wbkSearchQ)}" style="flex:1;border:none;background:transparent;font-size:13px;font-weight:500;color:var(--ink);outline:none;" oninput="openQuizWordBook(this.value, null, wbkSort, wbkTab)"/></div>
     <button class="apple-btn primary" style="height:34px;padding:0 14px;font-size:13px;font-weight:700;" onclick="openAddWordBookDialog('', '', '')">+ Add</button>
   </div>`;
 
   const listHTML = items.length ? items.map(w => {
     const m = w._memory || {};
     const status = m.reviewStatus || 'New';
-    const tags = (m.tags && m.tags.length ? m.tags : ['Memory']).join(' · ');
-    const lastSeen = m.lastSeenDate || w.lastSeenDate || w.dateAdded || '-';
-    const next = m.nextReview ? new Date(m.nextReview).toLocaleDateString() : '-';
-    return `<div class="list-item" style="display:flex;justify-content:space-between;align-items:flex-start;padding:14px;border-radius:var(--radius-sm);margin-bottom:10px;background:${w.highlight?'rgba(162,132,94,0.16)':'var(--bg-elev)'};border:1px solid ${w.highlight?'#A2845E':'var(--line)'};">
+    return `<div class="list-item" style="display:flex;justify-content:space-between;align-items:flex-start;padding:12px 14px;border-radius:var(--radius-sm);margin-bottom:8px;background:var(--bg-card);border:1px solid var(--line);">
       <div style="flex:1;min-width:0;">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap;"><h4 style="font-size:17px;font-weight:800;margin:0;color:var(--ink);">${esc(w.text||w.word)}</h4><span class="memory-status-pill ${status.toLowerCase()}">${status}</span><span class="chip">${esc(tags)}</span></div>
-        <div class="meta" style="font-size:12px;color:var(--ink-secondary);line-height:1.6;">Seen ${m.seenCount||0} · Errors ${m.errorCount||0} · Last seen ${esc(lastSeen)} · Next review ${esc(next)}</div>
-        ${m.context || w.example ? `<div style="font-size:13px;color:var(--ink-secondary);font-style:italic;line-height:1.45;margin-top:5px;">${esc(m.context || w.example)}</div>` : ''}
-        ${w.meaning ? `<div style="font-size:13px;color:var(--ink);font-weight:600;margin-top:5px;">${esc(w.meaning)}</div>` : ''}
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;flex-wrap:wrap;"><h4 style="font-size:16px;font-weight:800;margin:0;color:var(--ink);">${esc(w.text||w.word)}</h4><span class="memory-status-pill ${status.toLowerCase()}">${status}</span></div>
+        ${m.context || w.example ? `<div style="font-size:13px;color:var(--ink-secondary);line-height:1.5;margin-top:3px;">${esc(m.context || w.example)}</div>` : ''}
+        ${w.meaning ? `<div style="font-size:13px;color:var(--ink);font-weight:600;margin-top:3px;">${esc(w.meaning)}</div>` : ''}
       </div>
-      <div class="actions" style="display:flex;gap:6px;margin-left:14px;flex-shrink:0;align-items:center;flex-wrap:wrap;justify-content:flex-end;">
-        <button class="apple-btn small" onclick="markMemoryKnownEncoded('${encodeURIComponent(w.text||w.word)}')">Known</button>
-        ${w._memoryOnly ? `<button class="apple-btn small" onclick="addMemoryToWordBookEncoded('${encodeURIComponent(w.text||w.word)}')">Add to Word Book</button>` : `<button class="apple-btn small" onclick="openEditWordBookDialog('${w.id}')">Edit</button>`}
+      <div class="actions" style="display:flex;gap:6px;margin-left:12px;flex-shrink:0;align-items:center;flex-wrap:wrap;justify-content:flex-end;">
+        ${w._memoryOnly ? `<button class="apple-btn small" onclick="addMemoryToWordBookEncoded('${encodeURIComponent(w.text||w.word)}')">Add</button>` : `<button class="apple-btn small" onclick="openEditWordBookDialog('${w.id}')">Edit</button>`}
         <button class="apple-btn small danger" onclick="deleteMemoryEncoded('${encodeURIComponent(w.text||w.word)}')">Delete</button>
       </div>
     </div>`;
   }).join('') : `<div class="empty-state">No words in this category.</div>`;
 
   saveQuiz();
-  openGenericSheet(`Memory Center (${Object.keys(quizState.wordMemory||{}).length})`, topBanner + filterBar + `<div style="max-height:430px;overflow-y:auto;">${listHTML}</div>`, [
+  openGenericSheet(`Word Book (${Object.keys(quizState.wordMemory||{}).length})`, filterBar + `<div style="max-height:430px;overflow-y:auto;">${listHTML}</div>`, [
     { text: 'Close', cls: 'primary', onclick: () => { closeSheet('genericSheet'); render(); } }
   ]);
 }
@@ -5508,7 +5534,7 @@ function startWordBookReview(mode = 'due') {
     queue = [...memoryItems];
   }
 
-  if (!queue.length) { toast('Memory Center is empty. Add words from Quiz Hub first.'); return; }
+  if (!queue.length) { toast('Word Book is empty. Add words from Quiz Hub first.'); return; }
 
   wbkReviewSession = { queue, index: 0, showMeaning: false, mode, total: queue.length };
   renderWordBookReviewCard();
@@ -8563,7 +8589,7 @@ function processNextWeek(mode, lastTasks = []) {
   weeklyPlan.status = 'In Progress';
 
   if (mode === 'ai') {
-    generateWeeklyPlan();
+    generateWeeklyPlan(lastTasks);
   } else if (mode === 'duplicate') {
     weeklyPlan.tasks = lastTasks.filter(t => t.status !== 'completed').map(t => {
       const migrated = migrateTaskToGoal(t);
@@ -8865,25 +8891,38 @@ function initWeeklyPlanData() {
 
 function regenerateWeeklyPlan() {
   if (confirm('Regenerate weekly plan? Current progress for this week will be archived.')) {
-    if (weeklyPlan.tasks && weeklyPlan.tasks.length > 0) {
+    const currentTasks = weeklyPlan.tasks && weeklyPlan.tasks.length > 0 ? JSON.parse(JSON.stringify(weeklyPlan.tasks)) : [];
+    if (currentTasks.length > 0) {
       weeklyPlan.history.push({
         week: weeklyPlan.currentWeek,
         startDate: weeklyPlan.startDate,
         endDate: weeklyPlan.endDate,
-        tasks: JSON.parse(JSON.stringify(weeklyPlan.tasks)),
+        tasks: currentTasks,
         suggestion: weeklyPlan.suggestion
       });
     }
-    generateWeeklyPlan();
+    generateWeeklyPlan(currentTasks);
     render();
     toast('✓ Weekly plan regenerated by AI');
   }
 }
 
-function generateWeeklyPlan() {
+function getTaskProgression(task) {
+  const cur = Number(task.current || 0);
+  const tgt = Number(task.target || 1);
+  const isCompleted = task.status === 'completed';
+  return {
+    startProgress: isCompleted ? tgt : cur,
+    targetProgress: isCompleted ? tgt + (task.unit === 'pages' ? (task.target - task.current || 8) : task.target) : Math.max(tgt, cur),
+    shouldContinue: true,
+    wasCompleted: isCompleted
+  };
+}
+
+function generateWeeklyPlan(lastWeekTasks) {
   const goals = [];
   const now = Date.now();
-  
+
   const allRoadmap = Array.isArray(roadmapPlans) ? roadmapPlans : [];
   const activeRoadmap = allRoadmap.filter(p => p.status !== 'completed');
   const allVocab = Array.isArray(quizState.wordBook) ? quizState.wordBook : [];
@@ -8905,12 +8944,28 @@ function generateWeeklyPlan() {
     else if (daysToExam < 90) stepMultiplier = 1.2;
   }
 
+  // Helper to find matching task from last week
+  const findLastTask = (keyword, idPrefix) => {
+    const arr = Array.isArray(lastWeekTasks) ? lastWeekTasks : [];
+    return arr.find(t => {
+      if (idPrefix && t.id && String(t.id).startsWith(idPrefix)) return true;
+      const goal = String(t.goal || t.title || '').toLowerCase();
+      return keyword && goal.includes(keyword.toLowerCase());
+    });
+  };
+
   // Grammar Goal
   const grammarBook = allLr.find(item => item.title && item.title.toLowerCase().includes('grammar'));
-  const grammarStart = grammarBook ? grammarBook.currentPage : 37;
+  const grammarBase = grammarBook ? grammarBook.currentPage : 37;
   let grammarStep = Math.round(8 * stepMultiplier);
   if (customStr.toLowerCase().includes('grammar')) grammarStep = Math.round(grammarStep * 1.5);
 
+  const grammarLast = findLastTask('grammar', 'w_grammar');
+  let grammarStart = grammarBase;
+  if (grammarLast) {
+    const prog = getTaskProgression(grammarLast);
+    grammarStart = prog.wasCompleted ? prog.targetProgress : prog.startProgress;
+  }
   goals.push({
     id:'w_grammar', subject:'english',
     goal: (grammarBook ? grammarBook.title : 'Grammar Book') + ' 第 ' + grammarStart + '~' + (grammarStart + grammarStep) + ' 页',
@@ -8920,8 +8975,15 @@ function generateWeeklyPlan() {
 
   // Reading Goal
   const readingBook = allLr.find(item => item.title && item.title.toLowerCase().includes('reading'));
-  const readingStart = readingBook ? readingBook.currentPage : 50;
+  const readingBase = readingBook ? readingBook.currentPage : 50;
   let readingStep = Math.round(8 * stepMultiplier);
+
+  const readingLast = findLastTask('reading', 'w_reading');
+  let readingStart = readingBase;
+  if (readingLast) {
+    const prog = getTaskProgression(readingLast);
+    readingStart = prog.wasCompleted ? prog.targetProgress : prog.startProgress;
+  }
   goals.push({
     id:'w_reading', subject:'english',
     goal: (readingBook ? readingBook.title : 'Reading Book') + ' 第 ' + readingStart + '~' + (readingStart + readingStep) + ' 页',
@@ -8930,24 +8992,61 @@ function generateWeeklyPlan() {
   });
 
   // Vocabulary Goal
+  const vocabLast = findLastTask('词汇', 'w_vocab');
+  const vocabBase = 0;
+  let vocabStep = dueVocab > 0 ? dueVocab : 30;
+
+  let vocabStart = vocabBase;
+  if (vocabLast) {
+    const prog = getTaskProgression(vocabLast);
+    vocabStart = prog.wasCompleted ? prog.targetProgress : prog.startProgress;
+  }
   goals.push({
     id:'w_vocab', subject:'english',
-    goal: 'SRS 词汇复习 ' + (dueVocab > 0 ? dueVocab : 30) + ' 词',
-    current: 0, target: dueVocab > 0 ? dueVocab : 30,
+    goal: 'SRS 词汇复习 ' + (vocabStart + vocabStep) + ' 词',
+    current: vocabStart, target: vocabStart + vocabStep,
     unit:'words', status:'in_progress', weekStart: ws, weekEnd: we
   });
 
   // Mock Test Goal
+  const mockLast = findLastTask('模拟', 'w_mock');
   let mockCount = (daysToExam !== null && daysToExam < 60) ? 3 : 1;
+  let mockStart = 0;
+  if (mockLast) {
+    const prog = getTaskProgression(mockLast);
+    mockStart = prog.wasCompleted ? prog.targetProgress : prog.startProgress;
+  }
   goals.push({
     id:'w_mock', subject:'english',
-    goal: '完成 ' + mockCount + ' 套模拟测试',
-    current: 0, target: mockCount,
+    goal: '完成 ' + (mockStart + mockCount) + ' 套模拟测试',
+    current: mockStart, target: mockStart + mockCount,
     unit:'tests', status:'in_progress', weekStart: ws, weekEnd: we
   });
 
+  // Carry over custom tasks from last week that were not completed
+  if (Array.isArray(lastWeekTasks)) {
+    lastWeekTasks.forEach(t => {
+      if (t.id && (String(t.id).startsWith('w_goal_') || String(t.id).startsWith('w_dup_') || String(t.id).startsWith('w_carry_'))) {
+        const prog = getTaskProgression(t);
+        if (!prog.wasCompleted) {
+          goals.push({
+            id: 'w_carry_' + Date.now() + Math.random(),
+            subject: t.subject || 'english',
+            goal: t.goal || t.title || 'Carry-over Goal',
+            current: prog.startProgress,
+            target: prog.targetProgress,
+            unit: t.unit || 'pages',
+            status: 'in_progress',
+            weekStart: ws,
+            weekEnd: we
+          });
+        }
+      }
+    });
+  }
+
   weeklyPlan.tasks = goals;
-  
+
   let sugg = `AI Analysis: ${dueVocab} words due. `;
   if (daysToExam !== null) {
     if (daysToExam < 30) sugg += "CRITICAL: Exam in <30 days. Plan shifted to simulations and error review.";
@@ -9226,6 +9325,16 @@ function generateStudyPlanningPrompt(){
     return `- [${t.status==='completed'?'x':' '}] [${subjLabel}] ${t.goal || t.title} — ${cur}/${tgt} ${t.unit || ''}`;
   }).join('\n') || 'No weekly goals yet.';
 
+  // Build last week completion summary from history
+  const lastWeek = safeArray(weeklyPlan.history)[0];
+  const lastWeekSummary = lastWeek ? safeArray(lastWeek.tasks).map(t => {
+    const subjLabel = (customSubjects[t.subject]?.label) || t.subject || 'General';
+    const cur = t.current || 0;
+    const tgt = t.target || 1;
+    const status = t.status === 'completed' ? '已完成' : '未完成（当前 ' + cur + '/' + tgt + '）';
+    return `- [${subjLabel}] ${t.goal || t.title} — ${status}`;
+  }).join('\n') : 'No previous week data.';
+
   return `You are my study-planning coach. Create a practical next-week study plan using my current StudyHub data.
 
 📅 **Current Week:** ${weeklyPlan.startDate || 'Not set'} ~ ${weeklyPlan.endDate || 'Not set'}
@@ -9241,6 +9350,9 @@ ${progress}
 - Quiz questions completed: ${Object.keys(quizState.answerLog || {}).length}
 - Vocabulary learned: ${safeArray(quizState.wordBook).length}
 - Wrong questions in review: ${safeArray(quizState.wrongBook).length}
+
+📆 **上周完成情况：**
+${lastWeekSummary}
 
 🎯 **Weekly Goals:**
 ${weeklyGoals}
@@ -9704,8 +9816,39 @@ function renderProgressCheck(container){
 //  INIT
 // ================================================================
 loadAppState();
-if (!['quiz','roadmap','resources','weekly_planner','progress_check'].includes(appState.currentModule)) appState.currentModule = 'quiz';
+if (!['quiz','roadmap','resources','weekly_planner','progress_check','review'].includes(appState.currentModule)) appState.currentModule = 'quiz';
 loadQuiz();
+
+// Migrate old wordMemory data to wordBook (one-time cleanup)
+if (quizState.wordMemory && Object.keys(quizState.wordMemory).length > 0) {
+  quizState.wordBook = quizState.wordBook || [];
+  Object.values(quizState.wordMemory).forEach(mem => {
+    const word = mem.word || '';
+    if (!word) return;
+    const exists = quizState.wordBook.find(w => (w.text || w.word || '').toLowerCase() === word.toLowerCase());
+    if (!exists) {
+      quizState.wordBook.push({
+        id: 'wbk_' + Date.now() + Math.random().toString(36).slice(2, 6),
+        text: word,
+        meaning: '',
+        example: mem.context || '',
+        source: mem.source || 'Migrated from Memory',
+        subject: 'english',
+        dateAdded: new Date(mem.createdAt || Date.now()).toISOString().slice(0, 10),
+        addedAt: mem.createdAt || Date.now(),
+        highlight: (mem.tags || []).includes('Highlight'),
+        starred: false,
+        srsBox: 0,
+        srsNext: Date.now(),
+        srsReviews: 0,
+        srsLapses: 0
+      });
+    }
+  });
+  quizState.wordMemory = {};
+  saveQuiz();
+}
+
 if (quizState.highlights && quizState.highlights.length) {
   quizState.wordBook = quizState.wordBook || [];
   quizState.highlights.forEach(h => {
@@ -9735,7 +9878,505 @@ updateNavigationActive();
 initSidebarState(true);
 window.addEventListener('resize', handleResponsiveViewportChange);
 window.addEventListener('orientationchange', handleResponsiveViewportChange);
+// ================================================================
+//  WRONG BOOK FUNCTIONS
+// ================================================================
+function openQuizWrongBook() {
+  const list = safeArray(quizState.wrongBook);
+  const total = list.length;
+  if (!total) {
+    openGenericSheet('Wrong Book', '<div class="empty-state">No wrong questions yet. Keep practicing!</div>', [{text:'Close', onclick:()=>closeSheet('genericSheet')}]);
+    return;
+  }
+  renderWrongBookListView();
+}
+
+function renderWrongBookListView() {
+  const list = safeArray(quizState.wrongBook);
+  const total = list.length;
+  const mastered = list.filter(w => w.completed).length;
+  const unmastered = total - mastered;
+  const todayStr = todayISO();
+  const todayReviewed = list.filter(w => w.lastReviewedAt && new Date(w.lastReviewedAt).toISOString().slice(0,10) === todayStr).length;
+
+  const statsHtml = `
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px;">
+      <div class="res-stat-card"><div class="label">Total</div><div class="value">${total}</div></div>
+      <div class="res-stat-card"><div class="label">Unmastered</div><div class="value">${unmastered}</div></div>
+      <div class="res-stat-card"><div class="label">Mastered</div><div class="value">${mastered}</div></div>
+      <div class="res-stat-card"><div class="label">Reviewed Today</div><div class="value">${todayReviewed}</div></div>
+    </div>
+  `;
+
+  const listHtml = list.map((w, idx) => {
+    const qText = esc((w.question || '').slice(0, 80) + ((w.question || '').length > 80 ? '...' : ''));
+    const statusClass = w.completed ? 'completed' : 'not_started';
+    const statusLabel = w.completed ? 'Mastered' : 'Unmastered';
+    return `
+      <div class="list-item" style="display:flex;flex-direction:column;gap:8px;">
+        <div style="font-weight:700;font-size:14px;">${idx+1}. ${qText}</div>
+        <div style="display:flex;gap:12px;font-size:12px;color:var(--ink-secondary);">
+          <span>✓ ${esc(String(w.correctAnswer).slice(0,30))}</span>
+          <span>✗ ${esc(String(w.yourAnswer).slice(0,30))}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <span class="roadmap-status ${statusClass}">${statusLabel}</span>
+          <div style="display:flex;gap:6px;">
+            <button class="apple-btn small" onclick="startWrongBookPracticeById('${esc(w.id)}')">Practice</button>
+            <button class="apple-btn small" onclick="toggleWrongBookMastered('${esc(w.id)}')">${w.completed ? 'Unmaster' : 'Mastered'}</button>
+            <button class="apple-btn small danger" onclick="deleteWrongBookItem('${esc(w.id)}')">Delete</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  const body = `
+    ${statsHtml}
+    <div style="display:flex;gap:8px;margin-bottom:12px;">
+      <button class="apple-btn primary" onclick="startWrongBookPractice()">Practice All</button>
+    </div>
+    <div style="max-height:60vh;overflow-y:auto;">${listHtml}</div>
+  `;
+
+  openGenericSheet('Wrong Book', body, [{text:'Close', onclick:()=>closeSheet('genericSheet')}]);
+  const sheetInner = document.getElementById('genericSheetInner');
+  if (sheetInner) sheetInner.classList.add('wide');
+}
+
+let _wbPracticeState = null;
+
+function startWrongBookPracticeById(id) {
+  const fullList = safeArray(quizState.wrongBook);
+  const idx = fullList.findIndex(w => w.id === id);
+  if (idx === -1) return;
+  const list = fullList.filter(w => !w.completed);
+  const filteredIdx = list.findIndex(w => w.id === id);
+  startWrongBookPractice(filteredIdx >= 0 ? filteredIdx : 0);
+}
+
+function startWrongBookPractice(startIdx) {
+  const list = safeArray(quizState.wrongBook).filter(w => !w.completed);
+  if (!list.length) {
+    toast('All questions mastered! Great job.');
+    return;
+  }
+  let idx = typeof startIdx === 'number' ? startIdx : 0;
+  if (idx < 0 || idx >= list.length) idx = 0;
+  _wbPracticeState = { list, idx, showAnswer: false, selected: null };
+  renderWrongBookPractice();
+}
+
+function renderWrongBookPractice() {
+  if (!_wbPracticeState) return;
+  const { list, idx, showAnswer } = _wbPracticeState;
+  const w = list[idx];
+  if (!w) {
+    renderWrongBookListView();
+    return;
+  }
+
+  const progressHtml = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;font-size:12px;color:var(--ink-secondary);">
+      <span>Question ${idx+1} / ${list.length}</span>
+      <span>${Math.round((idx/list.length)*100)}%</span>
+    </div>
+    <div class="progress-bar" style="height:6px;margin-bottom:16px;"><div class="progress-fill" style="width:${(idx/list.length)*100}%;"></div></div>
+  `;
+
+  const optionsHtml = safeArray(w.options).map((opt) => {
+    let cls = 'q-opt';
+    if (showAnswer) {
+      if (opt === w.correctAnswer) cls += ' correct';
+      else if (opt === _wbPracticeState.selected) cls += ' wrong';
+    } else if (_wbPracticeState.selected === opt) {
+      cls += ' selected';
+    }
+    return `<button class="${cls}" onclick="selectWrongBookOption('${esc(opt).replace(/'/g,"\\'")}')" ${showAnswer ? 'disabled' : ''}>${esc(opt)}</button>`;
+  }).join('');
+
+  const answerHtml = showAnswer ? `
+    <div class="q-status ${w.correctAnswer === _wbPracticeState.selected ? 'ok' : 'err'}" style="margin-top:10px;">
+      ${w.correctAnswer === _wbPracticeState.selected ? '✓ Correct!' : '✗ Wrong'}
+    </div>
+    <div class="q-explain show" style="margin-top:10px;">
+      <strong>Correct Answer:</strong> ${esc(w.correctAnswer)}<br>
+      <strong>Your Answer:</strong> ${esc(w.yourAnswer)}<br>
+      ${w.explanation ? `<strong>Explanation:</strong> ${esc(w.explanation)}` : ''}
+    </div>
+    <div style="display:flex;gap:8px;margin-top:12px;">
+      ${w.correctAnswer === _wbPracticeState.selected ? `<button class="apple-btn primary" onclick="masterWrongBookItem('${esc(w.id)}')">Mark Mastered</button>` : ''}
+      <button class="apple-btn" onclick="nextWrongBookQuestion()">Next</button>
+      <button class="apple-btn" onclick="renderWrongBookListView()">Back to List</button>
+    </div>
+  ` : `
+    <div style="display:flex;gap:8px;margin-top:12px;">
+      <button class="apple-btn primary" onclick="checkWrongBookAnswer()">Check Answer</button>
+      <button class="apple-btn" onclick="renderWrongBookListView()">Back to List</button>
+    </div>
+  `;
+
+  const body = `
+    ${progressHtml}
+    <div class="q-card">
+      <div class="q-text" style="font-size:15px;font-weight:700;line-height:1.6;">${esc(w.question)}</div>
+      <div class="q-options">${optionsHtml}</div>
+      ${answerHtml}
+    </div>
+  `;
+
+  document.getElementById('genericSheetBody').innerHTML = body;
+  document.getElementById('genericSheetTitle').textContent = 'Wrong Book — Practice';
+}
+
+function selectWrongBookOption(opt) {
+  if (!_wbPracticeState || _wbPracticeState.showAnswer) return;
+  _wbPracticeState.selected = opt;
+  renderWrongBookPractice();
+}
+
+function checkWrongBookAnswer() {
+  if (!_wbPracticeState || !_wbPracticeState.selected) { toast('Please select an answer'); return; }
+  _wbPracticeState.showAnswer = true;
+  const w = _wbPracticeState.list[_wbPracticeState.idx];
+  if (w) {
+    w.lastReviewedAt = Date.now();
+    w.reviewCount = (w.reviewCount || 0) + 1;
+    if (_wbPracticeState.selected === w.correctAnswer) {
+      w.reviewed = true;
+    }
+    saveQuiz(); renderSharedStats();
+  }
+  renderWrongBookPractice();
+}
+
+function nextWrongBookQuestion() {
+  if (!_wbPracticeState) return;
+  _wbPracticeState.idx++;
+  _wbPracticeState.showAnswer = false;
+  _wbPracticeState.selected = null;
+  renderWrongBookPractice();
+}
+
+function masterWrongBookItem(id) {
+  const w = safeArray(quizState.wrongBook).find(x => x.id === id);
+  if (w) {
+    w.completed = true;
+    w.reviewed = true;
+    saveQuiz(); renderSharedStats();
+    toast('Marked as mastered');
+  }
+  nextWrongBookQuestion();
+}
+
+function toggleWrongBookMastered(id) {
+  const w = safeArray(quizState.wrongBook).find(x => x.id === id);
+  if (w) {
+    w.completed = !w.completed;
+    saveQuiz(); renderSharedStats();
+    renderWrongBookListView();
+  }
+}
+
+function deleteWrongBookItem(id) {
+  if (!confirm('Delete this wrong question?')) return;
+  quizState.wrongBook = safeArray(quizState.wrongBook).filter(x => x.id !== id);
+  saveQuiz(); renderSharedStats();
+  renderWrongBookListView();
+}
+
+/* ================================================================
+   WRONG BOOK REVIEW VIEW — Word Book aligned size/layout
+   Shows answer + explanation by default for review.
+   ================================================================ */
+function _wrongBookText(val) {
+  if (val === null || typeof val === 'undefined') return '';
+  if (Array.isArray(val)) return val.map(_wrongBookText).filter(Boolean).join(', ');
+  if (typeof val === 'object') return val.text || val.label || val.value || val.answer || JSON.stringify(val);
+  return String(val);
+}
+function _wrongBookCorrect(w) {
+  return _wrongBookText(w?.correctAnswer ?? w?.answer ?? w?.correct ?? w?.correct_answer ?? '');
+}
+function _wrongBookUser(w) {
+  return _wrongBookText(w?.yourAnswer ?? w?.userAnswer ?? w?.selectedAnswer ?? w?.selected ?? w?.user_answer ?? '');
+}
+function _wrongBookExplanation(w) {
+  return _wrongBookText(w?.explanation ?? w?.explain ?? w?.analysis ?? w?.reason ?? '');
+}
+function _wrongBookStripChoicePrefix(s) {
+  return _wrongBookText(s).trim().replace(/^[A-H][\.|\)|、]\s*/i, '').trim();
+}
+function _wrongBookOptionMatches(opt, ans, idx) {
+  const option = _wrongBookText(opt).trim();
+  const answer = _wrongBookText(ans).trim();
+  if (!option || !answer) return false;
+  const lowerOpt = option.toLowerCase();
+  const lowerAns = answer.toLowerCase();
+  const letter = 'ABCDEFGH'[idx] || '';
+  if (letter && (lowerAns === letter.toLowerCase() || lowerAns === `${letter.toLowerCase()}.` || lowerAns === `${letter.toLowerCase()})`)) return true;
+  if (lowerOpt === lowerAns) return true;
+  if (_wrongBookStripChoicePrefix(lowerOpt) === _wrongBookStripChoicePrefix(lowerAns)) return true;
+  return false;
+}
+function _wrongBookOptionLabel(opt, idx) {
+  const raw = _wrongBookText(opt);
+  return /^[A-H][\.|\)|、]\s*/i.test(raw.trim()) ? esc(raw) : `<span style="font-weight:800;margin-right:6px;color:var(--ink-tertiary);">${'ABCDEFGH'[idx] || idx + 1}.</span>${esc(raw)}`;
+}
+function _renderWrongBookReviewCard(w, idx) {
+  const correct = _wrongBookCorrect(w);
+  const user = _wrongBookUser(w);
+  const explanation = _wrongBookExplanation(w);
+  const options = safeArray(w.options || w.choices || w.opts);
+  const statusClass = w.completed ? 'completed' : 'not_started';
+  const statusLabel = w.completed ? 'Mastered' : 'Unmastered';
+  const optionsHtml = options.length ? options.map((opt, optIdx) => {
+    const isCorrect = _wrongBookOptionMatches(opt, correct, optIdx);
+    const isUser = _wrongBookOptionMatches(opt, user, optIdx);
+    let cls = 'q-opt';
+    if (isCorrect) cls += ' correct';
+    if (isUser && !isCorrect) cls += ' wrong';
+    if (isUser && isCorrect) cls += ' selected';
+    const badges = `${isUser ? '<span style="margin-left:auto;font-size:11px;font-weight:800;color:var(--ink-secondary);">Your choice</span>' : ''}${isCorrect ? '<span style="margin-left:8px;font-size:11px;font-weight:800;color:var(--ink);">Correct</span>' : ''}`;
+    return `<div class="${cls}" style="cursor:default;display:flex;align-items:flex-start;gap:8px;pointer-events:none;">
+      <span style="flex:1;min-width:0;">${_wrongBookOptionLabel(opt, optIdx)}</span>${badges}
+    </div>`;
+  }).join('') : '<div class="empty-state" style="padding:14px 12px;margin-bottom:12px;">No options saved for this question.</div>';
+
+  return `
+    <div class="q-card" style="margin-bottom:14px;">
+      <div class="q-meta" style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
+        <span>Wrong Question ${idx + 1}</span>
+        <span class="roadmap-status ${statusClass}" style="text-transform:none;letter-spacing:0;">${statusLabel}</span>
+      </div>
+      <div class="q-text" style="font-size:15px;font-weight:750;line-height:1.65;">${esc(w.question || w.prompt || '')}</div>
+      <div class="q-options" style="margin-bottom:12px;">${optionsHtml}</div>
+      <div class="q-explain show" style="display:block;margin-top:10px;">
+        <div style="display:grid;grid-template-columns:minmax(0,1fr);gap:10px;margin-bottom:${explanation ? '10px' : '0'};">
+          <div style="background:var(--bg-card);border:1px solid var(--line-light);border-radius:var(--radius-sm);padding:10px 12px;">
+            <div style="font-size:10px;font-weight:800;color:var(--ink-tertiary);text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px;">Correct Answer</div>
+            <div style="font-size:13px;font-weight:800;color:var(--ink);line-height:1.45;">${esc(correct || 'Not recorded')}</div>
+          </div>
+        </div>
+        ${explanation ? `<div><strong>Explanation:</strong> ${esc(explanation)}</div>` : ''}
+      </div>
+      <div class="q-actions" style="margin-top:12px;justify-content:flex-end;">
+        <button onclick="toggleWrongBookMastered('${esc(w.id)}')">${w.completed ? 'Unmaster' : 'Mark Mastered'}</button>
+        <button class="danger" onclick="deleteWrongBookItem('${esc(w.id)}')">Delete</button>
+      </div>
+    </div>
+  `;
+}
+
+function openQuizWrongBook() {
+  const list = safeArray(quizState.wrongBook);
+  if (!list.length) {
+    openGenericSheet('Wrong Book', '<div class="empty-state">No wrong questions yet. Keep practicing!</div>', [{text:'Close', onclick:()=>closeSheet('genericSheet')}]);
+    const emptySheetInner = document.getElementById('genericSheetInner');
+    if (emptySheetInner) emptySheetInner.classList.add('wide');
+    return;
+  }
+  renderWrongBookListView();
+}
+
+function renderWrongBookListView() {
+  const list = safeArray(quizState.wrongBook);
+  const total = list.length;
+  const mastered = list.filter(w => w.completed).length;
+  const unmastered = total - mastered;
+  const todayStr = todayISO();
+  const todayReviewed = list.filter(w => w.lastReviewedAt && new Date(w.lastReviewedAt).toISOString().slice(0,10) === todayStr).length;
+  const body = `
+    <div style="display:flex;flex-direction:column;gap:14px;">
+      <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;">
+        <div class="res-stat-card" style="margin:0;"><div class="label">Total</div><div class="value">${total}</div></div>
+        <div class="res-stat-card" style="margin:0;"><div class="label">Unmastered</div><div class="value">${unmastered}</div></div>
+        <div class="res-stat-card" style="margin:0;"><div class="label">Mastered</div><div class="value">${mastered}</div></div>
+        <div class="res-stat-card" style="margin:0;"><div class="label">Reviewed Today</div><div class="value">${todayReviewed}</div></div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        <button class="apple-btn primary" onclick="startWrongBookPractice()">Practice All</button>
+      </div>
+      <div style="font-size:12px;color:var(--ink-secondary);line-height:1.55;background:var(--bg-elev);border:1px solid var(--line-light);border-radius:var(--radius);padding:10px 12px;">
+        Review mode: answers and explanations are shown automatically. No extra click is required.
+      </div>
+      <div>${list.map((w, idx) => _renderWrongBookReviewCard(w, idx)).join('')}</div>
+    </div>
+  `;
+  openGenericSheet('Wrong Book', body, [{text:'Close', onclick:()=>closeSheet('genericSheet')}]);
+  const sheetInner = document.getElementById('genericSheetInner');
+  if (sheetInner) {
+    sheetInner.className = 'sheet wide';
+    sheetInner.style.width = '';
+  }
+}
+
+function startWrongBookPractice(startIdx) {
+  const list = safeArray(quizState.wrongBook).filter(w => !w.completed);
+  if (!list.length) {
+    toast('All questions mastered! Great job.');
+    return;
+  }
+  let idx = typeof startIdx === 'number' ? startIdx : 0;
+  if (idx < 0 || idx >= list.length) idx = 0;
+  _wbPracticeState = { list, idx, showAnswer: true, selected: _wrongBookUser(list[idx]) || null };
+  renderWrongBookPractice();
+}
+
+function renderWrongBookPractice() {
+  if (!_wbPracticeState) return;
+  const { list, idx } = _wbPracticeState;
+  const w = list[idx];
+  if (!w) { renderWrongBookListView(); return; }
+  const progress = list.length ? ((idx + 1) / list.length) * 100 : 0;
+  const body = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;font-size:12px;color:var(--ink-secondary);">
+      <span>Question ${idx + 1} / ${list.length}</span>
+      <span>${Math.round(progress)}%</span>
+    </div>
+    <div class="progress-bar" style="height:6px;margin-bottom:16px;"><div class="progress-fill" style="width:${progress}%;background:var(--accent);"></div></div>
+    ${_renderWrongBookReviewCard(w, idx)}
+    <div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;">
+      <button class="apple-btn" onclick="renderWrongBookListView()">Back to List</button>
+      <button class="apple-btn primary" onclick="nextWrongBookQuestion()">Next</button>
+    </div>
+  `;
+  document.getElementById('genericSheetBody').innerHTML = body;
+  document.getElementById('genericSheetTitle').textContent = 'Wrong Book — Review';
+  const sheetInner = document.getElementById('genericSheetInner');
+  if (sheetInner) sheetInner.className = 'sheet wide';
+}
+
+// Wrong Book count is intentionally not rendered in the sidebar stats.
+
+
+/* ================================================================
+   REVIEW CENTER — full-screen main content entry for Word Book / Wrong Book / Synonyms
+   Existing module renderers are preserved; their Sheet target IDs are provided inside #mainContent.
+   ================================================================ */
+let _reviewCenterActiveTab = 'wordbook';
+let _reviewCenterRendering = false;
+
+const _reviewOrigOpenSidebarWordBook = (typeof openSidebarWordBook === 'function') ? openSidebarWordBook : null;
+const _reviewOrigOpenQuizWrongBook = (typeof openQuizWrongBook === 'function') ? openQuizWrongBook : null;
+const _reviewOrigOpenSidebarSynonyms = (typeof openSidebarSynonyms === 'function') ? openSidebarSynonyms : null;
+const _reviewOrigRender = (typeof render === 'function') ? render : null;
+
+function _reviewTabButton(label, tab) {
+  const active = _reviewCenterActiveTab === tab;
+  return `<button type="button" onclick="openReviewCenter('${tab}')" style="border:none !important;background:transparent !important;border-radius:0 !important;box-shadow:none !important;padding:0 0 4px 0;margin:0;font-size:13px;line-height:1.35;font-weight:${active ? '800' : '500'};color:${active ? 'var(--ink)' : 'var(--ink-secondary)'};text-decoration:${active ? 'underline' : 'none'};text-underline-offset:5px;cursor:pointer;">${label}</button>`;
+}
+
+function _reviewTabsHTML() {
+  return `<div id="reviewCenterTabs" data-review-tabs="true" style="display:flex;align-items:center;gap:22px;flex-wrap:wrap;margin-bottom:16px;padding-bottom:10px;border-bottom:1px solid var(--line-light);">
+    ${_reviewTabButton('Word Book', 'wordbook')}
+    ${_reviewTabButton('Wrong Book', 'wrongbook')}
+    ${_reviewTabButton('Synonyms', 'synonyms')}
+  </div>`;
+}
+
+function _setReviewNavActive() {
+  if (typeof updateNavigationActive === 'function') updateNavigationActive();
+  document.querySelectorAll('.capsule-item').forEach(el => {
+    el.classList.toggle('active', el.dataset && el.dataset.module === 'review');
+  });
+  const title = document.getElementById('topbarTitle');
+  if (title) title.textContent = 'Review';
+}
+
+function _prepareReviewMainShell() {
+  const main = document.getElementById('mainContent');
+  if (!main) return null;
+  main.innerHTML = `
+    <div class="roadmap-page" id="reviewCenterPage" style="display:flex;flex-direction:column;gap:16px;">
+      <div class="roadmap-section" style="padding:18px;">
+        <div class="roadmap-section-head" style="margin-bottom:12px;"><h3>Review</h3></div>
+        ${_reviewTabsHTML()}
+        <div id="genericSheet" class="review-main-shell" style="display:block;position:static;background:transparent;padding:0;">
+          <div id="genericSheetInner" class="review-main-inner" style="width:100%;max-width:100%;max-height:none;display:flex;flex-direction:column;border:none;box-shadow:none;background:transparent;">
+            <div class="sheet-head" style="display:none;"><h3 id="genericSheetTitle">Review</h3><div class="close-btn" onclick="closeSheet('genericSheet')">x</div></div>
+            <div class="sheet-body" id="genericSheetBody" style="padding:0;overflow:visible;max-height:none;flex:1;"></div>
+            <div class="sheet-foot" id="genericSheetFoot" style="padding:12px 0 0;margin-top:8px;border-top:1px solid var(--line-light);"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+  return document.getElementById('genericSheetBody');
+}
+
+function _normalizeReviewMainShell() {
+  const shell = document.getElementById('genericSheet');
+  const inner = document.getElementById('genericSheetInner');
+  const body = document.getElementById('genericSheetBody');
+  const foot = document.getElementById('genericSheetFoot');
+  if (shell) {
+    shell.className = 'review-main-shell';
+    shell.style.cssText = 'display:block;position:static;background:transparent;padding:0;';
+  }
+  if (inner) {
+    inner.className = 'review-main-inner';
+    inner.style.cssText = 'width:100%;max-width:100%;max-height:none;display:flex;flex-direction:column;border:none;box-shadow:none;background:transparent;overflow:visible;';
+  }
+  if (body) {
+    body.className = 'sheet-body';
+    body.style.padding = '0';
+    body.style.overflow = 'visible';
+    body.style.maxHeight = 'none';
+  }
+  if (foot) {
+    foot.className = 'sheet-foot';
+    foot.style.padding = '12px 0 0';
+    foot.style.marginTop = '8px';
+    foot.style.borderTop = '1px solid var(--line-light)';
+  }
+}
+
+function renderReviewCenter(tab = _reviewCenterActiveTab || 'wordbook') {
+  _reviewCenterActiveTab = tab || 'wordbook';
+  appState.currentModule = 'review';
+  if (typeof saveAppState === 'function') saveAppState();
+  _setReviewNavActive();
+  _reviewCenterRendering = true;
+  _prepareReviewMainShell();
+  if (_reviewCenterActiveTab === 'wrongbook') {
+    if (_reviewOrigOpenQuizWrongBook) _reviewOrigOpenQuizWrongBook();
+  } else if (_reviewCenterActiveTab === 'synonyms') {
+    if (_reviewOrigOpenSidebarSynonyms) _reviewOrigOpenSidebarSynonyms();
+  } else {
+    if (_reviewOrigOpenSidebarWordBook) _reviewOrigOpenSidebarWordBook();
+  }
+  _normalizeReviewMainShell();
+  _setReviewNavActive();
+  _reviewCenterRendering = false;
+}
+
+function openReviewCenter(tab = 'wordbook') {
+  renderReviewCenter(tab);
+}
+
+if (_reviewOrigRender) {
+  render = function() {
+    if (appState && appState.currentModule === 'review') {
+      renderReviewCenter(_reviewCenterActiveTab || 'wordbook');
+      return;
+    }
+    return _reviewOrigRender();
+  };
+}
+
+if (_reviewOrigOpenSidebarWordBook) {
+  openSidebarWordBook = function() { openReviewCenter('wordbook'); };
+}
+if (_reviewOrigOpenQuizWrongBook) {
+  openQuizWrongBook = function() { openReviewCenter('wrongbook'); };
+}
+if (_reviewOrigOpenSidebarSynonyms) {
+  openSidebarSynonyms = function() { openReviewCenter('synonyms'); };
+}
+
 render();
 </script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a176fd6be87039c4',t:'MTc4MzQyODc4Mw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a1771d6388e9371d',t:'MTc4MzQzMDA5Mw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a1780a322deadbec',t:'MTc4MzQzOTc5Mg=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a1782a0d69249730',t:'MTc4MzQ0MTA5Nw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a1782f3ffe679f58',t:'MTc4MzQ0MTMxMA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a176fd6be87039c4',t:'MTc4MzQyODc4Mw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a1771d6388e9371d',t:'MTc4MzQzMDA5Mw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a1780a322deadbec',t:'MTc4MzQzOTc5Mg=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a1782a0d69249730',t:'MTc4MzQ0MTA5Nw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a1782f3ffe679f58',t:'MTc4MzQ0MTMxMA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a17c34b1cfa68cac',t:'MTc4MzQ4MzQ3Ng=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a17c3fc42bd2a9f1',t:'MTc4MzQ4MzkzMA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a17c848b8a0cacf2',t:'MTc4MzQ4Njc0Nw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script defer src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ==" data-cf-beacon='{"version":"2024.11.0","token":"1954b47c125f43f8b4338b3c4f804e4f","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a17ca904ca2fd2f5',t:'MTc4MzQ4ODI0MQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a17d5805ad6c326f',t:'MTc4MzQ5NTQwOQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a17d6f7f2868ebb6',t:'MTc4MzQ5NjM3MQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>
