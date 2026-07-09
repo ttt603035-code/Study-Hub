@@ -768,6 +768,79 @@ textarea { resize: vertical; }
 .resource-list-compact .res-card {
   margin-bottom: 0;
 }
+.resource-grid.resource-list-compact {
+  position: relative;
+  overscroll-behavior: contain;
+}
+.resource-grid.resource-list-compact .res-card {
+  will-change: transform;
+  transition:
+    transform 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.2s ease,
+    box-shadow 0.2s ease,
+    border-color 0.2s ease,
+    background-color 0.2s ease;
+}
+.resource-grid.resource-list-compact .res-card:hover {
+  transition:
+    transform 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.2s ease,
+    border-color 0.2s ease;
+}
+.resource-grid.resource-list-compact .st-drag-grip {
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-user-drag: none;
+}
+.resource-grid.resource-list-compact .st-drag-grip:active {
+  cursor: grabbing;
+}
+body.resource-dragging,
+body.resource-dragging * {
+  cursor: grabbing !important;
+  user-select: none !important;
+  -webkit-user-select: none !important;
+}
+body.resource-dragging .resource-grid.resource-list-compact .res-card:hover {
+  transform: none;
+}
+.res-card.res-drag-placeholder {
+  opacity: 0.3 !important;
+  transform: scale(0.96) !important;
+  box-shadow: none !important;
+  border-color: var(--line) !important;
+  background: var(--bg-card) !important;
+  pointer-events: none;
+}
+.res-card.res-drag-lift {
+  position: fixed !important;
+  z-index: 9999;
+  margin: 0 !important;
+  opacity: 0.98;
+  cursor: grabbing;
+  pointer-events: none;
+  transform-origin: center center;
+  will-change: transform;
+  box-shadow:
+    0 18px 40px rgba(0, 0, 0, 0.18),
+    0 4px 12px rgba(0, 0, 0, 0.12);
+  border-color: rgba(0, 0, 0, 0.12);
+  backdrop-filter: saturate(180%) blur(18px);
+  -webkit-backdrop-filter: saturate(180%) blur(18px);
+  transition:
+    transform 0.08s linear,
+    box-shadow 0.18s ease,
+    opacity 0.18s ease;
+}
+.res-card.res-drag-lift.res-drag-drop {
+  opacity: 0;
+  transform: scale(0.98) !important;
+  transition:
+    opacity 0.16s ease,
+    transform 0.16s ease;
+}
 .res-card.completed { opacity: 0.7; }
 .res-card.completed .res-title { text-decoration: line-through; color: var(--ink-tertiary); }
 .res-card::before {
@@ -7873,8 +7946,42 @@ function downloadText(text, filename, type='text/plain') { const blob=new Blob([
 // ================================================================
 //  STUDY RESOURCES RENDER
 // ================================================================
+function normalizeResourceOrders(shouldSave = false) {
+  if (!Array.isArray(resources)) resources = [];
+
+  const nextOrderBySubject = {};
+  let changed = false;
+
+  resources.forEach(r => {
+    const subjectKey = r.subject || '__general';
+    if (nextOrderBySubject[subjectKey] === undefined) nextOrderBySubject[subjectKey] = 0;
+
+    const order = Number(r.order);
+    if (r.order === undefined || r.order === null || Number.isNaN(order)) {
+      r.order = nextOrderBySubject[subjectKey]++;
+      changed = true;
+    } else {
+      nextOrderBySubject[subjectKey] = Math.max(nextOrderBySubject[subjectKey], order + 1);
+    }
+  });
+
+  if (changed && shouldSave) saveResState();
+  return changed;
+}
+
+function sortResourcesByOrder(list) {
+  normalizeResourceOrders(false);
+  return [...(list || [])].sort((a, b) => {
+    const ao = Number.isFinite(Number(a.order)) ? Number(a.order) : 0;
+    const bo = Number.isFinite(Number(b.order)) ? Number(b.order) : 0;
+    return ao - bo;
+  });
+}
+
 function renderStudyResources(container) {
   try {
+    normalizeResourceOrders(true);
+
     const selectedResourceSubject = appState.resourceSubject || appState.currentSubject || getSidebarSubjectKeys()[0] || 'all';
     const isAllResourceView = selectedResourceSubject === 'all';
     const subj = isAllResourceView ? null : selectedResourceSubject;
@@ -7972,17 +8079,18 @@ function renderStudyResources(container) {
 
 function renderModResources(subj) {
   const allRes = resources || [];
-  let res = allRes.filter(r => !subj || r.subject === subj);
+  let res = sortResourcesByOrder(allRes.filter(r => !subj || r.subject === subj));
   if (resViewState.filterSubject !== 'all') res = res.filter(r => r.subject === resViewState.filterSubject);
   if (resViewState.filterType !== 'all' && resViewState.filterType !== 'resources') return '';
 
-  const notStarted = res.filter(r => r.status === 'not_started' || (r.startDate && r.startDate > todayISO()));
-  const pending = res.filter(r => r.status === 'pending' && (!r.startDate || r.startDate <= todayISO()));
-  const completed = res.filter(r => r.status === 'completed');
+  const notStarted = sortResourcesByOrder(res.filter(r => r.status === 'not_started' || (r.startDate && r.startDate > todayISO())));
+  const pending = sortResourcesByOrder(res.filter(r => r.status === 'pending' && (!r.startDate || r.startDate <= todayISO())));
+  const completed = sortResourcesByOrder(res.filter(r => r.status === 'completed'));
   let displayed = [...res];
   if (resViewState.resTab === 'not_started') displayed = notStarted;
   if (resViewState.resTab === 'pending') displayed = pending;
   if (resViewState.resTab === 'completed') displayed = completed;
+  displayed = sortResourcesByOrder(displayed);
 
   return `<div class="res-section mod-section" id="mod_resources" data-mod="resources">
     <div class="res-section-head" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
@@ -9218,7 +9326,7 @@ function generateWeeklySplitPrompt() {
     return `${i + 1}. [${subjectLabel}] ${t.goal || t.title || '未命名目标'}\n   进度: ${cur} / ${tgt} ${t.unit || ''}  状态: ${status}`;
   }).join('\n\n') || '暂无本周目标。';
 
-  return `你是一个学习规划助手。请根据我本周的学习总目标，帮我拆分成每天的具体可执行任务。
+  return `你是一个学习规划助手。请根据我本周的学习总目标，帮我拆分成每天可以导入 Apple Reminders 的具体任务。
 
 📅 本周时间范围：${ws} ~ ${we}
 
@@ -9228,13 +9336,43 @@ ${goalsText}
 
 ${customStr ? '📝 我的自定义要求：\n' + customStr + '\n' : ''}
 请帮我：
-1. 将以上每个总目标按天拆分，分配到周一~周日
+1. 将以上每个总目标按天拆分，分配到本周每一天
 2. 每天的任务要具体可执行（如"完成第38~40页"、"复习15个单词"）
 3. 考虑任务难度，前半周可以多做，后半周留出缓冲和复习时间
 4. 如果有考试倒计时，请优先安排高频考点内容
-5. 输出格式要求：每天一个任务清单，包含科目、具体任务、预计时间
+5. 每个任务都要有真实日期，日期必须在本周时间范围内
 
-请直接输出每天的任务安排，不需要额外解释。`;
+输出要求：
+- 只输出合法 JSON
+- 不要输出 Markdown
+- 不要使用 \`\`\`json 代码块
+- 不要输出解释文字
+- 不需要 time 字段
+- notes 可填可不填；如果没有特别备注，填空字符串 ""
+
+JSON 格式必须严格如下：
+
+{
+  "reminderList": "学习计划",
+  "tasks": [
+    {
+      "date": "YYYY-MM-DD",
+      "subject": "English",
+      "title": "完成 Grammar Book 第 38~40 页",
+      "duration": "45分钟",
+      "notes": "补充说明，可为空"
+    }
+  ]
+}
+
+字段规则：
+- date：必须是真实日期，格式为 YYYY-MM-DD，例如 ${ws}
+- subject：填写科目名称，例如 English、Chinese、Politics，也可以使用本周目标里的科目名称
+- title：填写适合直接放进 Apple Reminders 的具体任务标题，不要太长
+- duration：填写预计用时，例如 30分钟、45分钟、1小时
+- notes：填写页码范围、复习重点、注意事项等；没有就填 ""
+
+请现在只输出 JSON。`;
 }
 
 function importWeekly(mode) {
@@ -9347,41 +9485,254 @@ function initWeeklyTaskDrag() {
 
 function initResourceDrag() {
   const lists = document.querySelectorAll('[id^="resDragList_"]');
+
   lists.forEach(list => {
+    if (list.dataset.resourceDragReady === 'true') return;
+    list.dataset.resourceDragReady = 'true';
+
     list.querySelectorAll('.st-drag-grip').forEach(grip => {
       grip.onpointerdown = e => {
         const item = e.target.closest('.res-card');
-        if (!item) return;
-        e.preventDefault();
-        item.classList.add('st-is-dragging');
+        if (!item || e.button === 2) return;
 
-        const onMove = me => {
-          const sibs = Array.from(list.querySelectorAll('.res-card:not(.st-is-dragging)'));
-          const over = sibs.find(s => {
-            const r = s.getBoundingClientRect();
-            return me.clientY > r.top && me.clientY < r.bottom;
+        e.preventDefault();
+        e.stopPropagation();
+
+        const startRect = item.getBoundingClientRect();
+        const pointerOffsetX = e.clientX - startRect.left;
+        const pointerOffsetY = e.clientY - startRect.top;
+
+        let draggingItem = item;
+        let dragGhost = item.cloneNode(true);
+        let currentBeforeEl = null;
+        let hasMoved = false;
+        let rafId = null;
+        let latestX = e.clientX;
+        let latestY = e.clientY;
+
+        if (navigator.vibrate) navigator.vibrate(10);
+
+        document.body.classList.add('resource-dragging');
+
+        draggingItem.classList.add('res-drag-placeholder');
+        draggingItem.style.width = `${startRect.width}px`;
+        draggingItem.style.height = `${startRect.height}px`;
+
+        dragGhost.classList.add('res-drag-lift');
+        dragGhost.classList.remove('res-drag-placeholder');
+        dragGhost.style.width = `${startRect.width}px`;
+        dragGhost.style.height = `${startRect.height}px`;
+        dragGhost.style.left = `${startRect.left}px`;
+        dragGhost.style.top = `${startRect.top}px`;
+        dragGhost.style.pointerEvents = 'none';
+
+        document.body.appendChild(dragGhost);
+
+        const moveGhost = (clientX, clientY) => {
+          const x = clientX - pointerOffsetX;
+          const y = clientY - pointerOffsetY;
+
+          dragGhost.style.transform = `translate3d(${x - startRect.left}px, ${y - startRect.top}px, 0) scale(1.04) rotate(-0.5deg)`;
+        };
+
+        const getCards = () => {
+          return Array.from(list.querySelectorAll('.res-card:not(.res-drag-lift)'));
+        };
+
+        const getSiblings = () => {
+          return Array.from(list.querySelectorAll('.res-card:not(.res-drag-placeholder):not(.res-drag-lift)'));
+        };
+
+        const snapshotRects = () => {
+          const map = new Map();
+          getCards().forEach(card => {
+            map.set(card, card.getBoundingClientRect());
           });
-          if (over) {
-            const r = over.getBoundingClientRect();
-            if (me.clientY < r.top + r.height / 2) over.before(item);
-            else over.after(item);
+          return map;
+        };
+
+        const animateLayout = oldRects => {
+          getCards().forEach(card => {
+            if (card === draggingItem) return;
+
+            const oldRect = oldRects.get(card);
+            if (!oldRect) return;
+
+            const newRect = card.getBoundingClientRect();
+            const dx = oldRect.left - newRect.left;
+            const dy = oldRect.top - newRect.top;
+
+            if (!dx && !dy) return;
+
+            card.style.transition = 'none';
+            card.style.transform = `translate3d(${dx}px, ${dy}px, 0)`;
+
+            requestAnimationFrame(() => {
+              card.style.transition = 'transform 0.28s cubic-bezier(0.22, 1, 0.36, 1)';
+              card.style.transform = '';
+            });
+          });
+        };
+
+        const edgeScroll = clientY => {
+          const listRect = list.getBoundingClientRect();
+          const threshold = 50;
+          const speed = 8;
+
+          if (clientY < listRect.top + threshold) {
+            list.scrollTop -= speed;
+            return true;
+          } else if (clientY > listRect.bottom - threshold) {
+            list.scrollTop += speed;
+            return true;
+          }
+
+          return false;
+        };
+
+        const findInsertBefore = clientY => {
+          const siblings = getSiblings();
+          if (!siblings.length) return null;
+
+          let nearest = null;
+          let nearestRect = null;
+          let minDistance = Infinity;
+
+          siblings.forEach(sibling => {
+            const rect = sibling.getBoundingClientRect();
+            const centerY = rect.top + rect.height / 2;
+            const distance = Math.abs(clientY - centerY);
+
+            if (distance < minDistance) {
+              minDistance = distance;
+              nearest = sibling;
+              nearestRect = rect;
+            }
+          });
+
+          if (!nearest || !nearestRect) return null;
+
+          const nearestCenterY = nearestRect.top + nearestRect.height / 2;
+
+          if (clientY >= nearestCenterY) {
+            return nearest.nextElementSibling;
+          }
+
+          return nearest;
+        };
+
+        const reorderByPointer = clientY => {
+          const beforeEl = findInsertBefore(clientY);
+
+          if (beforeEl === currentBeforeEl) return;
+          if (beforeEl === draggingItem) return;
+
+          const oldRects = snapshotRects();
+
+          list.insertBefore(draggingItem, beforeEl || null);
+
+          currentBeforeEl = beforeEl;
+          animateLayout(oldRects);
+
+          if (navigator.vibrate) navigator.vibrate(4);
+        };
+
+        const onPointerMove = e => {
+          latestX = e.clientX;
+          latestY = e.clientY;
+          hasMoved = true;
+
+          edgeScroll(e.clientY);
+
+          if (rafId) return;
+
+          rafId = requestAnimationFrame(() => {
+            rafId = null;
+            moveGhost(latestX, latestY);
+            reorderByPointer(latestY);
+          });
+        };
+
+        const persistResourceOrder = () => {
+          const orderedIds = Array.from(list.querySelectorAll('.res-card'))
+            .map(el => el.dataset.resid)
+            .filter(Boolean);
+
+          if (!orderedIds.length) return;
+
+          normalizeResourceOrders(false);
+
+          const orderedSet = new Set(orderedIds);
+          const listKey = String(list.id || '').replace(/^resDragList_/, '');
+          const isAllList = !listKey || listKey === 'all';
+          const scopedResources = sortResourcesByOrder(resources.filter(r => isAllList || String(r.subject || '') === listKey));
+          const visibleSlotIndexes = [];
+
+          scopedResources.forEach((resource, index) => {
+            if (orderedSet.has(String(resource.id))) visibleSlotIndexes.push(index);
+          });
+
+          orderedIds.forEach((id, index) => {
+            const slotIndex = visibleSlotIndexes[index];
+            const resource = resources.find(r => String(r.id) === String(id));
+            if (slotIndex !== undefined && resource) scopedResources[slotIndex] = resource;
+          });
+
+          scopedResources.forEach((resource, index) => {
+            resource.order = index;
+          });
+
+          if (typeof saveResState === 'function') {
+            saveResState();
+          } else {
+            localStorage.setItem('study_resources_pro', JSON.stringify(resources));
           }
         };
-        const onUp = () => {
-          item.classList.remove('st-is-dragging');
-          window.removeEventListener('pointermove', onMove);
-          window.removeEventListener('pointerup', onUp);
-          // Persist order
-          const newIds = Array.from(list.querySelectorAll('.res-card')).map(el => el.dataset.resid);
-          const reordered = [];
-          newIds.forEach(id => { const r = resources.find(x => x.id === id); if (r) reordered.push(r); });
-          // Keep items not currently displayed in their original relative order
-          const removed = resources.filter(x => !newIds.includes(x.id));
-          resources = [...removed, ...reordered];
-          saveResState();
+
+        const cleanup = () => {
+          if (rafId) {
+            cancelAnimationFrame(rafId);
+            rafId = null;
+          }
+
+          draggingItem.classList.remove('res-drag-placeholder');
+          draggingItem.style.width = '';
+          draggingItem.style.height = '';
+
+          if (dragGhost) {
+            dragGhost.classList.add('res-drag-drop');
+            setTimeout(() => {
+              dragGhost?.remove();
+              dragGhost = null;
+            }, 180);
+          }
+
+          getCards().forEach(card => {
+            card.style.transition = '';
+            card.style.transform = '';
+          });
+
+          document.body.classList.remove('resource-dragging');
+
+          window.removeEventListener('pointermove', onPointerMove);
+          window.removeEventListener('pointerup', onPointerUp);
+          window.removeEventListener('pointercancel', onPointerUp);
         };
-        window.addEventListener('pointermove', onMove);
-        window.addEventListener('pointerup', onUp);
+
+        const onPointerUp = () => {
+          cleanup();
+
+          if (hasMoved) {
+            persistResourceOrder();
+            if (navigator.vibrate) navigator.vibrate(8);
+          }
+        };
+
+        moveGhost(e.clientX, e.clientY);
+
+        window.addEventListener('pointermove', onPointerMove, { passive: false });
+        window.addEventListener('pointerup', onPointerUp, { once: true });
+        window.addEventListener('pointercancel', onPointerUp, { once: true });
       };
     });
   });
