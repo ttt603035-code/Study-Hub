@@ -9317,6 +9317,11 @@ function generateWeeklySplitPrompt() {
   const ws = weeklyPlan.startDate || todayISO();
   const we = weeklyPlan.endDate || todayISO();
   const customStr = weeklyPlan.customPrompt || '';
+  const subjectOptions = getSidebarSubjectKeys()
+    .map(k => (customSubjects[k]?.label) || k)
+    .filter(Boolean);
+  const categoryList = subjectOptions.length ? subjectOptions.join('、') : 'English、Chinese、Politics';
+  const categoryExample = subjectOptions[0] || 'English';
 
   const goalsText = tasks.map((t, i) => {
     const subjectLabel = (customSubjects[t.subject]?.label) || t.subject || 'General';
@@ -9342,6 +9347,9 @@ ${customStr ? '📝 我的自定义要求：\n' + customStr + '\n' : ''}
 4. 如果有考试倒计时，请优先安排高频考点内容
 5. 每个任务都要有真实日期，日期必须在本周时间范围内
 
+当前系统科目分类：
+${categoryList}
+
 输出要求：
 - 只输出合法 JSON
 - 不要输出 Markdown
@@ -9349,6 +9357,7 @@ ${customStr ? '📝 我的自定义要求：\n' + customStr + '\n' : ''}
 - 不要输出解释文字
 - 不需要 time 字段
 - notes 可填可不填；如果没有特别备注，填空字符串 ""
+- 必须包含 category 字段，快捷指令会根据 category 放入对应的 Reminders List
 
 JSON 格式必须严格如下：
 
@@ -9357,7 +9366,8 @@ JSON 格式必须严格如下：
   "tasks": [
     {
       "date": "YYYY-MM-DD",
-      "subject": "English",
+      "category": "${categoryExample}",
+      "subject": "${categoryExample}",
       "title": "完成 Grammar Book 第 38~40 页",
       "duration": "45分钟",
       "notes": "补充说明，可为空"
@@ -9367,10 +9377,12 @@ JSON 格式必须严格如下：
 
 字段规则：
 - date：必须是真实日期，格式为 YYYY-MM-DD，例如 ${ws}
-- subject：填写科目名称，例如 English、Chinese、Politics，也可以使用本周目标里的科目名称
+- category：必须严格从“当前系统科目分类”中选择一个，不能输出其他分类名
+- subject：填写科目名称，通常与 category 相同；如果任务更具体，也可以写更具体的科目/模块
 - title：填写适合直接放进 Apple Reminders 的具体任务标题，不要太长
 - duration：填写预计用时，例如 30分钟、45分钟、1小时
 - notes：填写页码范围、复习重点、注意事项等；没有就填 ""
+- 如果无法判断分类，请选择最接近的系统科目，不要新增 Other、Review、General 等分类，除非它们已经出现在“当前系统科目分类”中
 
 请现在只输出 JSON。`;
 }
