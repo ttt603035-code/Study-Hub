@@ -3016,8 +3016,30 @@ img, svg, video, canvas, iframe, table, pre, code {
 }
 
 </style>
+<style>
+#miniDialog{position:fixed;inset:0;z-index:99999;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.45);backdrop-filter:blur(4px);}
+#miniDialog.open{display:flex;}
+#miniDialogBox{background:var(--bg-card,#fff);border:1px solid var(--line,#ddd);border-radius:16px;padding:24px 20px 16px;min-width:280px;max-width:340px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.3);display:flex;flex-direction:column;gap:12px;}
+#miniDialogLabel{font-size:14px;font-weight:600;color:var(--ink,#111);line-height:1.4;}
+#miniDialogInput{padding:10px 12px;font-size:14px;border:1px solid var(--line,#ddd);border-radius:10px;background:var(--bg-elev,#f5f5f5);color:var(--ink,#111);outline:none;width:100%;box-sizing:border-box;}
+#miniDialogInput:focus{border-color:var(--accent,#007aff);}
+#miniDialogBtns{display:flex;gap:8px;justify-content:flex-end;}
+#miniDialogBtns button{padding:8px 18px;border-radius:20px;border:none;font-size:13px;font-weight:600;cursor:pointer;}
+#miniDialogCancel{background:var(--bg-elev,#eee);color:var(--ink,#111);}
+#miniDialogOk{background:var(--accent,#007aff);color:#fff;}
+</style>
 </head>
 <body>
+<div id="miniDialog">
+  <div id="miniDialogBox">
+    <div id="miniDialogLabel"></div>
+    <input id="miniDialogInput" type="text">
+    <div id="miniDialogBtns">
+      <button id="miniDialogCancel">取消</button>
+      <button id="miniDialogOk">确定</button>
+    </div>
+  </div>
+</div>
 
 <div class="app">
   <!-- SIDEBAR -->
@@ -3557,6 +3579,33 @@ function saveAll() { saveAppState(); saveQuiz(); saveResState(); saveSuggest(); 
 //  HELPERS
 // ================================================================
 function uid(prefix='id') { return prefix+'_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,7); }
+function sanitizeJSON(raw) {
+  let s = String(raw || '').trim();
+  s = s.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '');
+  s = s.replace(/,\s*([}\]])/g, '$1');
+  return s;
+}
+function miniPrompt(label, defaultVal, callback) {
+  const overlay = document.getElementById('miniDialog');
+  const lbl = document.getElementById('miniDialogLabel');
+  const inp = document.getElementById('miniDialogInput');
+  const ok = document.getElementById('miniDialogOk');
+  const cancel = document.getElementById('miniDialogCancel');
+  lbl.textContent = label;
+  inp.value = defaultVal || '';
+  overlay.classList.add('open');
+  inp.focus(); inp.select();
+  const close = (result) => {
+    overlay.classList.remove('open');
+    ok.onclick = null; cancel.onclick = null;
+    overlay.onclick = null; inp.onkeydown = null;
+    callback(result);
+  };
+  ok.onclick = () => close(inp.value);
+  cancel.onclick = () => close(null);
+  overlay.onclick = (e) => { if (e.target === overlay) close(null); };
+  inp.onkeydown = (e) => { if (e.key === 'Enter') close(inp.value); if (e.key === 'Escape') close(null); };
+}
 function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function toast(msg, ms=1800) {
   const t = document.getElementById('toast');
@@ -3564,6 +3613,12 @@ function toast(msg, ms=1800) {
   clearTimeout(toast._t); toast._t = setTimeout(()=>t.classList.remove('show'), ms);
 }
 function todayISO() { return new Date().toISOString().slice(0,10); }
+function normalizeUnifiedExercises() { /* 空实现，防止报错 */ }
+function autoArchiveCompletedExercises() { /* 空实现，防止报错 */ }
+function smoothScrollToSection(selector) {
+  const el = document.querySelector(selector);
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
 function parseInlineHighlight(subj, str) {
   const escaped = esc(str);
   return escaped.replace(/==([^=]+)==/g, (m,p1) => `<span class="inline-highlight" onclick="removeInlineHighlight('${subj}','${esc(p1).replace(/'/g,"\\'")}')">${p1}</span>`);
@@ -3682,7 +3737,9 @@ function updateNavigationActive() {
 function toggleSidebarIASection(key) {
   sidebarIAState[key] = !(sidebarIAState[key] !== false);
   saveSidebarIAState();
+  // 修复：更新导航激活状态并重新渲染侧边栏，确保折叠状态立即同步
   updateNavigationActive();
+  renderSidebar();
 }
 function getCurrentMonthArchives() {
   const now = new Date();
@@ -3755,14 +3812,15 @@ function renderQuotesSection() {
 }
 
 function addQuote() {
-  const text = prompt('Add a study note or motivational quote:');
-  if (text === null) return;
-  const value = text.trim();
-  if (!value) return;
-  const quotes = getStudyQuotes();
-  quotes.unshift({ id: 'q_' + Date.now(), text: value, createdAt: Date.now(), pinned: false, done: false, focus: false });
-  saveStudyQuotes(quotes);
-  render();
+  miniPrompt('Add a study note or motivational quote:', '', text => {
+    if (text === null) return;
+    const value = text.trim();
+    if (!value) return;
+    const quotes = getStudyQuotes();
+    quotes.unshift({ id: 'q_' + Date.now(), text: value, createdAt: Date.now(), pinned: false, done: false, focus: false });
+    saveStudyQuotes(quotes);
+    render();
+  });
 }
 
 function startInlineQuoteEdit(id) {
@@ -4157,11 +4215,12 @@ function renderHomePage(container) {
 
 function editUsername() {
   const current = localStorage.getItem('study_username') || 'Scholar';
-  const newName = prompt('Enter your name:', current);
-  if (newName !== null && newName.trim() !== '') {
-    localStorage.setItem('study_username', newName.trim());
-    render();
-  }
+  miniPrompt('Enter your name:', current, newName => {
+    if (newName !== null && newName.trim() !== '') {
+      localStorage.setItem('study_username', newName.trim());
+      render();
+    }
+  });
 }
 
 function switchModule(mod) {
@@ -4328,6 +4387,13 @@ function renderSidebar() {
       <div class="progress-bar"><div class="progress-fill" style="width:${prog.percent}%;background:${s.color}"></div></div>
     </div>`;
   }).join('');
+
+  // 修复：确保 sidebar-ia-section 的折叠状态与 sidebarIAState 同步
+  document.querySelectorAll('.sidebar-ia-section').forEach(sec => {
+    const key = sec.dataset.sidebarSection;
+    const open = sidebarIAState[key] !== false;
+    sec.classList.toggle('collapsed', !open);
+  });
 }
 
 function renderSharedStats() {
@@ -4448,19 +4514,29 @@ function renderSectionPillsHTML() {
 
 function switchSection(id) { quizState.currentPassageId = id; saveQuiz(); render(); }
 function addPassage() {
-  const name = prompt('Section name:');
-  if (!name || !name.trim()) return;
-  const p = { id:uid('sec'), customName:name.trim(), title:'', content:'' };
+  miniPrompt('Section name:', '', name => {
+    if (!name || !name.trim()) return;
+    const p = { id:uid('sec'), customName:name.trim(), title:'', content:'' };
+    quizState.passages.push(p);
+    quizState.currentPassageId = p.id;
+    saveQuiz(); render();
+  });
+}
+function addPassageWithName(name) {
+  const trimmed = name.trim();
+  if (!trimmed) return;
+  const p = { id: uid('sec'), customName: trimmed, title: trimmed, content: '' };
   quizState.passages.push(p);
   quizState.currentPassageId = p.id;
-  saveQuiz(); render();
+  saveQuiz();
 }
 function renamePassage(id) {
   const p = quizState.passages.find(x=>x.id===id); if(!p) return;
-  const name = prompt('Rename section:', p.customName);
-  if (name===null) return;
-  if (!name.trim()) { toast('Name cannot be empty'); return; }
-  p.customName = name.trim(); saveQuiz(); render();
+  miniPrompt('Rename section:', p.customName, name => {
+    if (name===null) return;
+    if (!name.trim()) { toast('Name cannot be empty'); return; }
+    p.customName = name.trim(); saveQuiz(); render();
+  });
 }
 function deletePassage(id) {
   const p = quizState.passages.find(x=>x.id===id); if(!p) return;
@@ -4563,17 +4639,20 @@ function onQuizSetChange(val) {
 function addQuizSet() {
   const p = currentPassage(); if(!p) { toast('Create a section first'); return; }
   const list = getQuizSets(p.id);
-  const name = prompt('Quiz set name:', String(list.length+1));
-  if (name===null) return;
-  const qs = {id:uid('qs'),passageId:p.id,name:(name||'').trim()||String(list.length+1),createdAt:Date.now()};
-  quizState.quizSets.push(qs); quizState.currentQuizSetId[p.id]=qs.id;
-  saveQuiz(); render();
+  miniPrompt('Quiz set name:', String(list.length+1), name => {
+    if (name===null) return;
+    const qs = {id:uid('qs'),passageId:p.id,name:(name||'').trim()||String(list.length+1),createdAt:Date.now()};
+    quizState.quizSets.push(qs); quizState.currentQuizSetId[p.id]=qs.id;
+    saveQuiz(); render();
+  });
 }
 function renameCurrentQS() {
   const ids = getActiveQuizSetIds(); if(!ids.length) return;
   const qs = quizState.quizSets.find(x=>x.id===ids[0]); if(!qs) return;
-  const name = prompt('Rename:', qs.name); if(name===null) return;
-  if(!name.trim()){toast('Empty');return;} qs.name=name.trim(); saveQuiz(); render();
+  miniPrompt('Rename:', qs.name, name => {
+    if(name===null) return;
+    if(!name.trim()){toast('Empty');return;} qs.name=name.trim(); saveQuiz(); render();
+  });
 }
 function deleteCurrentQS() {
   const ids = getActiveQuizSetIds(); if(!ids.length) return;
@@ -4734,7 +4813,9 @@ function toggleQuestionWrongBook(qId, qType) {
     quizState.wrongBook.push({
       id: uid('wb'), qType, qId, passageId: q.passageId, quizSetId: q.quizSetId || null,
       question: q.question, options: q.options, correctAnswer: q.answer, yourAnswer: null,
-      explanation: q.explanation || '', ts: Date.now(), completed: false
+      explanation: q.explanation || '', ts: Date.now(), completed: false,
+      reviewStage: 0, nextReviewDate: todayISO(), lastReviewDate: null,
+      reviewCount: 0, mastered: false, consecutiveCorrect: 0
     });
     toast('Added to Wrong Book (已加入错题)');
   }
@@ -4798,12 +4879,14 @@ function submitAnswer(qId, qType) {
         passageId: q.passageId || null, quizSetId: q.quizSetId || null,
         question: q.question, options: q.options || [], correctAnswer: q.answer,
         yourAnswer: chosen, explanation: q.explanation || '', ts: Date.now(),
-        completed: false, reviewed: false, reviewCount: 0, lastReviewedAt: null
+        completed: false, reviewed: false, lastReviewedAt: null,
+        reviewStage: 0, nextReviewDate: todayISO(), lastReviewDate: null,
+        reviewCount: 0, mastered: false, consecutiveCorrect: 0
       });
       saveQuiz(); renderSharedStats();
     }
     quizState.wrongBook = quizState.wrongBook.filter(w=>w.qId!==qId);
-    quizState.wrongBook.push({id:uid('wb'),qType,qId,passageId:q.passageId,quizSetId:q.quizSetId||null,question:q.question,options:q.options,correctAnswer:q.answer,yourAnswer:chosen,explanation:q.explanation||'',ts:Date.now()});
+    quizState.wrongBook.push({id:uid('wb'),qType,qId,passageId:q.passageId,quizSetId:q.quizSetId||null,question:q.question,options:q.options,correctAnswer:q.answer,yourAnswer:chosen,explanation:q.explanation||'',ts:Date.now(),completed:false,reviewStage:0,nextReviewDate:todayISO(),lastReviewDate:null,reviewCount:0,mastered:false,consecutiveCorrect:0});
   } else {
     quizState.wrongBook = quizState.wrongBook.filter(w=>w.qId!==qId);
   }
@@ -5304,7 +5387,7 @@ document.getElementById('selMenu').addEventListener('click', e => {
   if(!info||!text){menu.style.display='none';return;}
   const p = currentPassage(); if(!p){menu.style.display='none';return;}
   if(btn.dataset.color) addHighlight(p.id,info.start,info.end,text,btn.dataset.color,'');
-  else if(btn.dataset.act==='note'){const note=prompt('Note:','');if(note!==null)addHighlight(p.id,info.start,info.end,text,'medium-brown',note.trim());}
+  else if(btn.dataset.act==='note'){ miniPrompt('Note:','',note=>{if(note!==null)addHighlight(p.id,info.start,info.end,text,'medium-brown',note.trim());}); menu.style.display='none'; window.getSelection().removeAllRanges(); return; }
   else if(btn.dataset.act==='vocab') addToWordBook(text.trim(), { source: 'Reading Passage', highlight: true, highlightColor: 'medium-brown' });
   menu.style.display='none'; window.getSelection().removeAllRanges();
 });
@@ -5859,7 +5942,7 @@ function openAddSynonymDialog(qId) {
 let wbCurrentIndex = 0;
 let wbFilter = 'all'; // 'all', 'unresolved', 'resolved'
 
-function openQuizWrongBook(idx = 0, filter = wbFilter) {
+function openQuizWrongBookLegacy(idx = 0, filter = 'all') {
   if (typeof idx === 'number') wbCurrentIndex = idx;
   if (filter) wbFilter = filter;
   const p = currentPassage();
@@ -6141,6 +6224,19 @@ function openQuizSettings() {
               <div id="aiStudioImportTitle" class="ai-studio-section-title">Study Resource Import</div>
             </div>
           </div>
+          <div id="aiStudioPassageSelector" style="margin-bottom:12px;padding:12px 14px;background:var(--bg-elev);border:1px solid var(--line);border-radius:var(--radius);display:none;">
+            <label style="font-size:12px;font-weight:700;color:var(--ink-secondary);display:block;margin-bottom:6px;">📂 导入到哪个板块？</label>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+              <select id="aiTargetPassage" style="flex:1;min-width:160px;padding:8px 12px;border:1px solid var(--line);border-radius:var(--radius-sm);background:var(--bg-card);color:var(--ink);font-size:13px;"></select>
+        <button class="apple-btn small" onclick="miniPrompt('新建板块名称：','',name=>{if(name&&name.trim()){addPassageWithName(name.trim());refreshAIPassageSelector();}})" style="white-space:nowrap;">+ 新建板块</button>
+            </div>
+            <div style="margin-top:8px;">
+              <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;">
+                <input type="checkbox" id="aiForcePassage" checked> 强制使用选中板块（覆盖 JSON 中的 passageId）
+              </label>
+            </div>
+            <div style="font-size:11px;color:var(--ink-tertiary);margin-top:6px;">💡 勾选「强制使用」后，AI 生成的所有题目都会关联到上方选中的板块。</div>
+          </div>
           <div class="ai-studio-import-mode">
             <label>导入方式：</label>
             <label><input type="radio" name="aiImportMode" value="merge" checked> 合并（保留现有数据）</label>
@@ -6272,6 +6368,7 @@ const AI_WIZARD_PROMPTS = {
 - answer 只写单个大写字母
 - explanation 用中文写
 - 如果有多个板块，创建多个 passage，id 递增（sec_001, sec_002…）
+- quizSets 中的 name 字段请填写有意义的名称，如 "Unit 1 - Grammar" 或 "IELTS Reading Set 3"
 
 请将以下内容转换：
 [在这里粘贴你的题目]`,
@@ -6567,6 +6664,23 @@ function switchAIWizardTab(tab) {
   document.querySelectorAll('.ai-wizard-tab').forEach(b => {
     b.classList.toggle('active', b.dataset.tab === _aiWizardTab);
   });
+  // 板块选择器：只在 quiz / passage tab 显示
+  const passageSel = document.getElementById('aiStudioPassageSelector');
+  if (passageSel) {
+    const isQuizTab = (_aiWizardTab === 'quiz' || _aiWizardTab === 'passage');
+    passageSel.style.display = isQuizTab ? '' : 'none';
+    if (isQuizTab) refreshAIPassageSelector();
+  }
+}
+
+function refreshAIPassageSelector() {
+  const sel = document.getElementById('aiTargetPassage');
+  if (!sel) return;
+  const currentVal = sel.value;
+  sel.innerHTML = quizState.passages.length
+    ? quizState.passages.map(p => `<option value="${p.id}">${esc(p.customName || p.title || p.id)}</option>`).join('')
+    : '<option value="">— 请先创建板块 —</option>';
+  if (currentVal && sel.querySelector(`option[value="${currentVal}"]`)) sel.value = currentVal;
 }
 
 function copyAIWizardPrompt() {
@@ -6695,17 +6809,37 @@ function handleAIStudioFileImport(event) {
 function openAIJSONImport() {
   const tab = _aiWizardTab;
   const labels = {quiz:'Quiz Hub',wordbook:'Word Book',synonyms:'Synonyms',passage:'Reading Passage',study_resource:'Study Resource',study_roadmap:'Study Roadmap',roadmap:'Study Roadmap',weekly_planner:'Weekly Planner'};
+
+  const passageOptions = quizState.passages.map(p =>
+    `<option value="${p.id}">${esc(p.customName || p.title || p.id)}</option>`
+  ).join('');
+
   openGenericSheet(`📥 导入 JSON — ${labels[tab]||tab}`,`
     <div style="font-size:13px;color:var(--ink-secondary);margin-bottom:10px;line-height:1.5;">
       将 AI 生成的 JSON 粘贴到下方，选择导入方式后点击导入。
     </div>
-    <div style="margin-bottom:10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+
+    <div style="margin-bottom:12px;padding:12px 14px;background:var(--bg-elev);border:1px solid var(--line);border-radius:var(--radius);">
+      <label style="font-size:12px;font-weight:700;color:var(--ink-secondary);display:block;margin-bottom:6px;">📂 导入到哪个板块？</label>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        <select id="aiTargetPassage" style="flex:1;min-width:160px;padding:8px 12px;border:1px solid var(--line);border-radius:var(--radius-sm);background:var(--bg-card);color:var(--ink);font-size:13px;">
+          ${passageOptions || '<option value="">— 请先创建板块 —</option>'}
+        </select>
+        <button class="apple-btn small" onclick="miniPrompt('新建板块名称：','',name=>{if(name&&name.trim()){addPassageWithName(name.trim());setTimeout(()=>{const sel=document.getElementById('aiTargetPassage');if(sel){sel.innerHTML=quizState.passages.map(p=>\`<option value='\${p.id}'>\${esc(p.customName||p.title||p.id)}</option>\`).join('');sel.value=quizState.passages[quizState.passages.length-1]?.id||'';}},100);}})" style="white-space:nowrap;">+ 新建板块</button>
+      </div>
+      <div style="font-size:11px;color:var(--ink-tertiary);margin-top:6px;">💡 导入时，AI 生成的题目将自动关联到选中的板块。勾选下方「强制使用」可覆盖 JSON 中的 passageId。</div>
+    </div>
+
+    <div style="margin-bottom:10px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
       <label style="font-size:12px;font-weight:700;color:var(--ink-secondary);">导入方式：</label>
       <label style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer;">
         <input type="radio" name="aiImportMode" value="merge" checked> 合并（保留现有数据）
       </label>
       <label style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer;">
         <input type="radio" name="aiImportMode" value="overwrite"> 覆盖（替换现有数据）
+      </label>
+      <label style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer;margin-left:8px;">
+        <input type="checkbox" id="aiForcePassage" checked> 强制使用选中板块（覆盖 JSON 中的 passageId）
       </label>
     </div>
     <textarea id="aiJsonPasteArea" placeholder="在这里粘贴 AI 生成的 JSON..." style="width:100%;height:220px;font-family:monospace;font-size:12px;padding:10px;border:1px solid var(--line);border-radius:var(--radius);background:var(--bg-elev);color:var(--ink);resize:vertical;box-sizing:border-box;"></textarea>
@@ -6762,7 +6896,8 @@ function previewAIImport(tab) {
   }
 
   try {
-    const data = JSON.parse(raw);
+    const clean = sanitizeJSON(raw);
+    const data = JSON.parse(clean);
     let lines = [];
     if (data.passages?.length) lines.push(`📖 Passages: ${data.passages.length} 个`);
     if (data.grammarQuestions?.length) lines.push(`📝 Grammar 题: ${data.grammarQuestions.length} 题`);
@@ -6781,7 +6916,10 @@ function confirmAIImport(tab) {
   const raw = document.getElementById('aiJsonPasteArea')?.value.trim();
   if (!raw) { toast('请先粘贴 JSON'); return; }
   let data;
-  try { data = JSON.parse(raw); } catch(e) { toast('JSON 格式错误：' + e.message); return; }
+  try {
+    const clean = sanitizeJSON(raw);
+    data = JSON.parse(clean);
+  } catch(e) { toast('JSON 格式错误：' + e.message); return; }
 
   const mode = document.querySelector('input[name="aiImportMode"]:checked')?.value || 'merge';
   const overwrite = mode === 'overwrite';
@@ -6789,6 +6927,27 @@ function confirmAIImport(tab) {
   if (overwrite && !confirm('覆盖模式会替换现有数据，确认继续？')) return;
 
   try {
+    if (tab === 'quiz' || tab === 'passage') {
+      // 获取目标板块
+      const targetPassageId = document.getElementById('aiTargetPassage')?.value;
+      const forcePassage = document.getElementById('aiForcePassage')?.checked !== false;
+
+      // 如果强制使用选中板块，替换所有 passageId
+      if (targetPassageId && forcePassage) {
+        if (data.passages) {
+          data.passages.forEach(p => { p.id = targetPassageId; });
+        }
+        if (data.grammarQuestions) {
+          data.grammarQuestions.forEach(q => { q.passageId = targetPassageId; });
+        }
+        if (data.vocabularyQuestions) {
+          data.vocabularyQuestions.forEach(q => { q.passageId = targetPassageId; });
+        }
+        if (data.quizSets) {
+          data.quizSets.forEach(qs => { qs.passageId = targetPassageId; });
+        }
+      }
+    }
     if (tab === 'quiz' || tab === 'passage') {
       // passages
       if (data.passages?.length) {
@@ -10059,9 +10218,12 @@ function renderWeeklyTaskCard(task, idx) {
           <div class="progress-bar" style="height:6px;"><div class="progress-fill" style="width: ${displayProgress}%; background: ${isDone ? 'var(--accent)' : 'var(--ink)'};"></div></div>
         </div>
         <div style="margin-top:10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-          <button class="apple-btn small" onclick="updateWeeklyTaskProgress('${esc(task.id)}', 1)" style="min-width:36px;font-size:10px;padding:2px 8px;">+1</button>
-          <button class="apple-btn small" onclick="updateWeeklyTaskProgress('${esc(task.id)}', -1)" style="min-width:36px;font-size:10px;padding:2px 8px;">-1</button>
-          <span style="font-size:11px;color:var(--ink-tertiary);margin-left:auto;display:flex;align-items:center;gap:4px;">Target: <input type="number" value="${tgt}" onchange="updateWeeklyTaskField('${esc(task.id)}', 'target', +this.value||1)" style="font-size:11px;width:38px;text-align:center;border:1px solid var(--line);border-radius:4px;padding:1px 3px;background:var(--bg-card);color:var(--ink);"> <input type="text" value="${esc(task.unit || 'pages')}" onchange="updateWeeklyTaskField('${esc(task.id)}', 'unit', this.value)" style="font-size:11px;width:50px;text-align:center;border:1px solid var(--line);border-radius:4px;padding:1px 3px;background:var(--bg-card);color:var(--ink);"></span>
+          <button class="apple-btn small" onclick="updateWeeklyTaskProgress('${esc(task.id)}', 1)">+1</button>
+          <button class="apple-btn small" onclick="updateWeeklyTaskProgress('${esc(task.id)}', -1)">-1</button>
+          <input type="number" id="jump_${esc(task.id)}" value="5" style="width:50px;text-align:center;border:1px solid var(--line);border-radius:4px;padding:2px 4px;background:var(--bg-card);color:var(--ink);font-size:11px;">
+          <button class="apple-btn small" onclick="const v=+document.getElementById('jump_${esc(task.id)}').value||5; updateWeeklyTaskProgress('${esc(task.id)}', v)">Jump +N</button>
+          <button class="apple-btn small" onclick="miniPrompt('设置当前进度为：', '${cur}', v=>{if(v!==null) updateWeeklyTaskField('${esc(task.id)}','current',+v||0)})">Set</button>
+          <span style="font-size:11px;color:var(--ink-tertiary);margin-left:auto;display:flex;align-items:center;gap:4px;">目标: <input type="number" value="${tgt}" onchange="updateWeeklyTaskField('${esc(task.id)}', 'target', +this.value||1)" style="font-size:11px;width:38px;text-align:center;border:1px solid var(--line);border-radius:4px;padding:1px 3px;background:var(--bg-card);color:var(--ink);"> <input type="text" value="${esc(task.unit || 'pages')}" onchange="updateWeeklyTaskField('${esc(task.id)}', 'unit', this.value)" style="font-size:11px;width:50px;text-align:center;border:1px solid var(--line);border-radius:4px;padding:1px 3px;background:var(--bg-card);color:var(--ink);"></span>
         </div>
       </div>
     </div>
@@ -10176,7 +10338,17 @@ function getAllProgressQuestions(){
 function startProgressCheck(mode){
   const pools = getAllProgressQuestions();
   if(!pools.all.length){ toast('Add Quiz Hub questions first.'); return; }
-  const count = mode==='monthly' ? 30 : mode==='custom' ? Number(prompt('How many questions?', '15') || 15) : 12;
+  if (mode === 'custom') {
+    miniPrompt('How many questions?', '15', val => {
+      const count = Number(val || 15) || 15;
+      _doStartProgressCheck(mode, count, pools);
+    });
+    return;
+  }
+  const count = mode==='monthly' ? 30 : 12;
+  _doStartProgressCheck(mode, count, pools);
+}
+function _doStartProgressCheck(mode, count, pools){
   const take = (arr,n)=>arr.sort(()=>Math.random()-0.5).slice(0,n);
   let selected = [...take(pools.grammar, Math.ceil(count*.35)), ...take(pools.vocabulary, Math.ceil(count*.35)), ...take(pools.wrong, Math.ceil(count*.30))];
   if(selected.length < count) selected = [...selected, ...take(pools.all.filter(q=>!selected.find(s=>s.id===q.id)), count-selected.length)];
@@ -10219,6 +10391,7 @@ function renderProgressCheck(container){
 loadAppState();
 if (!['quiz','roadmap','resources','weekly_planner','progress_check','review'].includes(appState.currentModule)) appState.currentModule = 'quiz';
 loadQuiz();
+if (typeof migrateWrongBookToEbbinghaus === 'function') migrateWrongBookToEbbinghaus();
 
 // Migrate old wordMemory data to wordBook (one-time cleanup)
 if (quizState.wordMemory && Object.keys(quizState.wordMemory).length > 0) {
@@ -10282,214 +10455,85 @@ window.addEventListener('orientationchange', handleResponsiveViewportChange);
 // ================================================================
 //  WRONG BOOK FUNCTIONS
 // ================================================================
-function openQuizWrongBook() {
-  const list = safeArray(quizState.wrongBook);
-  const total = list.length;
-  if (!total) {
-    openGenericSheet('Wrong Book', '<div class="empty-state">No wrong questions yet. Keep practicing!</div>', [{text:'Close', onclick:()=>closeSheet('genericSheet')}]);
-    return;
-  }
-  renderWrongBookListView();
-}
-
-function renderWrongBookListView() {
-  const list = safeArray(quizState.wrongBook);
-  const total = list.length;
-  const mastered = list.filter(w => w.completed).length;
-  const unmastered = total - mastered;
-  const todayStr = todayISO();
-  const todayReviewed = list.filter(w => w.lastReviewedAt && new Date(w.lastReviewedAt).toISOString().slice(0,10) === todayStr).length;
-
-  const statsHtml = `
-    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px;">
-      <div class="res-stat-card"><div class="label">Total</div><div class="value">${total}</div></div>
-      <div class="res-stat-card"><div class="label">Unmastered</div><div class="value">${unmastered}</div></div>
-      <div class="res-stat-card"><div class="label">Mastered</div><div class="value">${mastered}</div></div>
-      <div class="res-stat-card"><div class="label">Reviewed Today</div><div class="value">${todayReviewed}</div></div>
-    </div>
-  `;
-
-  const listHtml = list.map((w, idx) => {
-    const qText = esc((w.question || '').slice(0, 80) + ((w.question || '').length > 80 ? '...' : ''));
-    const statusClass = w.completed ? 'completed' : 'not_started';
-    const statusLabel = w.completed ? 'Mastered' : 'Unmastered';
-    return `
-      <div class="list-item" style="display:flex;flex-direction:column;gap:8px;">
-        <div style="font-weight:700;font-size:14px;">${idx+1}. ${qText}</div>
-        <div style="display:flex;gap:12px;font-size:12px;color:var(--ink-secondary);">
-          <span>✓ ${esc(String(w.correctAnswer).slice(0,30))}</span>
-          <span>✗ ${esc(String(w.yourAnswer).slice(0,30))}</span>
-        </div>
-        <div style="display:flex;justify-content:space-between;align-items:center;">
-          <span class="roadmap-status ${statusClass}">${statusLabel}</span>
-          <div style="display:flex;gap:6px;">
-            <button class="apple-btn small" onclick="startWrongBookPracticeById('${esc(w.id)}')">Practice</button>
-            <button class="apple-btn small" onclick="toggleWrongBookMastered('${esc(w.id)}')">${w.completed ? 'Unmaster' : 'Mastered'}</button>
-            <button class="apple-btn small danger" onclick="deleteWrongBookItem('${esc(w.id)}')">Delete</button>
-          </div>
-        </div>
-      </div>
-    `;
-  }).join('');
-
-  const body = `
-    ${statsHtml}
-    <div style="display:flex;gap:8px;margin-bottom:12px;">
-      <button class="apple-btn primary" onclick="startWrongBookPractice()">Practice All</button>
-    </div>
-    <div style="max-height:60vh;overflow-y:auto;">${listHtml}</div>
-  `;
-
-  openGenericSheet('Wrong Book', body, [{text:'Close', onclick:()=>closeSheet('genericSheet')}]);
-  const sheetInner = document.getElementById('genericSheetInner');
-  if (sheetInner) sheetInner.classList.add('wide');
-}
-
+const EBINGHAUS_INTERVALS = [1, 3, 7, 15, 30, 60];
 let _wbPracticeState = null;
 
-function startWrongBookPracticeById(id) {
-  const fullList = safeArray(quizState.wrongBook);
-  const idx = fullList.findIndex(w => w.id === id);
-  if (idx === -1) return;
-  const list = fullList.filter(w => !w.completed);
-  const filteredIdx = list.findIndex(w => w.id === id);
-  startWrongBookPractice(filteredIdx >= 0 ? filteredIdx : 0);
+function initWrongBookEbbinghausFields(w) {
+  if (!w) return w;
+  if (w.reviewStage === undefined) w.reviewStage = 0;
+  if (w.nextReviewDate === undefined) w.nextReviewDate = todayISO();
+  if (w.lastReviewDate === undefined) w.lastReviewDate = null;
+  if (w.reviewCount === undefined) w.reviewCount = 0;
+  if (w.mastered === undefined) w.mastered = false;
+  if (w.consecutiveCorrect === undefined) w.consecutiveCorrect = 0;
+  if (w.completed && !w.mastered) w.mastered = true;
+  return w;
 }
 
-function startWrongBookPractice(startIdx) {
-  const list = safeArray(quizState.wrongBook).filter(w => !w.completed);
-  if (!list.length) {
-    toast('All questions mastered! Great job.');
-    return;
-  }
-  let idx = typeof startIdx === 'number' ? startIdx : 0;
-  if (idx < 0 || idx >= list.length) idx = 0;
-  _wbPracticeState = { list, idx, showAnswer: false, selected: null };
-  renderWrongBookPractice();
+function migrateWrongBookToEbbinghaus() {
+  quizState.wrongBook = safeArray(quizState.wrongBook);
+  quizState.wrongBook.forEach(initWrongBookEbbinghausFields);
+  saveQuiz();
 }
 
-function renderWrongBookPractice() {
-  if (!_wbPracticeState) return;
-  const { list, idx, showAnswer } = _wbPracticeState;
-  const w = list[idx];
-  if (!w) {
-    renderWrongBookListView();
-    return;
+function calculateNextReview(wrongItem) {
+  if (!wrongItem) return null;
+  if ((wrongItem.reviewStage || 0) >= EBINGHAUS_INTERVALS.length) {
+    wrongItem.mastered = true;
+    return null;
   }
+  const days = EBINGHAUS_INTERVALS[wrongItem.reviewStage || 0];
+  const date = new Date();
+  date.setDate(date.getDate() + days);
+  return date.toISOString().slice(0, 10);
+}
 
-  const progressHtml = `
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;font-size:12px;color:var(--ink-secondary);">
-      <span>Question ${idx+1} / ${list.length}</span>
-      <span>${Math.round((idx/list.length)*100)}%</span>
-    </div>
-    <div class="progress-bar" style="height:6px;margin-bottom:16px;"><div class="progress-fill" style="width:${(idx/list.length)*100}%;"></div></div>
-  `;
+function handleWrongBookReview(wrongId, isCorrect) {
+  const item = safeArray(quizState.wrongBook).find(w => w.id === wrongId);
+  if (!item) return;
+  initWrongBookEbbinghausFields(item);
+  item.lastReviewDate = todayISO();
+  item.lastReviewedAt = Date.now();
+  item.reviewCount = (item.reviewCount || 0) + 1;
 
-  const optionsHtml = safeArray(w.options).map((opt) => {
-    let cls = 'q-opt';
-    if (showAnswer) {
-      if (opt === w.correctAnswer) cls += ' correct';
-      else if (opt === _wbPracticeState.selected) cls += ' wrong';
-    } else if (_wbPracticeState.selected === opt) {
-      cls += ' selected';
+  if (isCorrect) {
+    item.consecutiveCorrect = (item.consecutiveCorrect || 0) + 1;
+    item.reviewStage = (item.reviewStage || 0) + 1;
+    item.nextReviewDate = calculateNextReview(item);
+    if (item.reviewStage >= EBINGHAUS_INTERVALS.length) {
+      item.mastered = true;
+      item.completed = true;
+      toast('🎉 恭喜！本题已完全掌握！');
+    } else {
+      toast(`✅ 正确！${EBINGHAUS_INTERVALS[item.reviewStage]}天后再次复习`);
     }
-    return `<button class="${cls}" onclick="selectWrongBookOption('${esc(opt).replace(/'/g,"\\'")}')" ${showAnswer ? 'disabled' : ''}>${esc(opt)}</button>`;
-  }).join('');
-
-  const answerHtml = showAnswer ? `
-    <div class="q-status ${w.correctAnswer === _wbPracticeState.selected ? 'ok' : 'err'}" style="margin-top:10px;">
-      ${w.correctAnswer === _wbPracticeState.selected ? '✓ Correct!' : '✗ Wrong'}
-    </div>
-    <div class="q-explain show" style="margin-top:10px;">
-      <strong>Correct Answer:</strong> ${esc(w.correctAnswer)}<br>
-      <strong>Your Answer:</strong> ${esc(w.yourAnswer)}<br>
-      ${w.explanation ? `<strong>Explanation:</strong> ${esc(w.explanation)}` : ''}
-    </div>
-    <div style="display:flex;gap:8px;margin-top:12px;">
-      ${w.correctAnswer === _wbPracticeState.selected ? `<button class="apple-btn primary" onclick="masterWrongBookItem('${esc(w.id)}')">Mark Mastered</button>` : ''}
-      <button class="apple-btn" onclick="nextWrongBookQuestion()">Next</button>
-      <button class="apple-btn" onclick="renderWrongBookListView()">Back to List</button>
-    </div>
-  ` : `
-    <div style="display:flex;gap:8px;margin-top:12px;">
-      <button class="apple-btn primary" onclick="checkWrongBookAnswer()">Check Answer</button>
-      <button class="apple-btn" onclick="renderWrongBookListView()">Back to List</button>
-    </div>
-  `;
-
-  const body = `
-    ${progressHtml}
-    <div class="q-card">
-      <div class="q-text" style="font-size:15px;font-weight:700;line-height:1.6;">${esc(w.question)}</div>
-      <div class="q-options">${optionsHtml}</div>
-      ${answerHtml}
-    </div>
-  `;
-
-  document.getElementById('genericSheetBody').innerHTML = body;
-  document.getElementById('genericSheetTitle').textContent = 'Wrong Book — Practice';
-}
-
-function selectWrongBookOption(opt) {
-  if (!_wbPracticeState || _wbPracticeState.showAnswer) return;
-  _wbPracticeState.selected = opt;
-  renderWrongBookPractice();
-}
-
-function checkWrongBookAnswer() {
-  if (!_wbPracticeState || !_wbPracticeState.selected) { toast('Please select an answer'); return; }
-  _wbPracticeState.showAnswer = true;
-  const w = _wbPracticeState.list[_wbPracticeState.idx];
-  if (w) {
-    w.lastReviewedAt = Date.now();
-    w.reviewCount = (w.reviewCount || 0) + 1;
-    if (_wbPracticeState.selected === w.correctAnswer) {
-      w.reviewed = true;
-    }
-    saveQuiz(); renderSharedStats();
+  } else {
+    item.consecutiveCorrect = 0;
+    item.reviewStage = 0;
+    item.mastered = false;
+    item.completed = false;
+    item.nextReviewDate = calculateNextReview(item);
+    toast('❌ 答错了，明天再来复习这道题');
   }
-  renderWrongBookPractice();
+  saveQuiz();
+  renderSharedStats();
 }
 
-function nextWrongBookQuestion() {
-  if (!_wbPracticeState) return;
-  _wbPracticeState.idx++;
-  _wbPracticeState.showAnswer = false;
-  _wbPracticeState.selected = null;
-  renderWrongBookPractice();
+function getDueWrongBookQuestions() {
+  const today = todayISO();
+  return safeArray(quizState.wrongBook).map(initWrongBookEbbinghausFields).filter(w => {
+    if (w.mastered || w.completed) return false;
+    if (!w.nextReviewDate) return true;
+    return w.nextReviewDate <= today;
+  });
 }
 
-function masterWrongBookItem(id) {
-  const w = safeArray(quizState.wrongBook).find(x => x.id === id);
-  if (w) {
-    w.completed = true;
-    w.reviewed = true;
-    saveQuiz(); renderSharedStats();
-    toast('Marked as mastered');
-  }
-  nextWrongBookQuestion();
+function getWrongBookMasteredRate() {
+  const list = safeArray(quizState.wrongBook);
+  if (!list.length) return 0;
+  return Math.round((list.filter(w => w.mastered || w.completed).length / list.length) * 100);
 }
 
-function toggleWrongBookMastered(id) {
-  const w = safeArray(quizState.wrongBook).find(x => x.id === id);
-  if (w) {
-    w.completed = !w.completed;
-    saveQuiz(); renderSharedStats();
-    renderWrongBookListView();
-  }
-}
-
-function deleteWrongBookItem(id) {
-  if (!confirm('Delete this wrong question?')) return;
-  quizState.wrongBook = safeArray(quizState.wrongBook).filter(x => x.id !== id);
-  saveQuiz(); renderSharedStats();
-  renderWrongBookListView();
-}
-
-/* ================================================================
-   WRONG BOOK REVIEW VIEW — Word Book aligned size/layout
-   Shows answer + explanation by default for review.
-   ================================================================ */
 function _wrongBookText(val) {
   if (val === null || typeof val === 'undefined') return '';
   if (Array.isArray(val)) return val.map(_wrongBookText).filter(Boolean).join(', ');
@@ -10524,87 +10568,111 @@ function _wrongBookOptionLabel(opt, idx) {
   const raw = _wrongBookText(opt);
   return /^[A-H][\.|\)|、]\s*/i.test(raw.trim()) ? esc(raw) : `<span style="font-weight:800;margin-right:6px;color:var(--ink-tertiary);">${'ABCDEFGH'[idx] || idx + 1}.</span>${esc(raw)}`;
 }
-function _renderWrongBookReviewCard(w, idx) {
-  const correct = _wrongBookCorrect(w);
-  const user = _wrongBookUser(w);
-  const explanation = _wrongBookExplanation(w);
-  const options = safeArray(w.options || w.choices || w.opts);
-  const statusClass = w.completed ? 'completed' : 'not_started';
-  const statusLabel = w.completed ? 'Mastered' : 'Unmastered';
-  const optionsHtml = options.length ? options.map((opt, optIdx) => {
-    const isCorrect = _wrongBookOptionMatches(opt, correct, optIdx);
-    const isUser = _wrongBookOptionMatches(opt, user, optIdx);
-    let cls = 'q-opt';
-    if (isCorrect) cls += ' correct';
-    if (isUser && !isCorrect) cls += ' wrong';
-    if (isUser && isCorrect) cls += ' selected';
-    const badges = `${isUser ? '<span style="margin-left:auto;font-size:11px;font-weight:800;color:var(--ink-secondary);">Your choice</span>' : ''}${isCorrect ? '<span style="margin-left:8px;font-size:11px;font-weight:800;color:var(--ink);">Correct</span>' : ''}`;
-    return `<div class="${cls}" style="cursor:default;display:flex;align-items:flex-start;gap:8px;pointer-events:none;">
-      <span style="flex:1;min-width:0;">${_wrongBookOptionLabel(opt, optIdx)}</span>${badges}
-    </div>`;
-  }).join('') : '<div class="empty-state" style="padding:14px 12px;margin-bottom:12px;">No options saved for this question.</div>';
-
-  return `
-    <div class="q-card" style="margin-bottom:14px;">
-      <div class="q-meta" style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
-        <span>Wrong Question ${idx + 1}</span>
-        <span class="roadmap-status ${statusClass}" style="text-transform:none;letter-spacing:0;">${statusLabel}</span>
-      </div>
-      <div class="q-text" style="font-size:15px;font-weight:750;line-height:1.65;">${esc(w.question || w.prompt || '')}</div>
-      <div class="q-options" style="margin-bottom:12px;">${optionsHtml}</div>
-      <div class="q-explain show" style="display:block;margin-top:10px;">
-        <div style="display:grid;grid-template-columns:minmax(0,1fr);gap:10px;margin-bottom:${explanation ? '10px' : '0'};">
-          <div style="background:var(--bg-card);border:1px solid var(--line-light);border-radius:var(--radius-sm);padding:10px 12px;">
-            <div style="font-size:10px;font-weight:800;color:var(--ink-tertiary);text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px;">Correct Answer</div>
-            <div style="font-size:13px;font-weight:800;color:var(--ink);line-height:1.45;">${esc(correct || 'Not recorded')}</div>
-          </div>
-        </div>
-        ${explanation ? `<div><strong>Explanation:</strong> ${esc(explanation)}</div>` : ''}
-      </div>
-      <div class="q-actions" style="margin-top:12px;justify-content:flex-end;">
-        <button onclick="toggleWrongBookMastered('${esc(w.id)}')">${w.completed ? 'Unmaster' : 'Mark Mastered'}</button>
-        <button class="danger" onclick="deleteWrongBookItem('${esc(w.id)}')">Delete</button>
-      </div>
-    </div>
-  `;
+function _wrongBookIsCorrectSelection(w, optIdx, optVal) {
+  return _wrongBookOptionMatches(optVal, _wrongBookCorrect(w), optIdx);
+}
+function _wrongBookDaysUntil(dateStr) {
+  if (!dateStr) return '';
+  const start = new Date(todayISO() + 'T00:00:00');
+  const end = new Date(dateStr + 'T00:00:00');
+  const diff = Math.ceil((end - start) / 86400000);
+  if (diff <= 0) return '今天';
+  return `${diff} 天后`;
+}
+function _wrongBookStageLabel(w) {
+  initWrongBookEbbinghausFields(w);
+  if (w.mastered || w.completed) return '已掌握';
+  return `第 ${Math.min((w.reviewStage || 0) + 1, EBINGHAUS_INTERVALS.length)} 次复习 / 共 ${EBINGHAUS_INTERVALS.length} 次`;
+}
+function _wrongBookStatusBadge(w) {
+  initWrongBookEbbinghausFields(w);
+  if (w.mastered || w.completed) return `<span class="roadmap-status completed" style="text-transform:none;letter-spacing:0;">已掌握</span>`;
+  if (getDueWrongBookQuestions().some(d => d.id === w.id)) return `<span class="roadmap-status in_progress" style="text-transform:none;letter-spacing:0;background:rgba(255,159,10,.12);color:var(--orange);">今日待复习</span>`;
+  return `<span class="roadmap-status not_started" style="text-transform:none;letter-spacing:0;">进行中</span>`;
 }
 
-function openQuizWrongBook() {
-  const list = safeArray(quizState.wrongBook);
-  if (!list.length) {
-    openGenericSheet('Wrong Book', '<div class="empty-state">No wrong questions yet. Keep practicing!</div>', [{text:'Close', onclick:()=>closeSheet('genericSheet')}]);
-    const emptySheetInner = document.getElementById('genericSheetInner');
-    if (emptySheetInner) emptySheetInner.classList.add('wide');
-    return;
+function openQuizWrongBook(idx = 0, filter = 'all') {
+  if (typeof idx === 'number') wbCurrentIndex = idx;
+  wbFilter = filter || 'all';
+  migrateWrongBookToEbbinghaus();
+  renderWrongBookListView();
+}
+
+function refreshWrongBookList() {
+  // 在 Review 模式下，不重新打开 Sheet，只刷新现有内容，避免 openGenericSheet 重置内嵌样式
+  if (appState.currentModule === 'review') {
+    const body = document.getElementById('genericSheetBody');
+    if (body) {
+      renderWrongBookListContent(body);
+      return;
+    }
   }
   renderWrongBookListView();
 }
 
-function renderWrongBookListView() {
-  const list = safeArray(quizState.wrongBook);
-  const total = list.length;
-  const mastered = list.filter(w => w.completed).length;
-  const unmastered = total - mastered;
-  const todayStr = todayISO();
-  const todayReviewed = list.filter(w => w.lastReviewedAt && new Date(w.lastReviewedAt).toISOString().slice(0,10) === todayStr).length;
-  const body = `
-    <div style="display:flex;flex-direction:column;gap:14px;">
-      <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;">
-        <div class="res-stat-card" style="margin:0;"><div class="label">Total</div><div class="value">${total}</div></div>
-        <div class="res-stat-card" style="margin:0;"><div class="label">Unmastered</div><div class="value">${unmastered}</div></div>
-        <div class="res-stat-card" style="margin:0;"><div class="label">Mastered</div><div class="value">${mastered}</div></div>
-        <div class="res-stat-card" style="margin:0;"><div class="label">Reviewed Today</div><div class="value">${todayReviewed}</div></div>
-      </div>
-      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-        <button class="apple-btn primary" onclick="startWrongBookPractice()">Practice All</button>
-      </div>
-      <div style="font-size:12px;color:var(--ink-secondary);line-height:1.55;background:var(--bg-elev);border:1px solid var(--line-light);border-radius:var(--radius);padding:10px 12px;">
-        Review mode: answers and explanations are shown automatically. No extra click is required.
-      </div>
-      <div>${list.map((w, idx) => _renderWrongBookReviewCard(w, idx)).join('')}</div>
+function renderWrongBookListContent(container) {
+  migrateWrongBookToEbbinghaus();
+  const all = safeArray(quizState.wrongBook).map(initWrongBookEbbinghausFields);
+  const dueList = getDueWrongBookQuestions();
+  const sorted = all.slice().sort((a, b) => {
+    const ad = a.mastered || a.completed ? '9999-12-31' : (a.nextReviewDate || todayISO());
+    const bd = b.mastered || b.completed ? '9999-12-31' : (b.nextReviewDate || todayISO());
+    return ad.localeCompare(bd) || ((b.ts || 0) - (a.ts || 0));
+  });
+  const total = all.length;
+  const dueCount = dueList.length;
+  const masteredCount = all.filter(w => w.mastered || w.completed).length;
+  const inProgressCount = total - masteredCount;
+  const masteredRate = getWrongBookMasteredRate();
+
+  const statsHtml = `
+    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:16px;">
+      <div class="res-stat-card"><div class="label">总错题</div><div class="value">${total}</div></div>
+      <div class="res-stat-card"><div class="label">今日待复习</div><div class="value" style="color:var(--orange)">${dueCount}</div></div>
+      <div class="res-stat-card"><div class="label">已掌握</div><div class="value" style="color:var(--green)">${masteredCount}</div></div>
+      <div class="res-stat-card"><div class="label">进行中</div><div class="value">${inProgressCount}</div></div>
+      <div class="res-stat-card"><div class="label">掌握率</div><div class="value">${masteredRate}%</div></div>
     </div>
   `;
-  openGenericSheet('Wrong Book', body, [{text:'Close', onclick:()=>closeSheet('genericSheet')}]);
+
+  const toolbarHtml = `
+    <div style="display:flex;gap:8px;margin-bottom:14px;align-items:center;flex-wrap:wrap;">
+      <button class="apple-btn primary" onclick="startEbbinghausReview()">今日复习 (${dueCount})</button>
+      <span class="apple-btn" style="cursor:default;">📊 掌握进度: ${masteredRate}%</span>
+      <button class="apple-btn" onclick="startWrongBookPractice()">Practice All</button>
+    </div>
+  `;
+
+  const dueHtml = dueList.length ? `
+    <div style="margin-bottom:16px;">
+      <div style="font-size:13px;font-weight:800;color:var(--orange);margin-bottom:8px;">今日待复习</div>
+      ${dueList.map((w, idx) => _renderWrongBookListItem(w, idx, true)).join('')}
+    </div>
+  ` : `<div class="empty-state" style="padding:14px 12px;margin-bottom:16px;">🎉 今天没有需要复习的错题！</div>`;
+
+  const allHtml = sorted.length ? sorted.map((w, idx) => _renderWrongBookListItem(w, idx, false)).join('') : `<div class="empty-state">No wrong questions yet. Keep practicing!</div>`;
+  container.innerHTML = `
+    ${statsHtml}
+    ${toolbarHtml}
+    ${dueHtml}
+    <div style="font-size:13px;font-weight:800;color:var(--ink);margin:8px 0;">全部错题（按下次复习日期排序）</div>
+    <div style="max-height:60vh;overflow-y:auto;display:flex;flex-direction:column;gap:10px;">${allHtml}</div>
+  `;
+}
+
+function renderWrongBookListView() {
+  migrateWrongBookToEbbinghaus();
+  const body = document.getElementById('genericSheetBody');
+
+  // 如果在 Review 模式下且 body 存在，直接刷新内容，不重新打开 Sheet
+  if (appState.currentModule === 'review' && body) {
+    renderWrongBookListContent(body);
+    return;
+  }
+
+  const temp = document.createElement('div');
+  renderWrongBookListContent(temp);
+  openGenericSheet('Wrong Book · 艾宾浩斯复习', temp.innerHTML, [{text:'Close', cls:'primary', onclick:()=>closeSheet('genericSheet')}]);
   const sheetInner = document.getElementById('genericSheetInner');
   if (sheetInner) {
     sheetInner.className = 'sheet wide';
@@ -10612,43 +10680,236 @@ function renderWrongBookListView() {
   }
 }
 
-function startWrongBookPractice(startIdx) {
-  const list = safeArray(quizState.wrongBook).filter(w => !w.completed);
+function _renderWrongBookListItem(w, idx, highlightDue) {
+  initWrongBookEbbinghausFields(w);
+  const correct = _wrongBookCorrect(w);
+  const user = _wrongBookUser(w);
+  const sameAnswer = correct && user && String(correct).trim() === String(user).trim();
+  const answerHtml = sameAnswer
+    ? `<span>✓ ${esc(user || correct || 'Not recorded')}</span>`
+    : `<span>✗ ${esc(user || 'Not recorded')}</span><span style="margin-left:12px;">✓ 正确答案: ${esc(correct || 'Not recorded')}</span>`;
+  const explanation = _wrongBookExplanation(w);
+  const qText = esc((w.question || w.prompt || '').slice(0, 140) + ((w.question || w.prompt || '').length > 140 ? '...' : ''));
+  const border = highlightDue ? 'border:1px solid rgba(255,159,10,.45);background:rgba(255,159,10,.07);' : 'border:1px solid var(--line-light);background:var(--bg-card);';
+  return `
+    <div class="list-item" style="${border}display:flex;flex-direction:column;gap:8px;border-radius:var(--radius);padding:12px;">
+      <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start;">
+        <div style="font-weight:750;font-size:14px;line-height:1.55;">${idx + 1}. ${qText}</div>
+        ${_wrongBookStatusBadge(w)}
+      </div>
+      <div style="display:flex;gap:12px;font-size:12px;color:var(--ink-secondary);flex-wrap:wrap;">
+        <span>复习阶段：${_wrongBookStageLabel(w)}</span>
+        <span>下次复习：${w.mastered || w.completed ? '已完成' : esc(w.nextReviewDate || '今天')} ${(!w.mastered && !w.completed && w.nextReviewDate) ? `(${_wrongBookDaysUntil(w.nextReviewDate)})` : ''}</span>
+        <span>已复习：${w.reviewCount || 0} 次</span>
+      </div>
+      <div style="display:flex;gap:12px;font-size:12px;color:var(--ink-tertiary);flex-wrap:wrap;">
+        ${answerHtml}
+      </div>
+      <div style="font-size:12px;color:var(--ink-secondary);margin-top:4px;line-height:1.5;background:var(--bg-elev);padding:6px 10px;border-radius:6px;border-left:3px solid var(--accent);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;">
+        ${esc(explanation || '暂无解析')}
+      </div>
+      <div style="display:flex;justify-content:flex-end;align-items:center;gap:6px;flex-wrap:wrap;">
+        <button class="apple-btn small" onclick="startWrongBookPracticeById('${esc(w.id)}')">Practice</button>
+        <button class="apple-btn small" onclick="toggleWrongBookMastered('${esc(w.id)}')">${w.mastered || w.completed ? 'Unmaster' : 'Mark Mastered'}</button>
+        <button class="apple-btn small danger" onclick="deleteWrongBookItem('${esc(w.id)}')">Delete</button>
+      </div>
+    </div>
+  `;
+}
+
+function startWrongBookPracticeById(id) {
+  migrateWrongBookToEbbinghaus();
+  const fullList = safeArray(quizState.wrongBook).filter(w => !w.completed && !w.mastered);
+  const filteredIdx = fullList.findIndex(w => w.id === id);
+  startWrongBookPractice(filteredIdx >= 0 ? filteredIdx : 0, fullList);
+}
+
+function startWrongBookPractice(startIdx = 0, customList) {
+  migrateWrongBookToEbbinghaus();
+  const list = (Array.isArray(customList) ? customList : safeArray(quizState.wrongBook).filter(w => !w.completed && !w.mastered)).map(initWrongBookEbbinghausFields);
   if (!list.length) {
     toast('All questions mastered! Great job.');
     return;
   }
   let idx = typeof startIdx === 'number' ? startIdx : 0;
   if (idx < 0 || idx >= list.length) idx = 0;
-  _wbPracticeState = { list, idx, showAnswer: true, selected: _wrongBookUser(list[idx]) || null };
+  _wbPracticeState = { list, idx, showAnswer: false, selected: null, selectedIndex: null, mode: 'practice' };
+  renderWrongBookPractice();
+}
+
+function startEbbinghausReview() {
+  const dueList = getDueWrongBookQuestions();
+  if (!dueList.length) {
+    toast('🎉 今天没有需要复习的错题！');
+    return;
+  }
+  _wbPracticeState = {
+    list: dueList,
+    idx: 0,
+    showAnswer: false,
+    selected: null,
+    selectedIndex: null,
+    mode: 'ebbinghaus'
+  };
   renderWrongBookPractice();
 }
 
 function renderWrongBookPractice() {
   if (!_wbPracticeState) return;
-  const { list, idx } = _wbPracticeState;
+  const { list, idx, showAnswer } = _wbPracticeState;
   const w = list[idx];
-  if (!w) { renderWrongBookListView(); return; }
-  const progress = list.length ? ((idx + 1) / list.length) * 100 : 0;
-  const body = `
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;font-size:12px;color:var(--ink-secondary);">
+  if (!w) {
+    renderWrongBookListView();
+    return;
+  }
+  initWrongBookEbbinghausFields(w);
+  const stageNow = Math.min((w.reviewStage || 0) + 1, EBINGHAUS_INTERVALS.length);
+  const nextDays = EBINGHAUS_INTERVALS[w.reviewStage || 0] || 0;
+  const pct = Math.round(((idx + (showAnswer ? 1 : 0)) / list.length) * 100);
+  const progressHtml = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;font-size:12px;color:var(--ink-secondary);gap:10px;flex-wrap:wrap;">
       <span>Question ${idx + 1} / ${list.length}</span>
-      <span>${Math.round(progress)}%</span>
+      <span>复习进度: 第 ${stageNow} 次复习 / 共 ${EBINGHAUS_INTERVALS.length} 次&nbsp;&nbsp;|&nbsp;&nbsp;下次复习: ${nextDays ? nextDays + ' 天后' : '完成后掌握'}</span>
     </div>
-    <div class="progress-bar" style="height:6px;margin-bottom:16px;"><div class="progress-fill" style="width:${progress}%;background:var(--accent);"></div></div>
-    ${_renderWrongBookReviewCard(w, idx)}
-    <div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;">
-      <button class="apple-btn" onclick="renderWrongBookListView()">Back to List</button>
+    <div class="progress-bar" style="height:6px;margin-bottom:16px;"><div class="progress-fill" style="width:${pct}%;"></div></div>
+  `;
+
+  const options = safeArray(w.options || w.choices || w.opts);
+  const optionsHtml = options.map((opt, optIdx) => {
+    let cls = 'q-opt';
+    const isCorrect = _wrongBookIsCorrectSelection(w, optIdx, opt);
+    const isSelected = _wbPracticeState.selectedIndex === optIdx;
+    if (showAnswer) {
+      if (isCorrect) cls += ' correct';
+      else if (isSelected) cls += ' wrong';
+    } else if (isSelected) {
+      cls += ' selected';
+    }
+    return `<button class="${cls}" onclick="selectWrongBookOption(${optIdx})" ${showAnswer ? 'disabled' : ''}>${_wrongBookOptionLabel(opt, optIdx)}</button>`;
+  }).join('');
+  const selectedIsCorrect = _wbPracticeState.selectedIndex !== null && options[_wbPracticeState.selectedIndex] !== undefined
+    ? _wrongBookIsCorrectSelection(w, _wbPracticeState.selectedIndex, options[_wbPracticeState.selectedIndex])
+    : false;
+
+  const answerHtml = showAnswer ? `
+    <div class="q-status ${selectedIsCorrect ? 'ok' : 'err'}" style="margin-top:10px;">
+      ${selectedIsCorrect ? '✓ Correct!' : '✗ Wrong'}
+    </div>
+    <div class="q-explain show" style="margin-top:10px;">
+      <strong>Correct Answer:</strong> ${esc(_wrongBookCorrect(w) || 'Not recorded')}<br>
+      <strong>Your Answer:</strong> ${esc(_wrongBookText(_wbPracticeState.selected) || 'Not selected')}<br>
+      ${_wrongBookExplanation(w) ? `<strong>Explanation:</strong> ${esc(_wrongBookExplanation(w))}` : ''}
+    </div>
+    <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;">
+      ${selectedIsCorrect ? `<button class="apple-btn primary" onclick="masterWrongBookItem('${esc(w.id)}')">Mark Mastered</button>` : ''}
       <button class="apple-btn primary" onclick="nextWrongBookQuestion()">Next</button>
+      <button class="apple-btn" onclick="renderWrongBookListView()">Back to List</button>
+    </div>
+  ` : `
+    <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;">
+      <button class="apple-btn primary" onclick="checkWrongBookAnswer()">Check Answer</button>
+      <button class="apple-btn" onclick="renderWrongBookListView()">Back to List</button>
     </div>
   `;
-  document.getElementById('genericSheetBody').innerHTML = body;
-  document.getElementById('genericSheetTitle').textContent = 'Wrong Book — Review';
+
+  const body = `
+    ${progressHtml}
+    <div class="q-card">
+      <div class="q-meta" style="display:flex;justify-content:space-between;gap:10px;align-items:center;">
+        <span>${_wbPracticeState.mode === 'ebbinghaus' ? '艾宾浩斯今日复习' : 'Wrong Book Practice'}</span>
+        ${_wrongBookStatusBadge(w)}
+      </div>
+      <div class="q-text" style="font-size:15px;font-weight:700;line-height:1.6;">${esc(w.question || w.prompt || '')}</div>
+      <div class="q-options">${optionsHtml || '<div class="empty-state" style="padding:14px 12px;">No options saved for this question.</div>'}</div>
+      ${answerHtml}
+    </div>
+  `;
+
+  const bodyEl = document.getElementById('genericSheetBody');
+  const titleEl = document.getElementById('genericSheetTitle');
+  if (bodyEl) bodyEl.innerHTML = body;
+  if (titleEl) titleEl.textContent = _wbPracticeState.mode === 'ebbinghaus' ? 'Wrong Book — 今日复习' : 'Wrong Book — Practice';
+  if (!bodyEl) {
+    openGenericSheet(_wbPracticeState.mode === 'ebbinghaus' ? 'Wrong Book — 今日复习' : 'Wrong Book — Practice', body, [{text:'Close', cls:'primary', onclick:()=>closeSheet('genericSheet')}]);
+  }
   const sheetInner = document.getElementById('genericSheetInner');
   if (sheetInner) sheetInner.className = 'sheet wide';
 }
 
+function selectWrongBookOption(optIdx) {
+  if (!_wbPracticeState || _wbPracticeState.showAnswer) return;
+  const w = _wbPracticeState.list[_wbPracticeState.idx];
+  const options = safeArray(w?.options || w?.choices || w?.opts);
+  _wbPracticeState.selectedIndex = optIdx;
+  _wbPracticeState.selected = options[optIdx];
+  renderWrongBookPractice();
+}
+
+function checkWrongBookAnswer() {
+  if (!_wbPracticeState || _wbPracticeState.selectedIndex === null) { toast('Please select an answer'); return; }
+  const w = _wbPracticeState.list[_wbPracticeState.idx];
+  const options = safeArray(w?.options || w?.choices || w?.opts);
+  const isCorrect = !!w && _wrongBookIsCorrectSelection(w, _wbPracticeState.selectedIndex, options[_wbPracticeState.selectedIndex]);
+  _wbPracticeState.showAnswer = true;
+  if (w) handleWrongBookReview(w.id, isCorrect);
+  renderWrongBookPractice();
+}
+
+function nextWrongBookQuestion() {
+  if (!_wbPracticeState) return;
+  _wbPracticeState.idx++;
+  _wbPracticeState.showAnswer = false;
+  _wbPracticeState.selected = null;
+  _wbPracticeState.selectedIndex = null;
+  renderWrongBookPractice();
+}
+
+function masterWrongBookItem(id) {
+  const w = safeArray(quizState.wrongBook).find(x => x.id === id);
+  if (w) {
+    initWrongBookEbbinghausFields(w);
+    w.completed = true;
+    w.mastered = true;
+    w.reviewed = true;
+    w.reviewStage = EBINGHAUS_INTERVALS.length;
+    w.nextReviewDate = null;
+    w.lastReviewDate = todayISO();
+    saveQuiz(); renderSharedStats();
+    toast('Marked as mastered');
+  }
+  nextWrongBookQuestion();
+}
+
+function toggleWrongBookMastered(id) {
+  const w = safeArray(quizState.wrongBook).find(x => x.id === id);
+  if (w) {
+    initWrongBookEbbinghausFields(w);
+    const next = !(w.completed || w.mastered);
+    w.completed = next;
+    w.mastered = next;
+    if (next) {
+      w.reviewStage = EBINGHAUS_INTERVALS.length;
+      w.nextReviewDate = null;
+      w.lastReviewDate = todayISO();
+    } else {
+      w.reviewStage = 0;
+      w.nextReviewDate = todayISO();
+      w.consecutiveCorrect = 0;
+    }
+    saveQuiz(); renderSharedStats();
+    renderWrongBookListView();
+  }
+}
+
+function deleteWrongBookItem(id) {
+  if (!confirm('Delete this wrong question?')) return;
+  quizState.wrongBook = safeArray(quizState.wrongBook).filter(x => x.id !== id);
+  saveQuiz(); renderSharedStats();
+  renderWrongBookListView();
+}
+
 // Wrong Book count is intentionally not rendered in the sidebar stats.
+
 
 
 /* ================================================================
