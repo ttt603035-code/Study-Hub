@@ -605,7 +605,8 @@ textarea { resize: vertical; }
 .sel-menu .swatch { display: inline-block; width: 10px; height: 10px; border-radius: 50%; }
 
 /* ====== QUIZ WORD SELECTION — Apple Books style ====== */
-.q-selectable { user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;cursor:text; }
+.q-selectable { cursor:text; }
+/* 触屏设备需要原生长按菜单，不设 user-select:none / -webkit-touch-callout:none */
 .q-word-token { display:inline;border-radius:4px;transition:background 0.14s ease, box-shadow 0.14s ease;padding:0 2px;cursor:pointer; }
 .q-word-token:hover { background:rgba(162,132,94,0.12); }
 .q-word-token.qs-selected { background:#735835; color:#FFFFFF; box-shadow:inset 0 -1px 0 rgba(0,0,0,0.2); }
@@ -3154,10 +3155,13 @@ img, svg, video, canvas, iframe, table, pre, code {
             <div class="capsule-item active" data-module="quiz" onclick="switchModule('quiz')">
               <span class="icon" style="font-weight:800;font-size:13px;width:20px;text-align:center;">Q</span> Quiz Hub
             </div>
+            <div class="capsule-item" data-module="reading" onclick="switchModule('reading')">
+              <span class="icon" style="font-weight:800;font-size:13px;width:20px;text-align:center;">R</span> Reading
+            </div>
             <div class="capsule-item" data-module="progress_check" onclick="switchModule('progress_check')">
               <span class="icon" style="font-weight:800;font-size:13px;width:20px;text-align:center;">C</span> Progress Check
             </div>
-            <div class="capsule-item" data-module="review" onclick="openReviewCenter('wordbook')">
+            <div class="capsule-item" data-module="review" onclick="switchModule('review')">
               <span class="icon" style="font-weight:800;font-size:13px;width:20px;text-align:center;">R</span> Review
             </div>
           </div>
@@ -3331,6 +3335,39 @@ let quizState = {
   activeQIndex: { grammar: {}, vocab: {} },
 };
 let quizMeta = { lastExportTs:0, lastBackupTs:0, gist:{token:'',gistId:'',filename:'dashboard.json',lastSyncTs:0} };
+
+// === READING MODULE STATE ===
+const READING_STORE_KEY = 'study_reading_collections_v1';
+const DEFAULT_READING_PROMPT = `你是一个 Reading JSON 生成助手。请根据我提供的要求生成一篇英文阅读文章，并同时给出完整中文翻译。
+
+请严格只输出合法 JSON，不要 Markdown，不要代码块标记，不要解释文字。
+
+输出格式必须完全符合：
+{
+  "name": "文章标题",
+  "text": "完整英文文章正文。段落之间用\\n\\n分隔。",
+  "translation": "完整中文翻译。段落顺序必须和英文正文一致。",
+  "highlights": []
+}
+
+规则：
+- name：简短标题。
+- text：只放英文正文，不要夹杂中文。
+- translation：放整篇中文翻译，不要留空。
+- highlights：可选数组；如果没有预设高亮，就输出空数组 []。
+- 所有换行必须写成 JSON 字符串里的 \\n。
+- 不允许输出任何联网、AI 接口、来源链接或额外字段。
+
+我的文章要求：
+[在这里写主题、难度、词汇范围、文章长度等要求]`;
+let readingState = JSON.parse(localStorage.getItem(READING_STORE_KEY) || 'null') || {
+  collections: [],
+  currentId: null,
+  fontSize: 17,
+  translationCollapsed: false,
+  promptTemplate: DEFAULT_READING_PROMPT
+};
+function saveReading() { localStorage.setItem(READING_STORE_KEY, JSON.stringify(readingState)); }
 
 // === STUDY RESOURCES STATE (from dashboard.html) ===
 let customSubjects = JSON.parse(localStorage.getItem('study_subjects_pro')) || {
@@ -3789,6 +3826,8 @@ function syncResourceToTasks(res) {
 function getModuleTitle(mod) {
   if (mod === 'home') return 'Home';
   if (mod === 'quiz') return 'Quiz Hub';
+  if (mod === 'reading') return 'Reading';
+  if (mod === 'review') return 'Review';
   if (mod === 'roadmap') return 'Study Roadmap';
   if (mod === 'weekly_planner') return 'Weekly AI Planner';
   if (mod === 'progress_check') return 'Progress Check';
@@ -4375,13 +4414,18 @@ function render() {
   renderSidebar();
   renderSharedStats();
   const main = document.getElementById('mainContent');
+
+  if (appState.currentModule === 'review' && typeof renderReviewCenter === 'function') {
+    renderReviewCenter(_reviewCenterActiveTab || 'wordbook');
+    return;
+  }
   
   if (appState.currentModule === 'home') {
     renderHomePage(main);
     return;
   }
   
-  const showDashboard = !(appState.currentModule === 'resources' && appState.resourceSubject !== 'all');
+  const showDashboard = !(appState.currentModule === 'resources' && appState.resourceSubject !== 'all') && appState.currentModule !== 'reading' && appState.currentModule !== 'review';
   main.innerHTML = `${showDashboard ? renderStudyOverviewDashboard() : ''}<div class="module-content-stack" id="moduleContentMount"></div>`;
   const moduleMain = document.getElementById('moduleContentMount');
 
@@ -4392,6 +4436,10 @@ function render() {
 
   if (appState.currentModule === 'quiz') {
     renderQuizHub(moduleMain);
+  } else if (appState.currentModule === 'reading') {
+    renderReadingHub(moduleMain);
+  } else if (appState.currentModule === 'review') {
+    renderReviewCenter('wordbook');
   } else if (appState.currentModule === 'roadmap') {
     renderStudyRoadmap(moduleMain);
   } else if (appState.currentModule === 'weekly_planner') {
@@ -4515,6 +4563,354 @@ function renderGlobalSearch() {
   if (!total) html += `<div class="empty-state">No results found for "${esc(q)}"</div>`;
   return html;
 }
+
+// ================================================================
+//  READING MODULE
+// ================================================================
+function normalizeReadingCollections() {
+  readingState.collections = Array.isArray(readingState.collections) ? readingState.collections : [];
+  readingState.collections.forEach((c, i) => {
+    if (!c.id) c.id = uid('rd');
+    if (!c.name) c.name = 'Reading ' + (i + 1);
+    if (typeof c.text !== 'string') c.text = '';
+    if (typeof c.translation !== 'string') c.translation = '';
+    if (!Array.isArray(c.highlights)) c.highlights = [];
+  });
+  if (readingState.collections.length && !readingState.collections.find(c => c.id === readingState.currentId)) {
+    readingState.currentId = readingState.collections[0].id;
+  }
+  if (!readingState.collections.length) readingState.currentId = null;
+  if (!readingState.promptTemplate || String(readingState.promptTemplate).includes('提取核心生词')) readingState.promptTemplate = DEFAULT_READING_PROMPT;
+  if (!readingState.fontSize) readingState.fontSize = 17;
+}
+function currentReadingCollection() {
+  normalizeReadingCollections();
+  return readingState.collections.find(c => c.id === readingState.currentId) || null;
+}
+function rdSafeInline(s) { return String(s || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'"); }
+function rdNorm(s) { return String(s || '').trim().toLowerCase(); }
+function rdHighlightedWordSet(c) {
+  const set = new Set();
+  (c?.highlights || []).forEach(h => {
+    String(h.text || h).match(/[A-Za-z]+(?:['’-][A-Za-z]+)?/g)?.forEach(w => set.add(rdNorm(w)));
+  });
+  return set;
+}
+function renderReadingHub(container) {
+  normalizeReadingCollections();
+  const c = currentReadingCollection();
+  const opts = readingState.collections.map(x => `<option value="${esc(x.id)}" ${x.id===readingState.currentId?'selected':''}>${esc(x.name)}</option>`).join('');
+  let html = `<div style="margin-bottom:16px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:10px;">
+      <div>
+        <h2 style="font-size:20px;font-weight:800;margin:0;color:var(--ink);">Reading</h2>
+        <div style="font-size:12px;color:var(--ink-secondary);margin-top:2px;">Local collections · Manual paste only</div>
+      </div>
+      <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+        <button class="apple-btn small" onclick="openReadingPrompt()">Prompt</button>
+        <button class="apple-btn small primary" onclick="openReadingImport()">Import</button>
+      </div>
+    </div>
+    <div class="quizset-bar" style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;border-top:1px dashed var(--line);padding-top:12px;">
+      <label style="font-weight:600;font-size:13px;">Reading Set:</label>
+      <select onchange="switchReadingCollection(this.value)" style="padding:4px 8px;font-size:13px;" ${c?'':'disabled'}>${opts || '<option>No collections</option>'}</select>
+      <button class="apple-btn small" onclick="addReadingCollection()">+ New</button>
+      <button class="apple-btn small" onclick="renameReadingCollection()" ${c?'':'disabled'}>Rename</button>
+      <button class="apple-btn small danger" onclick="deleteReadingCollection()" ${c?'':'disabled'}>Delete</button>
+      <span style="margin-left:auto;display:flex;gap:4px;align-items:center;">
+        <button class="apple-btn small" onclick="adjustReadingFont(-1)" ${c?'':'disabled'}>A-</button>
+        <span style="font-size:12px;color:var(--ink-secondary);min-width:42px;text-align:center;">${readingState.fontSize}px</span>
+        <button class="apple-btn small" onclick="adjustReadingFont(1)" ${c?'':'disabled'}>A+</button>
+      </span>
+    </div>
+  </div>`;
+
+  if (!c) {
+    container.innerHTML = html + `<div class="empty-state">No Reading collection yet. Click "+ New" and paste an English passage manually.</div>`;
+    return;
+  }
+
+  html += `<div style="padding:18px 0;margin-bottom:16px;">
+    <div style="font-size:12px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-tertiary);margin-bottom:10px;">English Text</div>
+    <div id="readingBody" class="q-selectable" style="font-size:${readingState.fontSize}px;font-weight:500;color:var(--ink);line-height:1.8;white-space:pre-wrap;min-height:260px;">${renderReadingText(c)}</div>
+  </div>`;
+
+  const collapsed = !!readingState.translationCollapsed;
+  html += `<div class="ai-studio-panel" style="margin-top:16px;">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:${collapsed ? '0' : '12px'};">
+      <button class="apple-btn small" onclick="toggleReadingTranslation()" style="width:28px;height:28px;padding:0;display:flex;align-items:center;justify-content:center;">
+        <span class="roadmap-subject-caret" style="transform:${collapsed?'rotate(-90deg)':'rotate(0deg)'};">▼</span>
+      </button>
+      <div style="font-size:15px;font-weight:800;color:var(--ink);">Translation</div>
+    </div>
+    <textarea id="readingTranslationInput" oninput="saveReadingTranslation(this.value)" style="display:${collapsed?'none':'block'};width:100%;min-height:220px;line-height:1.7;" placeholder="Paste the full Chinese translation here.">${esc(c.translation || '')}</textarea>
+  </div>`;
+
+  container.innerHTML = html;
+  bindReadingModuleEvents();
+}
+function renderReadingText(c) {
+  const marked = rdHighlightedWordSet(c);
+  let idx = 0;
+  return String(c.text || '').split(/([A-Za-z]+(?:['’-][A-Za-z]+)?)/g).map(part => {
+    if (!part) return '';
+    if (/^[A-Za-z]+(?:['’-][A-Za-z]+)?$/.test(part)) {
+      const hl = marked.has(rdNorm(part)) ? ' qs-hl-persist' : '';
+      return `<span class="q-word-token rd-word-token${hl}" data-area="rd_${esc(c.id)}" data-idx="${idx++}" data-word="${esc(part)}" onpointerdown="rdWordDown(event,this)" oncontextmenu="rdWordContextMenu(event,this)" onclick="event.preventDefault();event.stopPropagation();">${esc(part)}</span>`;
+    }
+    return esc(part);
+  }).join('');
+}
+function switchReadingCollection(id) { readingState.currentId = id; saveReading(); render(); }
+function addReadingCollection() {
+  openGenericSheet('New Reading Collection', `
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      <label style="font-size:12px;font-weight:700;color:var(--ink-secondary);">Collection Name</label>
+      <input id="readingNewName" placeholder="Reading title" style="width:100%;">
+      <label style="font-size:12px;font-weight:700;color:var(--ink-secondary);">English Text</label>
+      <textarea id="readingNewText" placeholder="Paste the English passage here." style="width:100%;min-height:260px;line-height:1.7;"></textarea>
+    </div>`, [
+    { text:'Cancel', onclick:()=>closeSheet('genericSheet') },
+    { text:'Save', cls:'primary', onclick:()=>saveNewReadingCollection() }
+  ]);
+}
+function saveNewReadingCollection() {
+  const name = document.getElementById('readingNewName')?.value.trim();
+  const text = document.getElementById('readingNewText')?.value.trim();
+  if (!name) { toast('Name cannot be empty'); return; }
+  if (!text) { toast('Text cannot be empty'); return; }
+  const c = { id:uid('rd'), name, text, translation:'', highlights:[], createdAt:Date.now(), updatedAt:Date.now() };
+  readingState.collections.push(c);
+  readingState.currentId = c.id;
+  saveReading();
+  closeSheet('genericSheet');
+  render();
+}
+function cleanReadingImportJSON(raw) {
+  let s = String(raw || '').trim();
+  if (s.startsWith('```')) {
+    s = s.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
+  }
+  const firstObj = s.indexOf('{');
+  const firstArr = s.indexOf('[');
+  const starts = [firstObj, firstArr].filter(i => i >= 0);
+  if (starts.length) s = s.slice(Math.min(...starts));
+  return s;
+}
+function openReadingImport() {
+  openGenericSheet('Import Reading JSON', `
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      <div style="font-size:13px;color:var(--ink-secondary);line-height:1.6;">
+        把 AI 按 Prompt 生成的完整 JSON 粘贴到这里。导入后会自动创建 Reading 文集，并同步填入英文正文和 Translation。
+      </div>
+      <textarea id="readingImportText" placeholder='{"name":"...","text":"...","translation":"...","highlights":[]}' style="width:100%;min-height:360px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;line-height:1.6;"></textarea>
+    </div>`, [
+    { text:'Cancel', onclick:()=>closeSheet('genericSheet') },
+    { text:'Import', cls:'primary', onclick:()=>importReadingJSON() }
+  ]);
+}
+function importReadingJSON() {
+  const raw = document.getElementById('readingImportText')?.value || '';
+  if (!raw.trim()) { toast('请先粘贴 JSON'); return; }
+  let data;
+  try { data = JSON.parse(cleanReadingImportJSON(raw)); } catch (err) { toast('JSON 格式不正确'); return; }
+  const item = Array.isArray(data) ? data[0] : (data.reading || data.article || data);
+  if (!item || typeof item !== 'object') { toast('Reading JSON 格式不正确'); return; }
+  const name = String(item.name || item.title || '').trim();
+  const text = String(item.text || item.articleText || item.content || '').trim();
+  const translation = String(item.translation || item.chinese || item.cn || item.zh || '').trim();
+  if (!name) { toast('缺少 name 标题'); return; }
+  if (!text) { toast('缺少 text 英文正文'); return; }
+  const highlights = Array.isArray(item.highlights)
+    ? item.highlights.map(h => typeof h === 'string' ? h : (h?.text || '')).map(s => String(s).trim()).filter(Boolean).map(s => ({ id:uid('rdhl'), text:s, ts:Date.now() }))
+    : [];
+  const c = { id:uid('rd'), name, text, translation, highlights, createdAt:Date.now(), updatedAt:Date.now() };
+  readingState.collections.push(c);
+  readingState.currentId = c.id;
+  saveReading();
+  closeSheet('genericSheet');
+  render();
+  toast('Reading 已导入');
+}
+function renameReadingCollection() {
+  const c = currentReadingCollection(); if (!c) return;
+  miniPrompt('Rename reading collection:', c.name, name => {
+    if (name === null) return;
+    if (!name.trim()) { toast('Name cannot be empty'); return; }
+    c.name = name.trim(); c.updatedAt = Date.now(); saveReading(); render();
+  });
+}
+function deleteReadingCollection() {
+  const c = currentReadingCollection(); if (!c) return;
+  if (!confirm('Delete reading collection "' + c.name + '"?')) return;
+  readingState.collections = readingState.collections.filter(x => x.id !== c.id);
+  readingState.currentId = readingState.collections[0]?.id || null;
+  saveReading(); render();
+}
+function adjustReadingFont(delta) {
+  readingState.fontSize = Math.max(13, Math.min(28, (readingState.fontSize || 17) + delta));
+  saveReading(); render();
+}
+function toggleReadingTranslation() {
+  readingState.translationCollapsed = !readingState.translationCollapsed;
+  saveReading(); render();
+}
+function saveReadingTranslation(value) {
+  const c = currentReadingCollection(); if (!c) return;
+  c.translation = value; c.updatedAt = Date.now(); saveReading();
+}
+
+let rdTouchContext = false;
+let rdLastTap = { token:null, time:0 };
+let rdMenuGuardUntil = 0;
+const RD_DOUBLE_TAP_MS = 300;
+function rdWordDown(e, token) {
+  if (e.pointerType === 'touch') rdTouchContext = true;
+  if (quizDeviceProfile.type === 'phone') {
+    const now = Date.now();
+    if (rdLastTap.token === token && now - rdLastTap.time < RD_DOUBLE_TAP_MS) {
+      rdLastTap = { token:null, time:0 };
+      e.preventDefault(); e.stopPropagation();
+      rdShowFloatMenu([token]);
+    } else {
+      rdLastTap = { token, time:now };
+      e.stopPropagation();
+    }
+  }
+}
+function rdWordContextMenu(e, token) {
+  if (quizDeviceProfile.isPhone) return;
+  if (quizDeviceProfile.isIPad && rdTouchContext) { rdTouchContext = false; return; }
+  e.preventDefault(); e.stopPropagation();
+  rdMenuGuardUntil = Date.now() + 350;
+  rdShowFloatMenu([token]);
+}
+function rdRemoveFloatMenu() {
+  document.getElementById('rdFloatMenu')?.remove();
+  document.getElementById('rdSelectionMenu')?.remove();
+}
+function rdShowFloatMenu(tokens) {
+  rdRemoveFloatMenu();
+  rdMenuGuardUntil = Date.now() + 350;
+  const text = String(tokens.map(t => t.textContent).join(' ')).trim();
+  if (!text) return;
+  const c = currentReadingCollection();
+  const highlighted = (c?.highlights || []).some(h => rdNorm(h.text || h) === rdNorm(text));
+  const alreadyIn = (quizState.wordBook || []).some(w => rdNorm(w.text || w.word) === rdNorm(text));
+  const menu = document.createElement('div');
+  menu.id = 'rdFloatMenu';
+  menu.className = 'qs-float-menu';
+  const addButton = (label, handler, cls='') => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'qs-float-btn' + (cls ? ' ' + cls : '');
+    btn.textContent = label;
+    btn.addEventListener('pointerdown', ev => ev.stopPropagation());
+    btn.addEventListener('click', ev => { ev.preventDefault(); ev.stopPropagation(); handler(btn); });
+    menu.appendChild(btn);
+  };
+  addButton('Highlight', () => rdHighlightText(text), highlighted ? 'added' : '');
+  addButton(alreadyIn ? '✓' : '+', () => rdAddToVocab(text), alreadyIn ? 'added' : '');
+  addButton('+ Synonym', () => { rdRemoveFloatMenu(); qsAddToSynGroup(text); });
+  document.body.appendChild(menu);
+  rdPositionMenu(menu, tokens[0].getBoundingClientRect(), tokens[tokens.length - 1].getBoundingClientRect());
+}
+function rdPositionMenu(menu, firstRect, lastRect) {
+  requestAnimationFrame(() => {
+    const margin = 8;
+    const rect = menu.getBoundingClientRect();
+    const center = (firstRect.left + lastRect.right) / 2 + window.scrollX;
+    let left = Math.max(window.scrollX + margin, Math.min(center - rect.width / 2, window.scrollX + window.innerWidth - rect.width - margin));
+    let top = firstRect.top + window.scrollY - rect.height - 10;
+    if (top < window.scrollY + margin) top = firstRect.bottom + window.scrollY + 10;
+    menu.style.left = left + 'px';
+    menu.style.top = top + 'px';
+  });
+}
+function rdHighlightText(text) {
+  const c = currentReadingCollection(); if (!c) return;
+  const val = String(text || '').trim(); if (!val) return;
+  if (!(c.highlights || []).some(h => rdNorm(h.text || h) === rdNorm(val))) {
+    c.highlights.push({ id:uid('rdhl'), text:val, ts:Date.now() });
+  }
+  c.updatedAt = Date.now();
+  saveReading();
+  wordMemoryEnsure(val, 'Highlight', { source:'Reading · ' + c.name, context:c.text.slice(0, 220), countSeen:false });
+  saveQuiz();
+  toast('Highlighted');
+  rdRemoveFloatMenu();
+  render();
+}
+function rdAddToVocab(text) {
+  const c = currentReadingCollection();
+  const val = String(text || '').trim(); if (!val) return;
+  addToWordBook(val, { source:'Reading · ' + (c?.name || 'Reading'), example:c?.text?.slice(0, 220) || '', subject:appState.currentSubject || 'english', highlight:true });
+  const w = (quizState.wordBook || []).find(x => rdNorm(x.text || x.word) === rdNorm(val));
+  if (w && c) { w.readingCollectionId = c.id; w.readingCollectionName = c.name; saveQuiz(); }
+  rdRemoveFloatMenu();
+}
+function bindReadingModuleEvents() {
+  const body = document.getElementById('readingBody');
+  if (!body) return;
+  body.addEventListener('mouseup', ev => {
+    if (ev.button !== 0) return;
+    setTimeout(() => rdHandleSelection(), 0);
+  });
+  body.addEventListener('touchend', () => setTimeout(() => rdHandleSelection(), 0));
+}
+function rdHandleSelection() {
+  if (Date.now() < rdMenuGuardUntil) return;
+  rdRemoveFloatMenu();
+  const sel = window.getSelection();
+  const body = document.getElementById('readingBody');
+  if (!sel || !body || sel.rangeCount === 0 || sel.isCollapsed) return;
+  const text = sel.toString().trim();
+  if (!text || !body.contains(sel.anchorNode) || !body.contains(sel.focusNode)) return;
+  const range = sel.getRangeAt(0);
+  const rect = range.getBoundingClientRect();
+  if (!rect || (!rect.width && !rect.height)) return;
+  const menu = document.createElement('div');
+  menu.id = 'rdSelectionMenu';
+  menu.className = 'qs-float-menu';
+  menu._text = text;
+  const hi = document.createElement('button');
+  hi.className = 'qs-float-btn'; hi.type = 'button'; hi.textContent = 'Highlight';
+  hi.onclick = ev => { ev.preventDefault(); ev.stopPropagation(); rdHighlightText(menu._text); window.getSelection()?.removeAllRanges(); };
+  const voc = document.createElement('button');
+  voc.className = 'qs-float-btn'; voc.type = 'button'; voc.textContent = '+';
+  voc.onclick = ev => { ev.preventDefault(); ev.stopPropagation(); rdAddToVocab(menu._text); window.getSelection()?.removeAllRanges(); };
+  menu.appendChild(hi); menu.appendChild(voc); document.body.appendChild(menu);
+  rdPositionMenu(menu, rect, rect);
+}
+function openReadingPrompt() {
+  openGenericSheet('Prompt Template', `
+    <textarea id="readingPromptText" style="width:100%;min-height:320px;line-height:1.7;">${esc(readingState.promptTemplate || DEFAULT_READING_PROMPT)}</textarea>`, [
+    { text:'Copy', cls:'primary', onclick:()=>{ saveReadingPromptFromSheet(); copyReadingElementText('readingPromptText'); } },
+    { text:'Import', onclick:()=>openReadingImport() },
+    { text:'Save', onclick:()=>saveReadingPromptFromSheet() },
+    { text:'Close', onclick:()=>closeSheet('genericSheet') }
+  ]);
+}
+function saveReadingPromptFromSheet() {
+  const el = document.getElementById('readingPromptText');
+  if (!el) return;
+  readingState.promptTemplate = el.value;
+  saveReading();
+  toast('Saved');
+}
+function copyReadingElementText(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.select();
+  const text = el.value || el.textContent || '';
+  if (navigator.clipboard) navigator.clipboard.writeText(text).then(()=>toast('Copied')).catch(()=>document.execCommand('copy'));
+  else { document.execCommand('copy'); toast('Copied'); }
+}
+document.addEventListener('pointerdown', e => {
+  if (Date.now() < rdMenuGuardUntil) return;
+  const menu = document.getElementById('rdFloatMenu') || document.getElementById('rdSelectionMenu');
+  if (menu && !menu.contains(e.target) && !e.target.closest('.rd-word-token') && !e.target.closest('#readingBody')) rdRemoveFloatMenu();
+}, true);
 
 // ================================================================
 //  QUIZ HUB RENDER
@@ -5070,56 +5466,68 @@ function buildReadingHTML(content, hls) {
 }
 
 // ================================================================
-//  QUIZ WORD SELECTION ENGINE (Apple Books style)
+//  QUIZ WORD SELECTION ENGINE — 三端统一交互规则
+//  手机：单击无操作 · 长按放行原生菜单 · 双击弹功能条
+//  iPad：触屏单击/长按放行原生 · 鼠标右键弹功能条
+//  桌面：仅鼠标右键弹功能条
 // ================================================================
 let qsSelection = { tokens: [], anchorToken: null, floatMenu: null };
+/* 运行时标记当前操作是否来自触屏，iPad 用于区分触屏长按 vs 鼠标右键 */
+let qsIsTouchPointer = false;
 
-function qsWordDown(e, token) {
-  if (e.button !== undefined && e.button !== 0) return;
-  e.stopPropagation();
-  if (e.cancelable) try { e.preventDefault(); } catch(_) {}
+/* ---------- 1. 设备识别：手机 / iPad / 桌面 ---------- */
+function detectQuizDeviceProfile() {
+  const ua = navigator.userAgent || '';
+  const platform = navigator.platform || '';
+  const maxTouchPoints = navigator.maxTouchPoints || 0;
+  const isIPad = /iPad/i.test(ua) || (platform === 'MacIntel' && maxTouchPoints > 1);
+  const isIPhone = /iPhone|iPod/i.test(ua);
+  const isAndroidPhone = /Android/i.test(ua) && /Mobile/i.test(ua);
+  const isSmallTouchPhone = maxTouchPoints > 0 && window.matchMedia && window.matchMedia('(max-width: 767px)').matches && !isIPad;
 
-  // Long press for phrase, single click for word
-  let pressTimer = null;
-  let didLong = false;
-
-  const startToken = token;
-  const area = token.dataset.area;
-  let endToken = token;
-
-  // Clear previous
-  qsClearSelection();
-
-  const onMove = me => {
-    const el = document.elementFromPoint(me.clientX, me.clientY);
-    const t = el?.closest('.q-word-token');
-    if (t && t.dataset.area === area) {
-      endToken = t;
-      qsHighlightRange(area, startToken, endToken);
-    }
-  };
-
-  const onUp = () => {
-    clearTimeout(pressTimer);
-    window.removeEventListener('pointermove', onMove);
-    window.removeEventListener('pointerup', onUp);
-    if (!didLong) {
-      qsHighlightRange(area, startToken, endToken);
-    }
-    const tokens = Array.from(document.querySelectorAll(`.q-word-token.qs-selected`));
-    if (tokens.length) qsShowFloatMenu(tokens);
-  };
-
-  pressTimer = setTimeout(() => {
-    didLong = true;
-    if (navigator.vibrate) try { navigator.vibrate(30); } catch(_) {}
-    window.addEventListener('pointermove', onMove, { passive: true });
-  }, 300);
-
-  window.addEventListener('pointerup', onUp);
+  if (isIPhone || isAndroidPhone || isSmallTouchPhone) return { type: 'phone', isPhone: true, isIPad: false, isDesktop: false };
+  if (isIPad) return { type: 'ipad', isPhone: false, isIPad: true, isDesktop: false };
+  return { type: 'desktop', isPhone: false, isIPad: false, isDesktop: true };
 }
 
+const quizDeviceProfile = detectQuizDeviceProfile();
+
+/* ---------- 2. pointerdown：手机手动双击检测，iPad/桌面完全放行 ---------- */
+let qsLastTapInfo = { token: null, time: 0 };
+const QS_DOUBLE_TAP_MS = 300;
+
+function qsWordDown(e, token) {
+  // 标记触屏来源（iPad 触屏 vs 鼠标区分用）
+  if (e.pointerType === 'touch') qsIsTouchPointer = true;
+
+  if (quizDeviceProfile.type === 'phone') {
+    const now = Date.now();
+    if (qsLastTapInfo.token === token && now - qsLastTapInfo.time < QS_DOUBLE_TAP_MS) {
+      // 手机双击同一单词 → 弹功能条
+      qsLastTapInfo = { token: null, time: 0 };
+      e.preventDefault();
+      e.stopPropagation();
+      qsClearSelection();
+      const area = token.dataset.area;
+      qsHighlightRange(area, token, token);
+      const tokens = Array.from(document.querySelectorAll('.q-word-token.qs-selected'));
+      if (tokens.length) qsShowFloatMenu(tokens);
+    } else {
+      // 单击 / 首次点击 → 仅记录，不 preventDefault（放行长按原生菜单）
+      qsLastTapInfo = { token: token, time: now };
+      e.stopPropagation();
+    }
+  }
+  // iPad / 桌面：不拦截任何 pointerdown
+}
+
+/* ---------- 3. contextmenu：iPad 鼠标右键弹浮窗，手机触屏长按放行 ---------- */
 function qsWordContextMenu(e, token) {
+  // 手机：屏蔽右键，让长按走系统原生菜单
+  if (quizDeviceProfile.isPhone) return;
+  // iPad 触屏长按会触发 contextmenu，放行让系统处理
+  if (quizDeviceProfile.isIPad && qsIsTouchPointer) { qsIsTouchPointer = false; return; }
+  // iPad 鼠标右键 / 桌面鼠标右键 → 弹功能浮窗
   e.preventDefault();
   e.stopPropagation();
   qsClearSelection();
@@ -5144,9 +5552,16 @@ function qsClearSelection() {
   qsRemoveFloatMenu();
 }
 
+let qsFloatMenuCloseHandler = null;
+let qsFloatMenuGuardUntil = 0;
+
 function qsRemoveFloatMenu() {
   const old = document.getElementById('qsFloatMenu');
   if (old) old.remove();
+  if (qsFloatMenuCloseHandler) {
+    document.removeEventListener('pointerdown', qsFloatMenuCloseHandler, true);
+    qsFloatMenuCloseHandler = null;
+  }
 }
 
 function memoryKey(word) { return String(word||'').trim().toLowerCase(); }
@@ -5262,6 +5677,7 @@ function qsIsHighlighted(text) {
 }
 function qsShowFloatMenu(tokens) {
   qsRemoveFloatMenu();
+  qsFloatMenuGuardUntil = Date.now() + 250;
   const text = qsEscapeText(tokens.map(t => t.textContent).join(' '));
   if (!text) return;
 
@@ -5311,14 +5727,14 @@ function qsShowFloatMenu(tokens) {
     menu.style.top = top + 'px';
   });
 
+  qsFloatMenuCloseHandler = ev => {
+    if (Date.now() < qsFloatMenuGuardUntil) return;
+    if (!menu.contains(ev.target)) {
+      qsClearSelection();
+    }
+  };
   setTimeout(() => {
-    const handler = ev => {
-      if (!menu.contains(ev.target) && !ev.target.closest('.q-word-token')) {
-        qsClearSelection();
-        document.removeEventListener('pointerdown', handler, true);
-      }
-    };
-    document.addEventListener('pointerdown', handler, true);
+    if (qsFloatMenuCloseHandler) document.addEventListener('pointerdown', qsFloatMenuCloseHandler, true);
   }, 10);
 }
 
@@ -6442,6 +6858,7 @@ const AI_WIZARD_PROMPTS = {
 - explanation 用中文写
 - 如果有多个板块，创建多个 passage，id 递增（sec_001, sec_002…）
 - quizSets 中的 name 字段请填写有意义的名称，如 "Unit 1 - Grammar" 或 "IELTS Reading Set 3"
+- 如果题目中有填空（空格处需要填写单词），请在 question 字段的空格处使用下划线表示，例如："The result depends ____ several factors."，不要留空格
 
 请将以下内容转换：
 [在这里粘贴你的题目]`,
@@ -8943,8 +9360,8 @@ function _setGenericSheetAsReviewInline(sheet, inner) {
     const head = inner.querySelector('.sheet-head');
     if (head) head.style.display = 'none';
   }
-  const body = document.getElementById('genericSheetBody');
-  const foot = document.getElementById('genericSheetFoot');
+  const body = document.querySelector('#reviewCenterPage #genericSheetBody') || document.getElementById('genericSheetBody');
+  const foot = document.querySelector('#reviewCenterPage #genericSheetFoot') || document.getElementById('genericSheetFoot');
   if (body) {
     body.className = 'sheet-body';
     body.style.padding = '0';
@@ -8965,8 +9382,10 @@ function openGenericSheet(title, bodyHTML, buttons) {
   // Settings is different: when opened from Review it must be a real centered modal.
   const forceOverlayInReview = inReview && title === 'System Control Panel';
 
-  const sheetInner = document.getElementById('genericSheetInner');
-  const sheet = document.getElementById('genericSheet');
+  const reviewSheet = inReview ? document.querySelector('#reviewCenterPage #genericSheet') : null;
+  const reviewSheetInner = inReview ? document.querySelector('#reviewCenterPage #genericSheetInner') : null;
+  const sheetInner = reviewSheetInner || document.getElementById('genericSheetInner');
+  const sheet = reviewSheet || document.getElementById('genericSheet');
 
   if (inReview && !forceOverlayInReview) {
     _setGenericSheetAsReviewInline(sheet, sheetInner);
@@ -8974,16 +9393,18 @@ function openGenericSheet(title, bodyHTML, buttons) {
     _setGenericSheetAsOverlay(sheet, sheetInner);
   }
 
-  document.getElementById('genericSheetTitle').textContent = title;
-  document.getElementById('genericSheetBody').innerHTML = bodyHTML;
-  const foot = document.getElementById('genericSheetFoot');
-  foot.innerHTML = '';
+  const titleEl = (inReview ? document.querySelector('#reviewCenterPage #genericSheetTitle') : null) || document.getElementById('genericSheetTitle');
+  const bodyEl = (inReview ? document.querySelector('#reviewCenterPage #genericSheetBody') : null) || document.getElementById('genericSheetBody');
+  const foot = (inReview ? document.querySelector('#reviewCenterPage #genericSheetFoot') : null) || document.getElementById('genericSheetFoot');
+  if (titleEl) titleEl.textContent = title;
+  if (bodyEl) bodyEl.innerHTML = bodyHTML;
+  if (foot) foot.innerHTML = '';
   (buttons||[]).forEach(b => {
     const btn = document.createElement('button');
     btn.className = 'apple-btn' + (b.cls?' '+b.cls:'');
     btn.textContent = b.text;
     btn.onclick = b.onclick;
-    foot.appendChild(btn);
+    if (foot) foot.appendChild(btn);
   });
 
   if (inReview && !forceOverlayInReview) {
@@ -11327,14 +11748,14 @@ function _prepareReviewMainShell() {
       </div>
     </div>
   `;
-  return document.getElementById('genericSheetBody');
+  return document.querySelector('#reviewCenterPage #genericSheetBody') || document.getElementById('genericSheetBody');
 }
 
 function _normalizeReviewMainShell() {
-  const shell = document.getElementById('genericSheet');
-  const inner = document.getElementById('genericSheetInner');
-  const body = document.getElementById('genericSheetBody');
-  const foot = document.getElementById('genericSheetFoot');
+  const shell = document.querySelector('#reviewCenterPage #genericSheet') || document.getElementById('genericSheet');
+  const inner = document.querySelector('#reviewCenterPage #genericSheetInner') || document.getElementById('genericSheetInner');
+  const body = document.querySelector('#reviewCenterPage #genericSheetBody') || document.getElementById('genericSheetBody');
+  const foot = document.querySelector('#reviewCenterPage #genericSheetFoot') || document.getElementById('genericSheetFoot');
   if (shell) {
     shell.className = 'review-main-shell';
     shell.style.cssText = 'display:block;position:static;background:transparent;padding:0;';
