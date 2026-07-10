@@ -257,6 +257,8 @@ textarea { resize: vertical; }
 .apple-btn.active { background: var(--accent); color: #FFFFFF; border-color: var(--accent); }
 
 /* AI Studio — shared Apple HIG module import surface */
+.ai-studio-panel { display: none !important; }
+
 .ai-studio-panel {
   padding: 16px;
   background: var(--bg-card);
@@ -3719,6 +3721,26 @@ function sanitizeJSON(raw) {
   s = s.replace(/,\s*([}\]])/g, '$1');
   return s;
 }
+function normalizeQuizExplanationValue(value) {
+  if (Array.isArray(value)) return value.map(x => String(x || '').trim()).filter(Boolean).join('\n');
+  if (value && typeof value === 'object') return Object.entries(value).map(([k,v]) => `${k}: ${v}`).join('\n');
+  return String(value || '').trim();
+}
+function normalizeQuizImportPayload(data) {
+  if (!data || typeof data !== 'object') return data;
+  ['grammarQuestions','vocabularyQuestions'].forEach(key => {
+    if (!Array.isArray(data[key])) return;
+    data[key].forEach((q, i) => {
+      if (!q || typeof q !== 'object') return;
+      q.explanation = normalizeQuizExplanationValue(q.explanation || q.analysis || q.reason || q.explain || '');
+      q.question = String(q.question || '').trim();
+      q.options = Array.isArray(q.options) ? q.options.map(o => String(o || '').trim()).filter(Boolean) : [];
+      q.answer = String(q.answer || '').trim().slice(0, 1).toUpperCase();
+      if (!q.id) q.id = uid(key === 'grammarQuestions' ? 'g' : 'v');
+    });
+  });
+  return data;
+}
 function miniPrompt(label, defaultVal, callback) {
   const overlay = document.getElementById('miniDialog');
   const lbl = document.getElementById('miniDialogLabel');
@@ -4323,7 +4345,7 @@ function renderHomePage(container) {
 
   }
 
-  html += `</div>${renderQuotesSection()}</div>`;
+  html += `</div>${renderStudyOverviewDashboard()}${renderQuotesSection()}</div>`;
 
   container.innerHTML = html;
 
@@ -4449,7 +4471,7 @@ function render() {
     return;
   }
   
-  const showDashboard = !(appState.currentModule === 'resources' && appState.resourceSubject !== 'all') && appState.currentModule !== 'reading' && appState.currentModule !== 'review';
+  const showDashboard = false; // Hidden: Study Overview Dashboard and Milestone Panel
   main.innerHTML = `${showDashboard ? renderStudyOverviewDashboard() : ''}<div class="module-content-stack" id="moduleContentMount"></div>`;
   const moduleMain = document.getElementById('moduleContentMount');
 
@@ -4680,7 +4702,7 @@ function renderReadingText(c) {
     if (!part) return '';
     if (/^[A-Za-z]+(?:['’-][A-Za-z]+)?$/.test(part)) {
       const hl = marked.has(rdNorm(part)) ? ' qs-hl-persist' : '';
-      return `<span class="q-word-token rd-word-token${hl}" data-area="rd_${esc(c.id)}" data-idx="${idx++}" data-word="${esc(part)}" onpointerdown="rdWordDown(event,this)" oncontextmenu="rdWordContextMenu(event,this)" onclick="event.preventDefault();event.stopPropagation();">${esc(part)}</span>`;
+      return `<span class="q-word-token rd-word-token${hl}" data-area="rd_${esc(c.id)}" data-idx="${idx++}" data-word="${esc(part)}" onpointerdown="rdWordDown(event,this)" oncontextmenu="rdWordContextMenu(event,this)" onclick="rdWordClick(event,this)">${esc(part)}</span>`;
     }
     return esc(part);
   }).join('');
@@ -4786,10 +4808,28 @@ function saveReadingTranslation(value) {
 
 let rdTouchContext = false;
 let rdLastTap = { token:null, time:0 };
+let rdTouchTapState = { token:null, time:0, count:0 };
 let rdMenuGuardUntil = 0;
 const RD_DOUBLE_TAP_MS = 300;
+const RD_TRIPLE_TAP_MS = 560;
 function rdWordDown(e, token) {
-  if (e.pointerType === 'touch') rdTouchContext = true;
+  if (e.pointerType === 'touch') {
+    rdTouchContext = true;
+    const now = Date.now();
+    if (rdTouchTapState.token === token && now - rdTouchTapState.time < RD_TRIPLE_TAP_MS) {
+      rdTouchTapState.count += 1;
+    } else {
+      rdTouchTapState = { token, time:now, count:1 };
+    }
+    rdTouchTapState.time = now;
+    if (rdTouchTapState.count >= 3) {
+      rdTouchTapState = { token:null, time:0, count:0 };
+      e.preventDefault(); e.stopPropagation();
+      rdMenuGuardUntil = Date.now() + 350;
+      rdShowFloatMenu([token]);
+      return;
+    }
+  }
   if (quizDeviceProfile.type === 'phone') {
     const now = Date.now();
     if (rdLastTap.token === token && now - rdLastTap.time < RD_DOUBLE_TAP_MS) {
@@ -4808,6 +4848,17 @@ function rdWordContextMenu(e, token) {
   e.preventDefault(); e.stopPropagation();
   rdMenuGuardUntil = Date.now() + 350;
   rdShowFloatMenu([token]);
+}
+function rdWordClick(e, token) {
+  e.preventDefault();
+  e.stopPropagation();
+  const c = currentReadingCollection();
+  const text = String(token?.textContent || '').trim();
+  const highlighted = (c?.highlights || []).some(h => rdNorm(h.text || h) === rdNorm(text));
+  if (highlighted) {
+    rdMenuGuardUntil = Date.now() + 350;
+    rdShowFloatMenu([token]);
+  }
 }
 function rdRemoveFloatMenu() {
   document.getElementById('rdFloatMenu')?.remove();
@@ -4833,9 +4884,9 @@ function rdShowFloatMenu(tokens) {
     btn.addEventListener('click', ev => { ev.preventDefault(); ev.stopPropagation(); handler(btn); });
     menu.appendChild(btn);
   };
+  if (highlighted) addButton('Remove', () => rdRemoveHighlightText(text), 'danger');
   addButton('Highlight', () => rdHighlightText(text), highlighted ? 'added' : '');
   addButton(alreadyIn ? '✓' : '+', () => rdAddToVocab(text), alreadyIn ? 'added' : '');
-  addButton('+ Synonym', () => { rdRemoveFloatMenu(); qsAddToSynGroup(text); });
   document.body.appendChild(menu);
   rdPositionMenu(menu, tokens[0].getBoundingClientRect(), tokens[tokens.length - 1].getBoundingClientRect());
 }
@@ -4862,6 +4913,16 @@ function rdHighlightText(text) {
   wordMemoryEnsure(val, 'Highlight', { source:'Reading · ' + c.name, context:c.text.slice(0, 220), countSeen:false });
   saveQuiz();
   toast('Highlighted');
+  rdRemoveFloatMenu();
+  render();
+}
+function rdRemoveHighlightText(text) {
+  const c = currentReadingCollection(); if (!c) return;
+  const val = String(text || '').trim(); if (!val) return;
+  c.highlights = (c.highlights || []).filter(h => rdNorm(h.text || h) !== rdNorm(val));
+  c.updatedAt = Date.now();
+  saveReading();
+  toast('Highlight removed');
   rdRemoveFloatMenu();
   render();
 }
@@ -4908,19 +4969,15 @@ function rdHandleSelection() {
 }
 function openReadingPrompt() {
   openGenericSheet('Prompt Template', `
-    <textarea id="readingPromptText" style="width:100%;min-height:320px;line-height:1.7;">${esc(readingState.promptTemplate || DEFAULT_READING_PROMPT)}</textarea>`, [
-    { text:'Copy', cls:'primary', onclick:()=>{ saveReadingPromptFromSheet(); copyReadingElementText('readingPromptText'); } },
+    <div style="font-size:12px;color:var(--ink-secondary);line-height:1.6;margin-bottom:10px;">Prompt 已锁定为只读，避免误删后保存覆盖。需要使用时直接复制即可。</div>
+    <textarea id="readingPromptText" readonly style="width:100%;min-height:320px;line-height:1.7;background:var(--bg-elev);color:var(--ink-secondary);cursor:text;">${esc(DEFAULT_READING_PROMPT)}</textarea>`, [
+    { text:'Copy', cls:'primary', onclick:()=>copyReadingElementText('readingPromptText') },
     { text:'Import', onclick:()=>openReadingImport() },
-    { text:'Save', onclick:()=>saveReadingPromptFromSheet() },
     { text:'Close', onclick:()=>closeSheet('genericSheet') }
   ]);
 }
 function saveReadingPromptFromSheet() {
-  const el = document.getElementById('readingPromptText');
-  if (!el) return;
-  readingState.promptTemplate = el.value;
-  saveReading();
-  toast('Saved');
+  toast('Prompt is read-only');
 }
 function copyReadingElementText(id) {
   const el = document.getElementById(id);
@@ -5105,6 +5162,7 @@ function renderSectionTitleBarHTML() {
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
         <span style="background:var(--bg-card);padding:4px 12px;border-radius:var(--radius-pill);font-size:12px;font-weight:600;color:var(--ink-secondary);border:1px solid var(--line);">📊 题量: <b>${pool.length}</b> 题</span>
         <span style="background:var(--green)18;color:var(--green);padding:4px 12px;border-radius:var(--radius-pill);font-size:12px;font-weight:700;">✓ 进度: <b>${answeredCount}/${pool.length}</b> (${progPercent}%)</span>
+        <button class="apple-btn small primary" onclick="openQuizSectionImportExport('${p.id}')">Export / Import</button>
       </div>
     </div>
     <div class="quizset-bar" style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;border-top:1px dashed var(--line);padding-top:12px;">
@@ -5115,6 +5173,111 @@ function renderSectionTitleBarHTML() {
       <button class="apple-btn small danger" onclick="deleteCurrentQS()" ${curVal==='__all__'||!curVal?'disabled':''}>Delete</button>
     </div>
   </div>`;
+}
+
+
+function getQuizSectionExportData(passageId) {
+  const p = quizState.passages.find(x => x.id === passageId);
+  if (!p) return null;
+  const quizSets = quizState.quizSets.filter(qs => qs.passageId === passageId);
+  const setIds = new Set(quizSets.map(qs => qs.id));
+  const grammarQuestions = quizState.grammarQuestions.filter(q => q.passageId === passageId);
+  const vocabularyQuestions = quizState.vocabularyQuestions.filter(q => q.passageId === passageId);
+  const qIds = new Set([...grammarQuestions, ...vocabularyQuestions].map(q => q.id));
+  return {
+    version: '2.0',
+    schemaVersion: QUIZ_SCHEMA,
+    exportedAt: Date.now(),
+    scope: 'quiz_section',
+    passages: [p],
+    quizSets,
+    grammarQuestions,
+    vocabularyQuestions,
+    highlights: quizState.highlights.filter(h => h.passageId === passageId),
+    wrongBook: quizState.wrongBook.filter(w => w.passageId === passageId || qIds.has(w.qId)),
+    answerLog: Object.fromEntries(Object.entries(quizState.answerLog || {}).filter(([id]) => qIds.has(id))),
+    currentPassageId: passageId,
+    currentQuizSetId: { [passageId]: quizState.currentQuizSetId?.[passageId] || quizSets[0]?.id || '' },
+    activeQuizSetIds: { [passageId]: (quizState.activeQuizSetIds?.[passageId] || []).filter(id => setIds.has(id)) }
+  };
+}
+
+function exportQuizSectionJSON(passageId) {
+  const data = getQuizSectionExportData(passageId);
+  if (!data) { toast('Section not found'); return; }
+  const name = (data.passages[0].customName || data.passages[0].title || 'section').replace(/[^\w\u4e00-\u9fff-]+/g, '_').slice(0, 40) || 'section';
+  downloadJSON(data, 'quiz_section_' + name + '_' + todayISO() + '.json');
+  toast('Section exported');
+}
+
+function getQuizSectionPrompt(passageId) {
+  const p = quizState.passages.find(x => x.id === passageId);
+  const base = (typeof AI_WIZARD_PROMPTS !== 'undefined' && AI_WIZARD_PROMPTS.quiz) ? AI_WIZARD_PROMPTS.quiz : '';
+  const sectionName = p ? (p.customName || p.title || p.id) : 'Current Section';
+  const target = `【目标板块】\n- 请把所有题目导入到这个板块：${sectionName}\n- passageId 可以写成当前板块，导入时系统会强制关联到当前板块。\n\n`;
+  return base ? base.replace('[在这里粘贴你的题目]', target + '[在这里粘贴你的题目]') : target;
+}
+
+function copyQuizSectionPrompt(passageId) {
+  const prompt = getQuizSectionPrompt(passageId);
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(prompt).then(() => toast('Prompt copied')).catch(() => toast('Copy failed'));
+  } else {
+    const ta = document.createElement('textarea');
+    ta.value = prompt;
+    ta.style.cssText = 'position:fixed;left:-9999px;';
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    toast('Prompt copied');
+  }
+}
+
+function openQuizSectionImportExport(passageId) {
+  const p = quizState.passages.find(x => x.id === passageId);
+  if (!p) { toast('Section not found'); return; }
+  const prompt = getQuizSectionPrompt(passageId);
+  openGenericSheet(`Export / Import — ${esc(p.customName || p.title || 'Section')}`, `
+    <div style="display:flex;flex-direction:column;gap:14px;">
+      <div style="padding:12px 14px;background:var(--bg-elev);border:1px solid var(--line);border-radius:var(--radius);font-size:12px;color:var(--ink-secondary);line-height:1.6;">
+        当前入口只作用于这个板块：<b>${esc(p.customName || p.title || p.id)}</b>。默认每次导入都会新建一个独立 Quiz Set，适合一篇 text 对应一个题组，避免多次导入混在一起。
+      </div>
+      <div>
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;">
+          <div style="font-size:12px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-tertiary);">Prompt</div>
+          <button class="apple-btn small primary" onclick="copyQuizSectionPrompt('${passageId}')">Copy Prompt</button>
+        </div>
+        <div class="ai-studio-prompt-box" style="max-height:180px;">${esc(prompt)}</div>
+      </div>
+      <div>
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;">
+          <div style="font-size:12px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-tertiary);">Import JSON</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            <button class="apple-btn small" onclick="importAIStudioFromFile()">Import JSON File</button>
+            <button class="apple-btn small" onclick="clearImportTextarea('aiJsonPasteArea','aiImportPreview')">清空</button>
+          </div>
+          <input type="file" id="aiStudioFileInput" accept=".json" style="display:none;" onchange="handleAIStudioFileImport(event)">
+        </div>
+        <select id="aiTargetPassage" style="display:none;"><option value="${passageId}" selected>${esc(p.customName || p.title || p.id)}</option></select>
+        <label style="display:none;"><input type="checkbox" id="aiForcePassage" checked></label>
+        <div style="margin-bottom:10px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+          <label style="font-size:12px;font-weight:700;color:var(--ink-secondary);">导入方式：</label>
+          <label style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer;"><input type="radio" name="aiImportMode" value="new_set" checked> 新建 Quiz Set</label>
+          <label style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer;"><input type="radio" name="aiImportMode" value="merge_current_set"> 合并到当前 Quiz Set</label>
+        </div>
+        <div style="font-size:11px;color:var(--ink-tertiary);line-height:1.5;margin:-4px 0 10px;">建议保持“新建 Quiz Set”：第一次导入和第二次导入会自动分开。</div>
+        <textarea id="aiJsonPasteArea" class="ai-studio-import-textarea" placeholder="在这里粘贴 AI 生成的 JSON..."></textarea>
+        <div id="aiImportPreview" class="ai-studio-status" style="margin-top:10px;">Import status will appear here.</div>
+      </div>
+    </div>
+  `, [
+    { text:'Close', onclick:()=>closeSheet('genericSheet') },
+    { text:'Export JSON', onclick:()=>exportQuizSectionJSON(passageId) },
+    { text:'Preview', onclick:()=>previewAIImport('quiz') },
+    { text:'Import', cls:'primary', onclick:()=>confirmAIImport('quiz') }
+  ]);
 }
 
 function savePassageTitle() {
@@ -5180,7 +5343,7 @@ function renderQuestionsHTML() {
   let html = `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
     <div style="font-size:13px;color:var(--ink-secondary);font-weight:600;">${pool.length} questions in current view</div>
     <div style="display:flex;gap:8px;align-items:center;">
-      <button class="apple-btn small primary" style="font-weight:700;" onclick="redoCurrentQuizSet()">↻ Redo This Set (重新做这套题)</button>
+      <button class="apple-btn small primary" style="font-weight:700;" onclick="redoCurrentQuizSet()">↻ Redo This Set</button>
       <button class="apple-btn primary small" onclick="openQuestionEditor(null,'${isGrammar?'grammar':'vocab'}')">+ Add Question</button>
     </div>
   </div>`;
@@ -5518,11 +5681,37 @@ const quizDeviceProfile = detectQuizDeviceProfile();
 
 /* ---------- 2. pointerdown：手机手动双击检测，iPad/桌面完全放行 ---------- */
 let qsLastTapInfo = { token: null, time: 0 };
+let qsTouchTapState = { token: null, time: 0, count: 0 };
 const QS_DOUBLE_TAP_MS = 300;
+const QS_TRIPLE_TAP_MS = 560;
+
+function qsOpenTokenFloatMenu(token) {
+  qsClearSelection();
+  const area = token.dataset.area;
+  qsHighlightRange(area, token, token);
+  const tokens = Array.from(document.querySelectorAll('.q-word-token.qs-selected'));
+  if (tokens.length) qsShowFloatMenu(tokens);
+}
 
 function qsWordDown(e, token) {
   // 标记触屏来源（iPad 触屏 vs 鼠标区分用）
-  if (e.pointerType === 'touch') qsIsTouchPointer = true;
+  if (e.pointerType === 'touch') {
+    qsIsTouchPointer = true;
+    const now = Date.now();
+    if (qsTouchTapState.token === token && now - qsTouchTapState.time < QS_TRIPLE_TAP_MS) {
+      qsTouchTapState.count += 1;
+    } else {
+      qsTouchTapState = { token, time: now, count: 1 };
+    }
+    qsTouchTapState.time = now;
+    if (qsTouchTapState.count >= 3) {
+      qsTouchTapState = { token: null, time: 0, count: 0 };
+      e.preventDefault();
+      e.stopPropagation();
+      qsOpenTokenFloatMenu(token);
+      return;
+    }
+  }
 
   if (quizDeviceProfile.type === 'phone') {
     const now = Date.now();
@@ -5531,18 +5720,14 @@ function qsWordDown(e, token) {
       qsLastTapInfo = { token: null, time: 0 };
       e.preventDefault();
       e.stopPropagation();
-      qsClearSelection();
-      const area = token.dataset.area;
-      qsHighlightRange(area, token, token);
-      const tokens = Array.from(document.querySelectorAll('.q-word-token.qs-selected'));
-      if (tokens.length) qsShowFloatMenu(tokens);
+      qsOpenTokenFloatMenu(token);
     } else {
       // 单击 / 首次点击 → 仅记录，不 preventDefault（放行长按原生菜单）
       qsLastTapInfo = { token: token, time: now };
       e.stopPropagation();
     }
   }
-  // iPad / 桌面：不拦截任何 pointerdown
+  // iPad / 桌面：不拦截任何 pointerdown；iPad 触屏三连点会在上方触发
 }
 
 /* ---------- 3. contextmenu：iPad 鼠标右键弹浮窗，手机触屏长按放行 ---------- */
@@ -6672,24 +6857,16 @@ function openQuizSettings() {
   ];
   openGenericSheet('System Control Panel',`
     <div style="display:flex;flex-direction:column;gap:14px;">
+      ${renderLocalDataManagementPanel()}
       <div style="padding:16px;background:var(--bg-card);border:1px solid var(--line);border-radius:var(--radius-lg);">
-        <div style="font-weight:800;font-size:15px;margin-bottom:4px;letter-spacing:-0.01em;">Data Management Panel</div>
-        <div style="font-size:12px;color:var(--ink-tertiary);line-height:1.5;margin-bottom:14px;">Select the module data you want to export or reset. Quiz Hub remains an independent module and is managed here only for backup and restore.</div>
-        <div style="display:flex;flex-direction:column;gap:8px;">
-          <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;">
-            <span style="font-size:12px;font-weight:700;color:var(--ink-secondary);margin-right:4px;white-space:nowrap;">Select modules to reset:</span>
-            <select id="resetModuleSelect" multiple style="width:auto;min-width:140px;max-width:100%;height:70px;padding:3px 6px;border:1px solid var(--line);border-radius:var(--radius-sm);background:var(--bg-card);color:var(--ink);font-size:12px;line-height:1.3;">
-              <option value="study_resource">Study Resource</option>
-              <option value="weekly_planner">Weekly AI Planner</option>
-              <option value="quiz_hub">Quiz Hub</option>
-              <option value="word_book">Word Book</option>
-              <option value="synonyms">Synonyms</option>
-            </select>
-            <span style="font-size:10px;color:var(--ink-tertiary);white-space:nowrap;margin-left:2px;">⌘ 多选</span>
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+          <div>
+            <div style="font-weight:800;font-size:15px;margin-bottom:4px;letter-spacing:-0.01em;">Language</div>
+            <div style="font-size:12px;color:var(--ink-tertiary);line-height:1.5;">Switch interface language. Your notes, prompts and imported quiz content will not be translated.</div>
           </div>
-          <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;">
-            <button class="apple-btn primary" onclick="exportSelectedModules()">⬆ Export</button>
-            <button class="apple-btn danger" onclick="resetSelectedModules()">Reset Selected</button>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+            <button class="apple-btn small ${appLanguage === 'en' ? 'primary' : ''}" onclick="setAppLanguageFromSettings('en')">English</button>
+            <button class="apple-btn small ${appLanguage === 'zh' ? 'primary' : ''}" onclick="setAppLanguageFromSettings('zh')">中文</button>
           </div>
         </div>
       </div>
@@ -6774,10 +6951,6 @@ function openQuizSettings() {
           <div id="aiImportPreview" class="ai-studio-status">Import status will appear here. Toast remains unchanged.</div>
         </div>
       </div>
-      <div style="padding:16px;background:var(--bg-card);border:1px solid var(--line);border-radius:var(--radius-lg);">
-        <div style="font-weight:800;font-size:15px;margin-bottom:10px;letter-spacing:-0.01em;">Cloud Sync</div>
-        <button class="apple-btn" onclick="closeSheet('genericSheet');openCloudSync()">Open Cloud Sync</button>
-      </div>
     </div>
   `,[{text:'Close',cls:'primary',onclick:()=>closeSheet('genericSheet')}]);
   // init AI Studio default module
@@ -6804,6 +6977,7 @@ function importQuizJSON() {
 
 function importQuizData(data) {
   if(!data||typeof data!=='object') throw new Error('Invalid JSON');
+  data = normalizeQuizImportPayload(data);
   const passages = Array.isArray(data.passages)?data.passages:[];
   passages.forEach((p,i)=>{if(!p.id)p.id=uid('sec');if(!p.customName)p.customName=p.title||('Section '+(i+1));if(typeof p.content!=='string')p.content='';});
   quizState.passages=passages;
@@ -6878,6 +7052,8 @@ const AI_WIZARD_PROMPTS = {
 4. 所有字符串内部如果有换行，必须写成 \\n；不要在字符串里直接换行。
 5. 不确定的字段也要保留，用空字符串 "" 或空数组 []，不要省略顶层字段。
 6. 输出前请自己检查：所有 { } 和 [ ] 都闭合，逗号位置正确，可以被 JSON.parse 直接解析。
+7. 语法题解析很长时，explanation 优先写成字符串数组，每个元素一句话；不要把多段长解析塞进一个超长字符串。
+8. explanation 数组里的每一项也必须是合法 JSON 字符串：不要直接换行，不要使用未转义的英文双引号。
 
 【必须严格使用这个顶层结构】
 {
@@ -6905,7 +7081,7 @@ const AI_WIZARD_PROMPTS = {
       "question": "题目内容",
       "options": ["A. 选项", "B. 选项", "C. 选项", "D. 选项"],
       "answer": "A",
-      "explanation": "中文解析"
+      "explanation": ["第1句解析。", "第2句解析。", "第3句解析。"]
     }
   ],
   "vocabularyQuestions": [],
@@ -6924,10 +7100,14 @@ const AI_WIZARD_PROMPTS = {
 【转换规则】
 - 每个 passage 必须有 id、customName、title、content。
 - 每个 quizSet 必须有 id、passageId、name；passageId 必须对应 passages 里的 id。
+- 每篇 text / 每套题必须放在独立 quizSet 里；不要把不同 text 的题目放进同一个 quizSet。
+- 如果输入内容包含多篇 text / 多套 test，请为每篇 text 创建独立 quizSet，例如 Test 1 使用 qs_001，Test 2 使用 qs_002，并让对应题目的 quizSetId 分别指向自己的 quizSet。
+- 绝对不要让 Test 1 和 Test 2 共用同一个 quizSetId；不同 test 的题目 id 也不能重复。
 - 每道题必须有 id、passageId、quizSetId、question、options、answer、explanation。
 - options 必须是数组，通常 4 个选项，且每个选项以 "A. "、"B. "、"C. "、"D. " 开头。
 - answer 只写一个大写字母，例如 "A"、"B"、"C"、"D"。
-- explanation 用中文写，简洁说明正确答案原因。
+- explanation 用中文写；如果解析超过 80 字，必须写成字符串数组，例如 ["考点：...", "为什么选 A：...", "为什么其他项不对：..."]。
+- 不要在 explanation 字符串中直接写换行；需要分段就用数组拆分。
 - 语法/选择/填空题放入 grammarQuestions；词汇同义替换题放入 vocabularyQuestions。
 - 如果没有词汇题，vocabularyQuestions 必须输出 []。
 - 如果题目中有填空，question 字段的空格处使用 ____，例如 "The result depends ____ several factors."。
@@ -7328,6 +7508,17 @@ function executeAIStudioImport() {
   confirmAIImport(tab);
 }
 
+function clearImportTextarea(textareaId, statusId) {
+  const ta = document.getElementById(textareaId || 'aiJsonPasteArea');
+  if (ta) {
+    ta.value = '';
+    ta.dispatchEvent(new Event('input'));
+  }
+  const status = statusId ? document.getElementById(statusId) : (document.getElementById('aiImportPreview') || document.getElementById('plannerAIImportPreview'));
+  if (status) status.textContent = '已清空。';
+  toast('已清空');
+}
+
 function importAIStudioFromFile() {
   const inp = document.getElementById('aiStudioFileInput');
   if (inp) { inp.value = ''; inp.click(); }
@@ -7411,6 +7602,7 @@ function openAIJSONImport() {
     <div id="aiImportPreview" style="margin-top:10px;font-size:12px;color:var(--ink-tertiary);"></div>
   `,[
     {text:'取消', onclick:()=>closeSheet('genericSheet')},
+    {text:'清空', onclick:()=>clearImportTextarea('aiJsonPasteArea','aiImportPreview')},
     {text:'预览', onclick:()=>previewAIImport(tab)},
     {text:'导入', cls:'primary', onclick:()=>confirmAIImport(tab)}
   ]);
@@ -7477,14 +7669,87 @@ function previewAIImport(tab) {
   }
 }
 
+function getImportedQuizSetName(data, passageId, importedSet, index = 0) {
+  const importedPassage = Array.isArray(data?.passages) ? data.passages.find(p => !passageId || p.id === passageId) || data.passages[index] || data.passages[0] : null;
+  const base = (importedSet && importedSet.name && importedSet.name !== '1') ? importedSet.name : (importedPassage?.customName || importedPassage?.title || '');
+  if (base && String(base).trim()) return String(base).trim().slice(0, 42);
+  const count = getQuizSets(passageId).length + index + 1;
+  return 'Text ' + count;
+}
+
+function uniqueQuizSetName(base, passageId, usedNames) {
+  const existingNames = new Set(getQuizSets(passageId).map(qs => String(qs.name || '').trim()));
+  let name = String(base || 'Text').trim() || 'Text';
+  let n = 2;
+  while (existingNames.has(name) || usedNames.has(name)) {
+    name = `${base} ${n++}`;
+  }
+  usedNames.add(name);
+  return name;
+}
+
+function prepareQuizSetImport(data, targetPassageId, mode) {
+  if (!data || !targetPassageId || mode === 'overwrite') return data;
+  const grammar = Array.isArray(data.grammarQuestions) ? data.grammarQuestions : [];
+  const vocab = Array.isArray(data.vocabularyQuestions) ? data.vocabularyQuestions : [];
+  const allQuestions = grammar.concat(vocab);
+  if (!allQuestions.length) return data;
+
+  if (mode === 'merge_current_set') {
+    const targetSet = currentQuizSet() || ensureDefaultQuizSet(targetPassageId);
+    allQuestions.forEach(q => {
+      q.passageId = targetPassageId;
+      q.quizSetId = targetSet.id;
+      q.id = uid(grammar.includes(q) ? 'g' : 'v');
+    });
+    data.quizSets = [];
+    data.currentQuizSetId = { [targetPassageId]: targetSet.id };
+    data.activeQuizSetIds = { [targetPassageId]: [targetSet.id] };
+    return data;
+  }
+
+  const importedSets = Array.isArray(data.quizSets) ? data.quizSets.filter(Boolean) : [];
+  const setIdsFromQuestions = [...new Set(allQuestions.map(q => q.quizSetId).filter(Boolean))];
+  const sourceSets = importedSets.length
+    ? importedSets
+    : (setIdsFromQuestions.length ? setIdsFromQuestions.map((id, idx) => ({ id, name: 'Text ' + (idx + 1), passageId: targetPassageId })) : [{ id: '__single_import__', name: getImportedQuizSetName(data, targetPassageId, null, 0), passageId: targetPassageId }]);
+
+  const usedNames = new Set();
+  const idMap = {};
+  const newSets = sourceSets.map((srcSet, idx) => {
+    const oldId = srcSet.id || `__set_${idx}`;
+    const newSet = {
+      id: uid('qs'),
+      passageId: targetPassageId,
+      name: uniqueQuizSetName(getImportedQuizSetName(data, targetPassageId, srcSet, idx), targetPassageId, usedNames),
+      createdAt: Date.now()
+    };
+    idMap[oldId] = newSet.id;
+    return newSet;
+  });
+
+  const fallbackSetId = newSets[0].id;
+  allQuestions.forEach((q, idx) => {
+    const oldSetId = q.quizSetId || sourceSets[Math.min(idx, sourceSets.length - 1)]?.id || sourceSets[0]?.id;
+    q.passageId = targetPassageId;
+    q.quizSetId = idMap[oldSetId] || fallbackSetId;
+    q.id = uid(grammar.includes(q) ? 'g' : 'v');
+  });
+
+  data.quizSets = newSets;
+  data.currentQuizSetId = { [targetPassageId]: newSets[0].id };
+  data.activeQuizSetIds = { [targetPassageId]: newSets.map(qs => qs.id) };
+  return data;
+}
+
 function confirmAIImport(tab) {
   const raw = document.getElementById('aiJsonPasteArea')?.value.trim();
   if (!raw) { toast('请先粘贴 JSON'); return; }
   let data;
   try {
     const clean = sanitizeJSON(raw);
-    data = JSON.parse(clean);
-  } catch(e) { toast('JSON 格式错误：' + e.message); return; }
+    data = normalizeQuizImportPayload(JSON.parse(clean));
+  } catch(e) { toast('JSON 格式错误：' + e.message + '。建议让 AI 把长解析写成 explanation 数组，每条一句。'); return; }
 
   const mode = document.querySelector('input[name="aiImportMode"]:checked')?.value || 'merge';
   const overwrite = mode === 'overwrite';
@@ -7511,6 +7776,7 @@ function confirmAIImport(tab) {
         if (data.quizSets) {
           data.quizSets.forEach(qs => { qs.passageId = targetPassageId; });
         }
+        data = prepareQuizSetImport(data, targetPassageId, mode);
       }
     }
     if (tab === 'quiz' || tab === 'passage') {
@@ -7529,11 +7795,11 @@ function confirmAIImport(tab) {
       // questions
       if (data.grammarQuestions?.length) {
         if (overwrite) { quizState.grammarQuestions = data.grammarQuestions; }
-        else { data.grammarQuestions.forEach(q => { if (!q.id) q.id = uid('g'); if (!quizState.grammarQuestions.find(x=>x.id===q.id)) quizState.grammarQuestions.push(q); }); }
+        else { data.grammarQuestions.forEach(q => { if (!q.id) q.id = uid('g'); if (quizState.grammarQuestions.find(x=>x.id===q.id)) q.id = uid('g'); quizState.grammarQuestions.push(q); }); }
       }
       if (data.vocabularyQuestions?.length) {
         if (overwrite) { quizState.vocabularyQuestions = data.vocabularyQuestions; }
-        else { data.vocabularyQuestions.forEach(q => { if (!q.id) q.id = uid('v'); if (!quizState.vocabularyQuestions.find(x=>x.id===q.id)) quizState.vocabularyQuestions.push(q); }); }
+        else { data.vocabularyQuestions.forEach(q => { if (!q.id) q.id = uid('v'); if (quizState.vocabularyQuestions.find(x=>x.id===q.id)) q.id = uid('v'); quizState.vocabularyQuestions.push(q); }); }
       }
     }
     if (tab === 'wordbook' || (!tab && data.wordBook?.length)) {
@@ -7552,9 +7818,11 @@ function confirmAIImport(tab) {
       else { sr.forEach(r => { if (!r.id) r.id = uid('r'); if (!resources.find(x=>x.id===r.id)) resources.push(r); }); }
       saveResState();
     }
+    if (data.currentQuizSetId) quizState.currentQuizSetId = Object.assign(quizState.currentQuizSetId || {}, data.currentQuizSetId);
+    if (data.activeQuizSetIds) quizState.activeQuizSetIds = Object.assign(quizState.activeQuizSetIds || {}, data.activeQuizSetIds);
     if (!quizState.currentPassageId && quizState.passages.length) quizState.currentPassageId = quizState.passages[0].id;
     saveQuiz(); render();
-    toast('✅ 导入成功！');
+    toast(mode === 'new_set' ? '✅ 已导入到新的 Quiz Set！' : '✅ 导入成功！');
     closeSheet('genericSheet');
   } catch(e) {
     toast('导入出错：' + e.message);
@@ -7973,7 +8241,7 @@ function renderMilestonesSection() {
   return `<div class="roadmap-section">
     <div class="roadmap-section-head">
       <h3>Milestones <span class="count-pill">${milestones.length}</span></h3>
-      <div class="roadmap-toolbar"><button class="apple-btn primary" onclick="openMilestoneModal()">+ Add Milestone</button><button class="apple-btn" onclick="expandCurrentMilestone()">Expand Current Stage</button></div>
+      <div class="roadmap-toolbar"><button class="apple-btn primary" onclick="openMilestoneModal()">+ Add Milestone</button><button class="apple-btn" onclick="expandCurrentMilestone()" title="Only expand the milestone that matches today's date or the in-progress stage">Show Current Milestone</button></div>
     </div>
     <div class="roadmap-milestones-list">${milestones.map((m,i)=>milestoneCard(m,i)).join('')}</div>
   </div>`;
@@ -9316,10 +9584,189 @@ function resetSelectedModules() {
 // ================================================================
 //  UNIFIED IMPORT / EXPORT
 // ================================================================
+function safeJsonParseForStats(raw) {
+  try { return JSON.parse(raw); } catch (_) { return null; }
+}
+
+function estimateLocalStorageBytes() {
+  let bytes = 0;
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i) || '';
+    const val = localStorage.getItem(key) || '';
+    bytes += (key.length + val.length) * 2;
+  }
+  return bytes;
+}
+
+function formatBytes(bytes) {
+  const n = Number(bytes) || 0;
+  if (n < 1024) return n + ' B';
+  if (n < 1024 * 1024) return (n / 1024).toFixed(n < 10240 ? 1 : 0) + ' KB';
+  return (n / 1024 / 1024).toFixed(2) + ' MB';
+}
+
+function countDataEntries(value) {
+  if (Array.isArray(value)) return value.length;
+  if (value && typeof value === 'object') {
+    if (Array.isArray(value.passages) || Array.isArray(value.quizSets) || Array.isArray(value.grammarQuestions) || Array.isArray(value.vocabularyQuestions)) {
+      return safeArray(value.passages).length + safeArray(value.quizSets).length + safeArray(value.grammarQuestions).length + safeArray(value.vocabularyQuestions).length + safeArray(value.wordBook).length + safeArray(value.synonymLibrary).length + safeArray(value.wrongBook).length + Object.keys(value.wordMemory || {}).length;
+    }
+    if (Array.isArray(value.collections)) return value.collections.length;
+    if (Array.isArray(value.tasks) || Array.isArray(value.history)) return safeArray(value.tasks).length + safeArray(value.history).length;
+    if (Array.isArray(value.links)) return value.links.length + (value.notes ? 1 : 0);
+    return Object.keys(value).length;
+  }
+  return value ? 1 : 0;
+}
+
+function getLocalDataInventory() {
+  const rows = [];
+  let totalEntries = 0;
+  let totalBytes = 0;
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    const raw = localStorage.getItem(key) || '';
+    const parsed = safeJsonParseForStats(raw);
+    const entries = countDataEntries(parsed !== null ? parsed : raw);
+    const bytes = (String(key || '').length + raw.length) * 2;
+    totalEntries += entries;
+    totalBytes += bytes;
+    rows.push({ key, entries, bytes, type: parsed === null ? 'text' : (Array.isArray(parsed) ? 'array' : typeof parsed) });
+  }
+  rows.sort((a,b) => b.bytes - a.bytes);
+  return { rows, totalEntries, totalBytes };
+}
+
+function renderLocalDataManagementPanel() {
+  const inv = getLocalDataInventory();
+  const topRows = inv.rows.slice(0, 8).map(row => `
+    <div style="display:grid;grid-template-columns:minmax(0,1fr) 70px 78px;gap:10px;align-items:center;padding:9px 10px;border:1px solid var(--line-light);border-radius:10px;background:var(--bg-elev);font-size:12px;">
+      <div style="min-width:0;">
+        <div style="font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${esc(row.key)}">${esc(row.key)}</div>
+        <div style="font-size:10px;color:var(--ink-tertiary);margin-top:2px;">${esc(row.type)}</div>
+      </div>
+      <div style="text-align:right;color:var(--ink-secondary);font-weight:700;">${row.entries}</div>
+      <div style="text-align:right;color:var(--ink-secondary);font-weight:700;">${formatBytes(row.bytes)}</div>
+    </div>
+  `).join('');
+  return `
+    <div style="padding:16px;background:var(--bg-card);border:1px solid var(--line);border-radius:var(--radius-lg);">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px;">
+        <div>
+          <div style="font-weight:800;font-size:15px;margin-bottom:4px;letter-spacing:-0.01em;">数据管理</div>
+          <div style="font-size:12px;color:var(--ink-tertiary);line-height:1.5;">导出、恢复或清空当前浏览器保存的全部本地数据。导入或清空前建议先导出备份。</div>
+        </div>
+        <button class="apple-btn small" onclick="refreshLocalDataStats()">刷新统计</button>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:12px;">
+        <div style="padding:12px;border:1px solid var(--line-light);border-radius:12px;background:var(--bg-elev);">
+          <div style="font-size:10px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-tertiary);">存储项</div>
+          <div style="font-size:20px;font-weight:800;margin-top:4px;">${inv.rows.length}</div>
+        </div>
+        <div style="padding:12px;border:1px solid var(--line-light);border-radius:12px;background:var(--bg-elev);">
+          <div style="font-size:10px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-tertiary);">本地数据条目</div>
+          <div style="font-size:20px;font-weight:800;margin-top:4px;">${inv.totalEntries}</div>
+        </div>
+        <div style="padding:12px;border:1px solid var(--line-light);border-radius:12px;background:var(--bg-elev);">
+          <div style="font-size:10px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-tertiary);">估算大小</div>
+          <div style="font-size:20px;font-weight:800;margin-top:4px;">${formatBytes(inv.totalBytes)}</div>
+        </div>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;">
+        <button class="apple-btn primary" onclick="exportAllLocalData()">导出全部本地数据</button>
+        <button class="apple-btn" onclick="importAllLocalData()">导入备份数据</button>
+        <button class="apple-btn danger" onclick="clearAllLocalData()">清空本地数据</button>
+        <input type="file" id="allLocalDataImportInput" accept=".json,application/json" style="display:none;" onchange="handleAllLocalDataImport(event)">
+      </div>
+      <details style="border:1px solid var(--line-light);border-radius:12px;background:var(--bg-elev);padding:0;overflow:hidden;">
+        <summary style="cursor:pointer;list-style:revert;padding:11px 12px;font-size:12px;font-weight:800;color:var(--ink-secondary);user-select:none;">本地存储 Key</summary>
+        <div style="padding:0 10px 10px;">
+          <div style="display:grid;grid-template-columns:minmax(0,1fr) 70px 78px;gap:10px;padding:0 0 6px;font-size:10px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-tertiary);">
+            <div>Key</div><div style="text-align:right;">条目</div><div style="text-align:right;">大小</div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:6px;max-height:260px;overflow:auto;">
+            ${topRows || '<div class="empty-state" style="padding:14px 12px;">暂无本地数据。</div>'}
+          </div>
+          ${inv.rows.length > 8 ? `<div style="font-size:11px;color:var(--ink-tertiary);margin-top:8px;">当前显示 ${inv.rows.length} 个本地存储项中占用最大的 8 个。</div>` : ''}
+        </div>
+      </details>
+    </div>
+  `;
+}
+
+function buildAllLocalDataBackup() {
+  const storage = {};
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    storage[key] = localStorage.getItem(key);
+  }
+  const inv = getLocalDataInventory();
+  return {
+    version: 'study-dashboard-local-backup-v1',
+    exportedAt: new Date().toISOString(),
+    appTitle: document.title || 'Study Dashboard',
+    origin: location.origin || 'local-file',
+    summary: {
+      storageKeys: inv.rows.length,
+      dataEntries: inv.totalEntries,
+      estimatedBytes: inv.totalBytes
+    },
+    localStorage: storage
+  };
+}
+
+function exportAllLocalData() {
+  downloadJSON(buildAllLocalDataBackup(), 'study_dashboard_all_local_data_' + todayISO() + '.json');
+  toast('已导出全部本地数据');
+}
+
+function importAllLocalData() {
+  const input = document.getElementById('allLocalDataImportInput');
+  if (input) { input.value = ''; input.click(); }
+}
+
+function handleAllLocalDataImport(event) {
+  const file = event.target.files && event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const parsed = JSON.parse(reader.result);
+      const storage = parsed && parsed.localStorage;
+      if (!storage || typeof storage !== 'object' || Array.isArray(storage)) throw new Error('备份文件无效：缺少 localStorage 对象');
+      const count = Object.keys(storage).length;
+      if (!confirm(`确定导入 ${count} 个本地存储项吗？这会替换当前本地数据。建议先导出备份。`)) return;
+      localStorage.clear();
+      Object.keys(storage).forEach(key => {
+        const value = storage[key];
+        localStorage.setItem(key, value == null ? '' : String(value));
+      });
+      toast('备份已导入，正在刷新...');
+      setTimeout(() => location.reload(), 400);
+    } catch (err) {
+      alert('导入失败：' + (err && err.message ? err.message : err));
+    }
+  };
+  reader.readAsText(file);
+}
+
+function clearAllLocalData() {
+  const inv = getLocalDataInventory();
+  if (!inv.rows.length) { toast('没有可清空的本地数据'); return; }
+  const confirmText = prompt(`将清空 ${inv.rows.length} 个本地存储项（${formatBytes(inv.totalBytes)}）。请输入 DELETE 继续。`);
+  if (confirmText !== 'DELETE') { toast('已取消清空'); return; }
+  localStorage.clear();
+  toast('本地数据已清空，正在刷新...');
+  setTimeout(() => location.reload(), 400);
+}
+
+function refreshLocalDataStats() {
+  closeSheet('genericSheet');
+  setTimeout(openQuizSettings, 120);
+}
+
 function exportAllData() {
-  const selected = ['study_resource','weekly_planner','quiz_hub','word_book','synonyms'];
-  downloadJSON(buildSelectedModuleBackup(selected),'study_dashboard_full_backup_'+todayISO()+'.json');
-  toast('Full backup exported OK');
+  exportAllLocalData();
 }
 
 
@@ -9488,6 +9935,7 @@ function openGenericSheet(title, bodyHTML, buttons) {
   } else {
     openSheet('genericSheet');
   }
+  if (typeof applyAppLanguage === 'function') setTimeout(applyAppLanguage, 0);
 }
 
 // Close sheets on overlay click
@@ -9616,9 +10064,7 @@ function renderWeeklyPlanner(container) {
   if (!weeklyPlan.tasks || weeklyPlan.tasks.length === 0) {
     initWeeklyPlanData();
   }
-  // The top Weekly Planner navigation should only contain Current Plan / Archive / Statistics.
-  // AI Prompt is opened from the This Week Goals action button instead.
-  if (weeklyPlan.plannerTab === 'prompt') weeklyPlan.plannerTab = 'current';
+  // Top Weekly Planner navigation includes Current Plan / Archive / Statistics / AI Prompt.
 
   const tasks = weeklyPlan.tasks || [];
   const completedCount = tasks.filter(t => t.status === 'completed').length;
@@ -9629,15 +10075,17 @@ function renderWeeklyPlanner(container) {
   let html = `
     <div class="roadmap-page">
       <!-- Navigation Tabs -->
-      <div class="quiz-tabs" style="max-width: 500px; margin-bottom: 20px;">
+      <div class="quiz-tabs" style="max-width: 650px; margin-bottom: 20px;">
         <div class="quiz-tab ${weeklyPlan.plannerTab === 'current' ? 'active' : ''}" onclick="switchPlannerTab('current')">Current Plan</div>
         <div class="quiz-tab ${weeklyPlan.plannerTab === 'archive' ? 'active' : ''}" onclick="switchPlannerTab('archive')">Archive</div>
         <div class="quiz-tab ${weeklyPlan.plannerTab === 'stats' ? 'active' : ''}" onclick="switchPlannerTab('stats')">Statistics</div>
+        <div class="quiz-tab ${weeklyPlan.plannerTab === 'prompt' ? 'active' : ''}" onclick="switchPlannerTab('prompt')">AI Prompt</div>
       </div>
 
       ${weeklyPlan.plannerTab === 'current' ? renderCurrentPlan(completedCount, totalTasks, completionRate, estimatedTime) : ''}
       ${weeklyPlan.plannerTab === 'archive' ? renderPlannerArchive() : ''}
       ${weeklyPlan.plannerTab === 'stats' ? renderPlannerStats() : ''}
+      ${weeklyPlan.plannerTab === 'prompt' ? renderPromptEditor() : ''}
     </div>
   `;
 
@@ -11032,10 +11480,10 @@ function renderCurrentPlan(completedCount, totalTasks, completionRate, estimated
     </div>
     <div class="roadmap-hero" style="grid-template-columns: 1fr; margin-bottom: 24px;"><div class="roadmap-card"><div class="roadmap-kicker">Week Overview — ${weeklyPlan.status}</div><div style="display:flex; justify-content:space-between; align-items:baseline;"><div class="roadmap-days" style="font-size: 28px;">Week ${weeklyPlan.currentWeek}</div><div class="roadmap-days-sub" style="display:flex;align-items:center;gap:4px;"><input type="date" value="${weeklyPlan.startDate||''}" onchange="weeklyPlan.startDate=this.value;saveWeeklyPlan();" style="font-size:12px;font-weight:600;border:1px solid var(--line);border-radius:6px;padding:2px 6px;background:var(--bg-card);color:var(--ink);"> <span style="color:var(--ink-tertiary);">—</span> <input type="date" value="${weeklyPlan.endDate||''}" onchange="weeklyPlan.endDate=this.value;saveWeeklyPlan();" style="font-size:12px;font-weight:600;border:1px solid var(--line);border-radius:6px;padding:2px 6px;background:var(--bg-card);color:var(--ink);"></div></div></div></div>
     <div class="roadmap-section">
-      <div class="roadmap-section-head"><h3>This Week Goals</h3><div style="display:flex; gap:8px; flex-wrap:wrap;"><button class="apple-btn small" onclick="openAIPlannerPromptSheet('planning', false)">AI Prompt</button><button class="apple-btn small" onclick="addCustomWeeklyTask()">+ Add Goal</button><button class="apple-btn small" onclick="regenerateWeeklyPlan()">AI Regenerate</button><button class="apple-btn small danger" onclick="removeDemoData()">Remove Data</button></div></div>
+      <div class="roadmap-section-head"><h3>This Week Goals</h3><div style="display:flex; gap:8px; flex-wrap:wrap;"><button class="apple-btn small" onclick="addCustomWeeklyTask()">+ Add Goal</button><button class="apple-btn small primary" onclick="completeCurrentWeek()">Archive</button><button class="apple-btn small danger" onclick="removeDemoData()">Remove Data</button></div></div>
       <div class="exercise-list" id="weeklyTaskList">${_renderGroupedWeeklyTasks()}</div>
     </div>
-    <div class="roadmap-section" style="background: var(--bg-elev); margin-top: 24px;"><div class="roadmap-section-head"><h3>AI Suggestion</h3><button class="apple-btn small primary" onclick="openAIPlannerPromptSheet('planning', true)">AI Prompt</button></div><div class="score-note-box" style="background: var(--bg-card); border-color: var(--line);">${weeklyPlan.suggestion || 'Generating suggestions...'}</div></div>
+    <div class="roadmap-section" style="background: var(--bg-elev); margin-top: 24px;"><div class="roadmap-section-head"><h3>AI Suggestion</h3></div><div class="score-note-box" style="background: var(--bg-card); border-color: var(--line);">${weeklyPlan.suggestion || 'Generating suggestions...'}</div></div>
     ${renderWeeklyReviewCard()}
     ${renderAIWeeklySummary()}
   `;
@@ -11167,22 +11615,56 @@ function viewArchivedWeek(startDate) {
   ]);
   setTimeout(()=>{document.querySelectorAll('#genericSheetBody textarea').forEach(ta=>{ta.style.height='auto';ta.style.height=ta.scrollHeight+'px';});},60);
 }
-function renderPromptEditor() {
-  return `<div class="roadmap-section">
-    <div class="roadmap-section-head"><h3>AI Planning Prompt</h3>
-      <div style="display:flex;gap:8px;">
-        <button class="apple-btn small" onclick="openAIPlannerPromptSheet('planning', false)">AI Prompt</button><button class="apple-btn small" onclick="openAIImportSheet()">AI 导入</button>
-        <button class="apple-btn small" onclick="copyAIPrompt()">Copy Full Context</button>
+function copyPlannerPromptPanel(tab) {
+  const prompt = getPlannerPromptContent(tab || 'planning');
+  if (tab === 'split' && typeof copyWeeklySplitPrompt === 'function') {
+    copyWeeklySplitPrompt();
+    return;
+  }
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(prompt).then(() => toast('Prompt copied!')).catch(() => fallbackCopyPrompt(prompt));
+  } else {
+    fallbackCopyPrompt(prompt);
+  }
+}
+
+function renderPlannerPromptPanel(tab, title, desc) {
+  return `<div class="roadmap-section" style="margin:0;display:flex;flex-direction:column;gap:10px;min-height:0;">
+    <div class="roadmap-section-head" style="margin-bottom:0;">
+      <div>
+        <h3>${esc(title)}</h3>
+        <div style="font-size:12px;color:var(--ink-tertiary);line-height:1.45;margin-top:3px;">${esc(desc)}</div>
       </div>
+      <button class="apple-btn small" onclick="copyPlannerPromptPanel('${tab}')">Copy</button>
     </div>
-    <div style="margin-bottom: 16px; font-size: 13px; color: var(--ink-secondary); line-height: 1.6;">
-      <strong>📋 生成本周拆分 Prompt：</strong>生成一段 AI Prompt，将本周总目标拆分为每天的具体任务。<br>
-      <strong>Copy Full Context：</strong>复制完整的学习上下文（含 Roadmap、进度等），适合发给 AI 做更深入的规划。
+    <pre style="white-space:pre-wrap;background:var(--bg-elev);border:1px solid var(--line);border-radius:var(--radius);padding:12px;font-size:12px;line-height:1.55;max-height:260px;overflow:auto;margin:0;color:var(--ink-secondary);font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;">${esc(getPlannerPromptContent(tab))}</pre>
+  </div>`;
+}
+
+function renderPromptEditor() {
+  return `<div style="display:flex;flex-direction:column;gap:16px;">
+    <div class="roadmap-section">
+      <div class="roadmap-section-head"><h3>AI Prompt</h3></div>
     </div>
-    <textarea id="plannerCustomPrompt" style="width: 100%; height: 120px; padding: 16px; border-radius: 12px; border: 1px solid var(--line); background: var(--bg-card); font-size: 14px; line-height: 1.6;" placeholder="自定义指令（可选，例如：每天2页语法 + 1篇阅读）" oninput="weeklyPlan.customPrompt = this.value; saveWeeklyPlan();">${esc(weeklyPlan.customPrompt || '')}</textarea>
-    <div style="margin-top:16px;">
-      <div class="roadmap-kicker">Full Context Preview</div>
-      <pre style="white-space:pre-wrap;background:var(--bg-elev);border:1px solid var(--line);border-radius:var(--radius);padding:12px;font-size:12px;line-height:1.55;max-height:360px;overflow:auto;">${esc(generateStudyPlanningPrompt())}</pre>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;align-items:start;">
+      ${renderPlannerPromptPanel('planning', 'Study Planning Prompt', '完整学习上下文，用来生成下周学习规划建议。')}
+      ${renderPlannerPromptPanel('json', 'JSON Format Prompt', '让 AI 严格输出 Weekly Planner 可导入的 JSON。')}
+      ${renderPlannerPromptPanel('split', '拆分 Prompt', '把本周总目标拆成每天可执行的小任务。')}
+    </div>
+    <div class="roadmap-section">
+      <div class="roadmap-section-head"><h3>AI 导入</h3></div>
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:10px;font-size:12px;color:var(--ink-secondary);">
+        <span style="font-weight:700;color:var(--ink-secondary);">导入方式：</span>
+        <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;"><input type="radio" name="plannerImportMode" value="merge" checked><span>合并（保留现有数据）</span></label>
+        <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;"><input type="radio" name="plannerImportMode" value="replace"><span>覆盖（替换现有数据）</span></label>
+      </div>
+      <textarea id="importPlannerText" class="ai-studio-import-textarea" placeholder="粘贴 JSON 到这里..."></textarea>
+      <div class="ai-studio-actions" style="margin-top:10px;">
+        <button class="apple-btn" onclick="previewAIImport('weekly_planner')">预览</button>
+        <button class="apple-btn primary" onclick="importWeekly(document.querySelector('input[name=&quot;plannerImportMode&quot;]:checked')?.value || 'merge')">导入</button>
+        <button class="apple-btn" onclick="clearImportTextarea('importPlannerText','plannerAIImportPreview')">清空</button>
+      </div>
+      <div id="plannerAIImportPreview" class="ai-studio-status" style="margin-top:10px;">预览将显示任务数量、科目分布等摘要。</div>
     </div>
   </div>`;
 }
@@ -11855,7 +12337,7 @@ function _normalizeReviewMainShell() {
   }
 }
 
-function renderReviewCenter(tab = _reviewCenterActiveTab || 'wordbook') {
+function renderReviewCenter(tab = _reviewCenterActiveTab || 'wordbook', ...args) {
   _reviewCenterActiveTab = tab || 'wordbook';
   appState.currentModule = 'review';
   if (typeof saveAppState === 'function') saveAppState();
@@ -11863,19 +12345,20 @@ function renderReviewCenter(tab = _reviewCenterActiveTab || 'wordbook') {
   _reviewCenterRendering = true;
   _prepareReviewMainShell();
   if (_reviewCenterActiveTab === 'wrongbook') {
-    if (_reviewOrigOpenQuizWrongBook) _reviewOrigOpenQuizWrongBook();
+    if (_reviewOrigOpenQuizWrongBook) _reviewOrigOpenQuizWrongBook(...args);
   } else if (_reviewCenterActiveTab === 'synonyms') {
-    if (_reviewOrigOpenSidebarSynonyms) _reviewOrigOpenSidebarSynonyms();
+    if (_reviewOrigOpenSidebarSynonyms) _reviewOrigOpenSidebarSynonyms(...args);
   } else {
-    if (_reviewOrigOpenSidebarWordBook) _reviewOrigOpenSidebarWordBook();
+    if (_reviewOrigOpenSidebarWordBook) _reviewOrigOpenSidebarWordBook(...args);
   }
   _normalizeReviewMainShell();
   _setReviewNavActive();
   _reviewCenterRendering = false;
+  if (typeof applyAppLanguage === 'function') setTimeout(applyAppLanguage, 0);
 }
 
-function openReviewCenter(tab = 'wordbook') {
-  renderReviewCenter(tab);
+function openReviewCenter(tab = 'wordbook', ...args) {
+  renderReviewCenter(tab, ...args);
 }
 
 if (_reviewOrigRender) {
@@ -11889,14 +12372,117 @@ if (_reviewOrigRender) {
 }
 
 if (_reviewOrigOpenSidebarWordBook) {
-  openSidebarWordBook = function() { openReviewCenter('wordbook'); };
+  openSidebarWordBook = function(...args) { openReviewCenter('wordbook', ...args); };
 }
 if (_reviewOrigOpenQuizWrongBook) {
-  openQuizWrongBook = function() { openReviewCenter('wrongbook'); };
+  openQuizWrongBook = function(...args) { openReviewCenter('wrongbook', ...args); };
 }
 if (_reviewOrigOpenSidebarSynonyms) {
-  openSidebarSynonyms = function() { openReviewCenter('synonyms'); };
+  openSidebarSynonyms = function(...args) { openReviewCenter('synonyms', ...args); };
 }
+
+
+// ================================================================
+//  LANGUAGE SWITCH — UI TEXT ONLY
+// ================================================================
+const APP_LANG_KEY = 'quizhub_ui_language_v1';
+let appLanguage = localStorage.getItem(APP_LANG_KEY) || 'en';
+
+const I18N_ZH = {
+  'Home':'主页','Quiz Hub':'题库','Reading':'阅读','Review':'复习','Study Roadmap':'学习路线','Weekly AI Planner':'每周 AI 计划','Progress Check':'进度检测','Study Resource':'学习资料',
+  'Planning':'计划','Practice':'练习','System':'系统','Settings':'设置','All':'全部','Refresh':'刷新','Study Suggest':'学习建议','Search quizzes, vocabulary, resources, notes...':'搜索题目、词汇、资料、笔记...',
+  'Current Plan':'当前计划','Archive':'归档','Statistics':'统计','AI Prompt':'AI 提示词','This Week Goals':'本周目标','+ Add Goal':'+ 添加目标','Remove Data':'移除数据','AI Suggestion':'AI 建议',
+  'Exam Countdown':'考试倒计时','Remaining':'剩余','Current Stage':'当前阶段','Suggested Focus':'建议重点','Weekly Progress':'本周进度','Est. Time':'预计时间','Finish':'完成','Week':'周','Week Overview':'周概览',
+  'Study Planning Prompt':'学习规划 Prompt','JSON Format Prompt':'JSON 格式 Prompt','拆分 Prompt':'拆分 Prompt','AI 导入':'AI 导入','导入方式：':'导入方式：','合并（保留现有数据）':'合并（保留现有数据）','覆盖（替换现有数据）':'覆盖（替换现有数据）',
+  '预览':'预览','导入':'导入','清空':'清空','Copy':'复制','Prompt':'提示词','Copy Prompt':'复制 Prompt','Import JSON':'导入 JSON','Import JSON File':'导入 JSON 文件','Export JSON':'导出 JSON','Export / Import':'导出 / 导入',
+  'Close':'关闭','Cancel':'取消','Save':'保存','Delete':'删除','Rename':'重命名','Done':'完成','Edit':'编辑','Duplicate':'复制','Add Plan':'+ 添加计划','Show Current Milestone':'显示当前阶段','Mark Done':'标为完成','Goal:':'目标：','Check':'打卡','Focus':'关注','Pinned':'已置顶','Pin':'置顶','Today':'今日',
+  'Study Notes':'学习笔记','Notes':'笔记','Pinned':'置顶','No study notes yet. Add one to keep yourself motivated.':'还没有学习笔记。添加一条来激励自己。','+ Add':'+ 添加',
+  'Grammar':'语法','Vocabulary':'词汇','Quiz Set:':'题组：','+ New':'+ 新建','New Reading Collection':'新建阅读集','Collection Name':'集合名称','English Text':'英文正文','Reading Set:':'阅读集：',
+  'Prompt Template':'Prompt 模板','Prompt is read-only':'Prompt 为只读','Highlighted':'已高光','Highlight removed':'已移除高光','Highlight':'高光','Remove':'移除',
+  'Word Book':'生词本','Wrong Book':'错题本','Synonyms':'同义词','Question':'题目','Answer (A/B/C/D)':'答案 (A/B/C/D)','Explanation':'解析',
+  'Planning Statistics':'计划统计','Weeks Planned':'已计划周数','Archived Weeks':'已归档周数','Average Weekly Completion':'平均完成率','History Archive':'历史归档',
+  'Progress Report':'进度报告','Learning Insights':'学习洞察','Previous Checks':'历史检测','Weekly Check':'每周检测','Monthly Check':'每月检测','Custom Check':'自定义检测',
+  'No sections. Click "+ New Section" or import JSON.':'没有板块。点击“+ 新建板块”或导入 JSON。','+ New Section':'+ 新建板块',
+  'Import status will appear here.':'导入状态会显示在这里。','已清空。':'已清空。','粘贴 JSON 到这里...':'粘贴 JSON 到这里...'
+};
+
+const I18N_EN = {
+  '主页':'Home','题库':'Quiz Hub','阅读':'Reading','复习':'Review','学习路线':'Study Roadmap','每周 AI 计划':'Weekly AI Planner','进度检测':'Progress Check','学习资料':'Study Resource',
+  '计划':'Planning','练习':'Practice','系统':'System','设置':'Settings','全部':'All','刷新':'Refresh','学习建议':'Study Suggest','搜索题目、词汇、资料、笔记...':'Search quizzes, vocabulary, resources, notes...',
+  '当前计划':'Current Plan','归档':'Archive','统计':'Statistics','AI 提示词':'AI Prompt','本周目标':'This Week Goals','+ 添加目标':'+ Add Goal','移除数据':'Remove Data','AI 建议':'AI Suggestion',
+  '考试倒计时':'Exam Countdown','剩余':'Remaining','当前阶段':'Current Stage','建议重点':'Suggested Focus','本周进度':'Weekly Progress','预计时间':'Est. Time','完成':'Finish','周':'Week','周概览':'Week Overview',
+  '学习规划 Prompt':'Study Planning Prompt','JSON 格式 Prompt':'JSON Format Prompt','AI 导入':'AI Import','导入方式：':'Import Mode:','合并（保留现有数据）':'Merge (keep existing data)','覆盖（替换现有数据）':'Replace (overwrite existing data)',
+  '预览':'Preview','导入':'Import','清空':'Clear','复制':'Copy','提示词':'Prompt','复制 Prompt':'Copy Prompt','导入 JSON':'Import JSON','导入 JSON 文件':'Import JSON File','导出 JSON':'Export JSON','导出 / 导入':'Export / Import',
+  '关闭':'Close','取消':'Cancel','保存':'Save','删除':'Delete','重命名':'Rename','编辑':'Edit','复制':'Duplicate','+ 添加计划':'Add Plan','显示当前阶段':'Show Current Milestone','标为完成':'Mark Done','目标：':'Goal:','打卡':'Check','关注':'Focus','已置顶':'Pinned','置顶':'Pin','今日':'Today',
+  '学习笔记':'Study Notes','笔记':'Notes','还没有学习笔记。添加一条来激励自己。':'No study notes yet. Add one to keep yourself motivated.','+ 添加':'+ Add',
+  '语法':'Grammar','词汇':'Vocabulary','题组：':'Quiz Set:','+ 新建':'+ New','新建阅读集':'New Reading Collection','集合名称':'Collection Name','英文正文':'English Text','阅读集：':'Reading Set:',
+  'Prompt 模板':'Prompt Template','Prompt 为只读':'Prompt is read-only','已高光':'Highlighted','已移除高光':'Highlight removed','高光':'Highlight','移除':'Remove',
+  '生词本':'Word Book','错题本':'Wrong Book','同义词':'Synonyms','题目':'Question','答案 (A/B/C/D)':'Answer (A/B/C/D)','解析':'Explanation',
+  '计划统计':'Planning Statistics','已计划周数':'Weeks Planned','已归档周数':'Archived Weeks','平均完成率':'Average Weekly Completion','历史归档':'History Archive',
+  '进度报告':'Progress Report','学习洞察':'Learning Insights','历史检测':'Previous Checks','每周检测':'Weekly Check','每月检测':'Monthly Check','自定义检测':'Custom Check',
+  '没有板块。点击“+ 新建板块”或导入 JSON。':'No sections. Click "+ New Section" or import JSON.','+ 新建板块':'+ New Section',
+  '导入状态会显示在这里。':'Import status will appear here.','已清空。':'Cleared.','粘贴 JSON 到这里...':'Paste JSON here...'
+};
+
+function getI18nDict() {
+  return appLanguage === 'zh' ? I18N_ZH : I18N_EN;
+}
+
+function i18nTextValue(value) {
+  const dict = getI18nDict();
+  const raw = String(value || '');
+  const trimmed = raw.trim();
+  if (!trimmed || !dict[trimmed]) return raw;
+  return raw.replace(trimmed, dict[trimmed]);
+}
+
+function applyAppLanguage(root = document.body) {
+  if (!root) return;
+  document.documentElement.lang = appLanguage === 'zh' ? 'zh-CN' : 'en';
+  const langBtn = document.getElementById('btnLangToggle');
+  if (langBtn) langBtn.textContent = appLanguage === 'zh' ? 'EN' : '中文';
+
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+    acceptNode(node) {
+      const parent = node.parentElement;
+      if (!parent) return NodeFilter.FILTER_REJECT;
+      if (parent.closest('textarea,input,select,pre,code,script,style,[data-no-i18n]')) return NodeFilter.FILTER_REJECT;
+      if (!node.nodeValue || !node.nodeValue.trim()) return NodeFilter.FILTER_REJECT;
+      return NodeFilter.FILTER_ACCEPT;
+    }
+  });
+  const nodes = [];
+  while (walker.nextNode()) nodes.push(walker.currentNode);
+  nodes.forEach(node => {
+    node.nodeValue = i18nTextValue(node.nodeValue);
+  });
+
+  document.querySelectorAll('input[placeholder], textarea[placeholder], button[title], [title]').forEach(el => {
+    if (el.closest('[data-no-i18n]')) return;
+    if (el.placeholder) el.placeholder = i18nTextValue(el.placeholder);
+    if (el.title) el.title = i18nTextValue(el.title);
+    if (el.getAttribute && el.getAttribute('aria-label')) el.setAttribute('aria-label', i18nTextValue(el.getAttribute('aria-label')));
+  });
+}
+
+function setAppLanguageFromSettings(lang) {
+  appLanguage = lang === 'zh' ? 'zh' : 'en';
+  localStorage.setItem(APP_LANG_KEY, appLanguage);
+  render();
+  setTimeout(openQuizSettings, 80);
+}
+
+function toggleAppLanguage() {
+  appLanguage = appLanguage === 'zh' ? 'en' : 'zh';
+  localStorage.setItem(APP_LANG_KEY, appLanguage);
+  render();
+}
+
+const _quizhubRenderBase = render;
+render = function() {
+  _quizhubRenderBase();
+  setTimeout(() => applyAppLanguage(), 0);
+};
 
 render();
 </script>
