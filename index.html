@@ -4964,7 +4964,7 @@ function rdShowFloatMenu(tokens) {
   };
   addButton('Highlight', () => rdHighlightText(text), highlighted ? 'added' : '');
   addButton('+ Synonym', () => qsAddToSynGroup(text));
-  addButton(alreadyIn ? '✓' : '+', btn => qsAddToWordBook(btn, text), alreadyIn ? 'added' : '');
+  addButton(alreadyIn ? '✓' : '+', () => rdAddToVocab(text), alreadyIn ? 'added' : '');
   if (highlighted) {
     addButton('Remove', () => rdRemoveHighlightText(text), 'danger');
   }
@@ -4986,7 +4986,8 @@ function rdPositionMenu(menu, firstRect, lastRect) {
 function rdHighlightText(text) {
   const c = currentReadingCollection(); if (!c) return;
   const val = String(text || '').trim(); if (!val) return;
-  if (!(c.highlights || []).some(h => rdNorm(h.text || h) === rdNorm(val))) {
+  c.highlights = c.highlights || [];
+  if (!c.highlights.some(h => rdNorm(h.text || h) === rdNorm(val))) {
     c.highlights.push({ id:uid('rdhl'), text:val, ts:Date.now() });
   }
   c.updatedAt = Date.now();
@@ -5007,12 +5008,44 @@ function rdRemoveHighlightText(text) {
   rdRemoveFloatMenu();
   render();
 }
+function rdExtractExampleSentence(text, word) {
+  const raw = String(text || '');
+  const val = String(word || '').trim();
+  if (!raw || !val) return '';
+
+  const escaped = val.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const isAsciiWord = /^[A-Za-z0-9'-]+$/.test(val);
+  const wordRe = new RegExp(isAsciiWord ? `\\b${escaped}\\b` : escaped, 'i');
+  const sentenceRe = /[^。！？.!?\n\r]+[。！？.!?]?/g;
+  let match;
+
+  while ((match = sentenceRe.exec(raw)) !== null) {
+    const sentence = match[0].trim();
+    if (!sentence || !wordRe.test(sentence)) continue;
+
+    const endIndex = match.index + match[0].length;
+    const endsWithSentenceMark = /[。！？.!?]$/.test(sentence);
+    const endsAtLineBreak = endIndex < raw.length && /[\n\r]/.test(raw[endIndex]);
+    if (endsWithSentenceMark || endsAtLineBreak) return sentence.replace(/\s+/g, ' ');
+  }
+
+  const found = wordRe.exec(raw);
+  if (!found) return raw.slice(0, 80).trim();
+
+  const start = Math.max(0, found.index - 20);
+  const end = Math.min(raw.length, found.index + found[0].length + 20);
+  const before = raw.slice(start, found.index).replace(/\s+/g, ' ').trim();
+  const after = raw.slice(found.index + found[0].length, end).replace(/\s+/g, ' ').trim();
+  return `...${before ? before + ' ' : ''}${found[0]}${after ? ' ' + after : ''}...`;
+}
 function rdAddToVocab(text) {
   const c = currentReadingCollection();
   const val = String(text || '').trim(); if (!val) return;
-  addToWordBook(val, { source:'Reading · ' + (c?.name || 'Reading'), example:c?.text?.slice(0, 220) || '', subject:appState.currentSubject || 'english', highlight:true });
+  const example = rdExtractExampleSentence(c?.text || '', val);
+  const added = addToWordBook(val, { source:'Reading · ' + (c?.name || 'Reading'), example, subject:appState.currentSubject || 'english', highlight:true, silentToast:true });
   const w = (quizState.wordBook || []).find(x => rdNorm(x.text || x.word) === rdNorm(val));
   if (w && c) { w.readingCollectionId = c.id; w.readingCollectionName = c.name; saveQuiz(); }
+  toast(added ? '✅ 已加入生词本' : '已在生词本中');
   rdRemoveFloatMenu();
 }
 function bindReadingModuleEvents() {
@@ -5998,9 +6031,6 @@ function qsShowFloatMenu(tokens) {
   const lastRect = tokens[tokens.length - 1].getBoundingClientRect();
   const alreadyIn = (quizState.wordBook||[]).some(w => qsNorm(w.text || w.word) === qsNorm(text));
   const highlighted = qsIsHighlighted(text);
-  const tokenContext = wordMemoryContextFromToken(tokens[0]);
-  wordMemoryEnsure(text, highlighted ? 'Highlight' : '', tokenContext);
-  saveQuiz();
 
   const menu = document.createElement('div');
   menu.id = 'qsFloatMenu';
@@ -6282,7 +6312,7 @@ function addToWordBook(text, extra={}) {
     exists.errorCount = mem.errorCount || 0;
     exists.seenCount = mem.seenCount || 0;
     exists.lastSeenDate = mem.lastSeenDate;
-    saveQuiz(); toast('Already in Word Book'); return false;
+    saveQuiz(); if (!extra.silentToast) toast('Already in Word Book'); return false;
   }
   quizState.wordBook.push({
     id: uid('wbk'), text, meaning: extra.meaning || '', example: extra.example || '',
@@ -6291,7 +6321,7 @@ function addToWordBook(text, extra={}) {
     reviewStatus: mem.reviewStatus, errorCount: mem.errorCount || 0, seenCount: mem.seenCount || 0, lastSeenDate: mem.lastSeenDate,
     srsBox: 0, srsNext: mem.nextReview || Date.now(), srsReviews: 0, srsLapses: 0
   });
-  saveQuiz(); renderSharedStats(); render(); toast('Saved to Word Book'); return true;
+  saveQuiz(); renderSharedStats(); render(); if (!extra.silentToast) toast('Saved to Word Book'); return true;
 }
 
 function addToVocabBook(text, extra={}) {
@@ -6304,6 +6334,44 @@ function addToVocabBook(text, extra={}) {
 let wbkSearchQ = '';
 let wbkSort = 'dateDesc'; // 'dateDesc', 'alpha', 'highlight'
 let wbkTab = 'all'; // 'all', 'due', 'highlight', 'starred'
+
+const WBK_LOCAL_TRANSLATION_OVERRIDES = {
+  probably: '大概，很可能',
+  approximately: '大约，大概',
+  consequently: '因此，所以',
+  accordingly: '相应地，因此',
+  actually: '实际上，其实',
+  especially: '尤其，特别',
+  generally: '通常，一般来说',
+  usually: '通常',
+  perhaps: '也许，可能',
+  therefore: '因此，所以',
+  however: '然而，不过',
+  although: '虽然，尽管',
+  because: '因为',
+  important: '重要的',
+  different: '不同的'
+};
+
+function wbkLocalTranslation(word) {
+  const key = String(word || '').trim().toLowerCase().replace(/^[^a-z]+|[^a-z]+$/g, '');
+  return WBK_LOCAL_TRANSLATION_OVERRIDES[key] || '';
+}
+
+function wbkPostProcessTranslation(word, translated) {
+  const local = wbkLocalTranslation(word);
+  if (local) return local;
+
+  let result = String(translated || '').trim();
+  if (!result) return '';
+
+  if (result.includes('、') && result.replace(/[、，,。\s]/g, '').length > 4) {
+    const firstMeaning = result.split('、').map(s => s.trim()).filter(Boolean)[0];
+    if (firstMeaning) result = firstMeaning;
+  }
+
+  return result;
+}
 
 async function batchAutoLookupWords() {
   const words = (quizState.wordBook || []).filter(w => !w.meaning || String(w.meaning).trim() === '');
@@ -6333,13 +6401,20 @@ async function batchAutoLookupWords() {
           return;
         }
 
+        const localMeaning = wbkLocalTranslation(wordText);
+        if (localMeaning) {
+          w.meaning = localMeaning;
+          successCount++;
+          return;
+        }
+
         const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(wordText)}&langpair=en|zh-CN`;
         const res = await fetch(url);
         if (!res.ok) throw new Error('HTTP ' + res.status);
         const data = await res.json();
 
         if (data.responseData && data.responseData.translatedText) {
-          const translated = String(data.responseData.translatedText || '').trim();
+          const translated = wbkPostProcessTranslation(wordText, data.responseData.translatedText);
           if (translated && translated.toLowerCase() !== wordText.toLowerCase()) {
             w.meaning = translated;
             successCount++;
