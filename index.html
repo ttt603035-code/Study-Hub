@@ -5264,8 +5264,8 @@ function openQuizSectionImportExport(passageId) {
         <label style="display:none;"><input type="checkbox" id="aiForcePassage" checked></label>
         <div style="margin-bottom:10px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
           <label style="font-size:12px;font-weight:700;color:var(--ink-secondary);">导入方式：</label>
-          <label style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer;"><input type="radio" name="aiImportMode" value="new_set" checked> 新建 Quiz Set</label>
-          <label style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer;"><input type="radio" name="aiImportMode" value="merge_current_set"> 合并到当前 Quiz Set</label>
+          <label style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer;"><input type="radio" name="aiImportMode" value="new_set" checked> 新建 Quiz Set（自动分组）</label>
+          <label style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer;"><input type="radio" name="aiImportMode" value="merge"> 合并到当前 Quiz Set（同一题组）</label>
         </div>
         <div style="font-size:11px;color:var(--ink-tertiary);line-height:1.5;margin:-4px 0 10px;">建议保持“新建 Quiz Set”：第一次导入和第二次导入会自动分开。</div>
         <textarea id="aiJsonPasteArea" class="ai-studio-import-textarea" placeholder="在这里粘贴 AI 生成的 JSON..."></textarea>
@@ -5360,21 +5360,44 @@ function renderQuestionsHTML() {
 function renderQuestionCard(q, num, qType) {
   const log = quizState.answerLog[q.id];
 
-  // Tokenise text for word-level interaction. Escape every non-token part.
-  function tokenise(text, areaId) {
-    return String(text || '').split(/([^\s\p{P}]+)/u).map(part => {
-      if (!part) return '';
-      if (/^[^\s\p{P}]+$/u.test(part)) {
-        const hl = qsIsHighlighted(part) ? ' qs-hl-persist' : '';
-        return `<span class="q-word-token${hl}" data-area="${areaId}" data-token="${esc(part)}" onpointerdown="qsWordDown(event,this)" oncontextmenu="qsWordContextMenu(event,this)" onclick="event.preventDefault();event.stopPropagation();">${esc(part)}</span>`;
+  // ===== 预处理填空题：把 ____ 变成可视化下划线占位符 =====
+  let processedQuestion = q.question || '';
+  // 如果包含 ____，替换成带下划线的占位符（保留在 tokenise 中可被选中）
+  if (processedQuestion.includes('____')) {
+    // 先分割，再替换
+    const parts = processedQuestion.split(/(____)/g);
+    processedQuestion = parts.map(part => {
+      if (part === '____') {
+        return ' ⏤⏤⏤⏤ '; // 用特殊标记替代，稍后在 tokenise 中渲染
       }
-      return esc(part);
+      return part;
+    }).join('');
+  }
+
+  // Tokenise text for word-level interaction
+  function tokenise(text, areaId) {
+    // 先把 ____ 统一替换为内部占位符 ⏤⏤⏤⏤，再统一渲染
+    const normalised = String(text || '').replace(/_{4,}/g, '⏤⏤⏤⏤');
+    const parts = normalised.split(/(⏤⏤⏤⏤)/g);
+    return parts.map(part => {
+      if (part === '⏤⏤⏤⏤') {
+        return `<span class="q-word-token" style="display:inline-block;min-width:70px;border-bottom:3px solid var(--accent);margin:0 3px;padding:0 6px;color:var(--accent);font-weight:700;letter-spacing:2px;text-align:center;">&nbsp;&nbsp;&nbsp;&nbsp;</span>`;
+      }
+      // 正常分词逻辑
+      return String(part).split(/([^\s\p{P}]+)/u).map(subpart => {
+        if (!subpart) return '';
+        if (/^[^\s\p{P}]+$/u.test(subpart)) {
+          const hl = qsIsHighlighted(subpart) ? ' qs-hl-persist' : '';
+          return `<span class="q-word-token${hl}" data-area="${areaId}" data-token="${esc(subpart)}" onpointerdown="qsWordDown(event,this)" oncontextmenu="qsWordContextMenu(event,this)" onclick="event.preventDefault();event.stopPropagation();">${esc(subpart)}</span>`;
+        }
+        return esc(subpart);
+      }).join('');
     }).join('');
   }
 
   let html = `<div class="q-card" data-qid="${q.id}">
     <div class="q-meta">Q${num} · ${qType.toUpperCase()}${q.synonymGroup?' · '+esc(q.synonymGroup):''}</div>
-    <div class="q-text q-selectable" style="font-size:15px;font-weight:600;color:var(--ink);margin-bottom:8px;line-height:1.7;">${tokenise(q.question, 'q_'+q.id)}</div>
+    <div class="q-text q-selectable" style="font-size:15px;font-weight:600;color:var(--ink);margin-bottom:8px;line-height:1.7;">${tokenise(processedQuestion, 'q_'+q.id)}</div>
     <div class="q-options">`;
 
   q.options.forEach(opt => {
@@ -7100,9 +7123,11 @@ const AI_WIZARD_PROMPTS = {
 【转换规则】
 - 每个 passage 必须有 id、customName、title、content。
 - 每个 quizSet 必须有 id、passageId、name；passageId 必须对应 passages 里的 id。
-- 每篇 text / 每套题必须放在独立 quizSet 里；不要把不同 text 的题目放进同一个 quizSet。
-- 如果输入内容包含多篇 text / 多套 test，请为每篇 text 创建独立 quizSet，例如 Test 1 使用 qs_001，Test 2 使用 qs_002，并让对应题目的 quizSetId 分别指向自己的 quizSet。
-- 绝对不要让 Test 1 和 Test 2 共用同一个 quizSetId；不同 test 的题目 id 也不能重复。
+- ⭐ 每篇 text / 每套题必须放在独立 quizSet 里；不要把不同 text 的题目放进同一个 quizSet。
+- ⭐ 如果输入内容包含多篇 text / 多套 test（例如 test1、test2、test3...test10），请为每篇 text 创建独立 quizSet。
+  - test1 使用 qs_001，test2 使用 qs_002，test3 使用 qs_003 ... test10 使用 qs_010
+  - 每道题的 quizSetId 必须指向自己所属的 test 对应的 quizSetId
+- ⭐ 绝对不要让 test1 和 test2 共用同一个 quizSetId；不同 test 的题目 id 也不能重复。
 - 每道题必须有 id、passageId、quizSetId、question、options、answer、explanation。
 - options 必须是数组，通常 4 个选项，且每个选项以 "A. "、"B. "、"C. "、"D. " 开头。
 - answer 只写一个大写字母，例如 "A"、"B"、"C"、"D"。
@@ -7110,9 +7135,12 @@ const AI_WIZARD_PROMPTS = {
 - 不要在 explanation 字符串中直接写换行；需要分段就用数组拆分。
 - 语法/选择/填空题放入 grammarQuestions；词汇同义替换题放入 vocabularyQuestions。
 - 如果没有词汇题，vocabularyQuestions 必须输出 []。
-- 如果题目中有填空，question 字段的空格处使用 ____，例如 "The result depends ____ several factors."。
-- 如果有多个板块，id 依次使用 sec_001、sec_002；quizSet id 依次使用 qs_001、qs_002；题目 id 依次使用 g_001、g_002 或 v_001、v_002。
-- currentPassageId 填第一个 passage 的 id；currentQuizSetId 是对象，键为 passageId，值为该 passage 默认 quizSetId。
+- 如果题目中有填空，question 字段的空格处使用 ____。
+- 如果有多个板块，id 依次使用 sec_001、sec_002、sec_003 ... sec_010；
+  quizSet id 依次使用 qs_001、qs_002、qs_003 ... qs_010；
+  题目 id 依次使用 g_001、g_002... 或 v_001、v_002...
+- currentPassageId 填第一个 passage 的 id（sec_001）；
+  currentQuizSetId 是对象，键为 passageId，值为该 passage 默认 quizSetId。
 - 不要把答案、解析写在 JSON 外面。
 
 请将以下内容转换为严格 JSON：
@@ -7688,57 +7716,8 @@ function uniqueQuizSetName(base, passageId, usedNames) {
   return name;
 }
 
+// prepareQuizSetImport：强制板块模式的逻辑已移至 confirmAIImport，此函数保留为 passthrough 备用
 function prepareQuizSetImport(data, targetPassageId, mode) {
-  if (!data || !targetPassageId || mode === 'overwrite') return data;
-  const grammar = Array.isArray(data.grammarQuestions) ? data.grammarQuestions : [];
-  const vocab = Array.isArray(data.vocabularyQuestions) ? data.vocabularyQuestions : [];
-  const allQuestions = grammar.concat(vocab);
-  if (!allQuestions.length) return data;
-
-  if (mode === 'merge_current_set') {
-    const targetSet = currentQuizSet() || ensureDefaultQuizSet(targetPassageId);
-    allQuestions.forEach(q => {
-      q.passageId = targetPassageId;
-      q.quizSetId = targetSet.id;
-      q.id = uid(grammar.includes(q) ? 'g' : 'v');
-    });
-    data.quizSets = [];
-    data.currentQuizSetId = { [targetPassageId]: targetSet.id };
-    data.activeQuizSetIds = { [targetPassageId]: [targetSet.id] };
-    return data;
-  }
-
-  const importedSets = Array.isArray(data.quizSets) ? data.quizSets.filter(Boolean) : [];
-  const setIdsFromQuestions = [...new Set(allQuestions.map(q => q.quizSetId).filter(Boolean))];
-  const sourceSets = importedSets.length
-    ? importedSets
-    : (setIdsFromQuestions.length ? setIdsFromQuestions.map((id, idx) => ({ id, name: 'Text ' + (idx + 1), passageId: targetPassageId })) : [{ id: '__single_import__', name: getImportedQuizSetName(data, targetPassageId, null, 0), passageId: targetPassageId }]);
-
-  const usedNames = new Set();
-  const idMap = {};
-  const newSets = sourceSets.map((srcSet, idx) => {
-    const oldId = srcSet.id || `__set_${idx}`;
-    const newSet = {
-      id: uid('qs'),
-      passageId: targetPassageId,
-      name: uniqueQuizSetName(getImportedQuizSetName(data, targetPassageId, srcSet, idx), targetPassageId, usedNames),
-      createdAt: Date.now()
-    };
-    idMap[oldId] = newSet.id;
-    return newSet;
-  });
-
-  const fallbackSetId = newSets[0].id;
-  allQuestions.forEach((q, idx) => {
-    const oldSetId = q.quizSetId || sourceSets[Math.min(idx, sourceSets.length - 1)]?.id || sourceSets[0]?.id;
-    q.passageId = targetPassageId;
-    q.quizSetId = idMap[oldSetId] || fallbackSetId;
-    q.id = uid(grammar.includes(q) ? 'g' : 'v');
-  });
-
-  data.quizSets = newSets;
-  data.currentQuizSetId = { [targetPassageId]: newSets[0].id };
-  data.activeQuizSetIds = { [targetPassageId]: newSets.map(qs => qs.id) };
   return data;
 }
 
@@ -7756,50 +7735,132 @@ function confirmAIImport(tab) {
 
   if (overwrite && !confirm('覆盖模式会替换现有数据，确认继续？')) return;
 
+  // 在 prepareQuizSetImport 之前检测并询问
+  if (tab === 'quiz' || tab === 'passage') {
+    const targetPassageId = document.getElementById('aiTargetPassage')?.value;
+    const hasQuizSets = Array.isArray(data.quizSets) && data.quizSets.length > 0;
+    if (!hasQuizSets && mode !== 'overwrite' && targetPassageId) {
+      const totalQuestions = (data.grammarQuestions?.length || 0) + (data.vocabularyQuestions?.length || 0);
+      const confirmMsg = `检测到导入的 JSON 没有包含 Quiz Set 分组信息。\n\n本次共 ${totalQuestions} 道题目，将自动放入一个全新的 Quiz Set 中。\n\n是否继续？`;
+      if (!confirm(confirmMsg)) {
+        toast('已取消导入');
+        return;
+      }
+    }
+  }
+
   try {
     if (tab === 'quiz' || tab === 'passage') {
       // 获取目标板块
       const targetPassageId = document.getElementById('aiTargetPassage')?.value;
       const forcePassage = document.getElementById('aiForcePassage')?.checked !== false;
 
-      // 如果强制使用选中板块，替换所有 passageId
       if (targetPassageId && forcePassage) {
-        if (data.passages) {
-          data.passages.forEach(p => { p.id = targetPassageId; });
+        // ===== 强制使用选中板块：完全忽略 AI 生成的 passages，不新增任何板块 =====
+        data.passages = []; // 清空，防止新增板块
+
+        const grammar = Array.isArray(data.grammarQuestions) ? data.grammarQuestions : [];
+        const vocab = Array.isArray(data.vocabularyQuestions) ? data.vocabularyQuestions : [];
+        const allQuestions = grammar.concat(vocab);
+
+        if (mode === 'merge') {
+          // 合并模式：全部题目进当前 Quiz Set
+          const targetSet = currentQuizSet() || ensureDefaultQuizSet(targetPassageId);
+          allQuestions.forEach(q => {
+            q.passageId = targetPassageId;
+            q.quizSetId = targetSet.id;
+            q.id = uid(grammar.includes(q) ? 'g' : 'v');
+          });
+          data.quizSets = [];
+
+        } else {
+          // new_set 模式（默认）：自动创建一个新 Quiz Set，名称避免重名
+          const existingSets = getQuizSets(targetPassageId);
+          const usedNames = new Set(existingSets.map(qs => String(qs.name || '').trim()));
+          let baseName = 'Imported Set';
+          let finalName = baseName;
+          let counter = 1;
+          while (usedNames.has(finalName)) {
+            finalName = `${baseName} ${counter++}`;
+          }
+          const newSet = { id: uid('qs'), passageId: targetPassageId, name: finalName, createdAt: Date.now() };
+          allQuestions.forEach(q => {
+            q.passageId = targetPassageId;
+            q.quizSetId = newSet.id;
+            q.id = uid(grammar.includes(q) ? 'g' : 'v');
+          });
+          data.quizSets = [newSet];
+          data.currentQuizSetId = { [targetPassageId]: newSet.id };
+          data.activeQuizSetIds = { [targetPassageId]: [newSet.id] };
         }
-        if (data.grammarQuestions) {
-          data.grammarQuestions.forEach(q => { q.passageId = targetPassageId; });
+
+        // 导入 quizSets（强制模式只 push，不 overwrite，避免破坏其他板块数据）
+        if (data.quizSets?.length) {
+          data.quizSets.forEach(qs => {
+            if (!quizState.quizSets.find(x => x.id === qs.id)) quizState.quizSets.push(qs);
+          });
         }
-        if (data.vocabularyQuestions) {
-          data.vocabularyQuestions.forEach(q => { q.passageId = targetPassageId; });
+
+        // 导入题目
+        grammar.forEach(q => {
+          if (quizState.grammarQuestions.find(x => x.id === q.id)) q.id = uid('g');
+          quizState.grammarQuestions.push(q);
+        });
+        vocab.forEach(q => {
+          if (quizState.vocabularyQuestions.find(x => x.id === q.id)) q.id = uid('v');
+          quizState.vocabularyQuestions.push(q);
+        });
+
+        if (data.currentQuizSetId) quizState.currentQuizSetId = Object.assign(quizState.currentQuizSetId || {}, data.currentQuizSetId);
+        if (data.activeQuizSetIds) quizState.activeQuizSetIds = Object.assign(quizState.activeQuizSetIds || {}, data.activeQuizSetIds);
+
+      } else {
+        // ===== 非强制模式：走原有逻辑（含 overwrite） =====
+
+        // passages
+        if (data.passages?.length) {
+          if (overwrite) { quizState.passages = data.passages; }
+          else { data.passages.forEach(p => {
+            if (!p.id) p.id = uid('sec');
+            if (!quizState.passages.find(x => x.id === p.id)) quizState.passages.push(p);
+          }); }
         }
-        if (data.quizSets) {
-          data.quizSets.forEach(qs => { qs.passageId = targetPassageId; });
+
+        // quizSets
+        if (data.quizSets?.length) {
+          if (overwrite) { quizState.quizSets = data.quizSets; }
+          else { data.quizSets.forEach(qs => {
+            if (!qs.id) qs.id = uid('qs');
+            if (!quizState.quizSets.find(x => x.id === qs.id)) quizState.quizSets.push(qs);
+          }); }
         }
-        data = prepareQuizSetImport(data, targetPassageId, mode);
-      }
-    }
-    if (tab === 'quiz' || tab === 'passage') {
-      // passages
-      if (data.passages?.length) {
-        if (overwrite) { quizState.passages = data.passages; }
-        else { data.passages.forEach(p => { if (!p.id) p.id = uid('sec'); if (!quizState.passages.find(x=>x.id===p.id)) quizState.passages.push(p); }); }
-      }
-      // quizSets
-      if (data.quizSets?.length) {
-        if (overwrite) { quizState.quizSets = data.quizSets; }
-        else { data.quizSets.forEach(qs => { if (!qs.id) qs.id = uid('qs'); if (!quizState.quizSets.find(x=>x.id===qs.id)) quizState.quizSets.push(qs); }); }
-      }
-      // auto-create quizSets for passages without one
-      quizState.passages.forEach(p => { if (!quizState.quizSets.some(qs=>qs.passageId===p.id)) quizState.quizSets.push({id:uid('qs'),passageId:p.id,name:'1',createdAt:Date.now()}); });
-      // questions
-      if (data.grammarQuestions?.length) {
-        if (overwrite) { quizState.grammarQuestions = data.grammarQuestions; }
-        else { data.grammarQuestions.forEach(q => { if (!q.id) q.id = uid('g'); if (quizState.grammarQuestions.find(x=>x.id===q.id)) q.id = uid('g'); quizState.grammarQuestions.push(q); }); }
-      }
-      if (data.vocabularyQuestions?.length) {
-        if (overwrite) { quizState.vocabularyQuestions = data.vocabularyQuestions; }
-        else { data.vocabularyQuestions.forEach(q => { if (!q.id) q.id = uid('v'); if (quizState.vocabularyQuestions.find(x=>x.id===q.id)) q.id = uid('v'); quizState.vocabularyQuestions.push(q); }); }
+        // auto-create quizSets for passages without one
+        quizState.passages.forEach(p => {
+          if (!quizState.quizSets.some(qs => qs.passageId === p.id)) {
+            quizState.quizSets.push({ id: uid('qs'), passageId: p.id, name: '1', createdAt: Date.now() });
+          }
+        });
+
+        // questions
+        if (data.grammarQuestions?.length) {
+          if (overwrite) { quizState.grammarQuestions = data.grammarQuestions; }
+          else { data.grammarQuestions.forEach(q => {
+            if (!q.id) q.id = uid('g');
+            if (quizState.grammarQuestions.find(x => x.id === q.id)) q.id = uid('g');
+            quizState.grammarQuestions.push(q);
+          }); }
+        }
+        if (data.vocabularyQuestions?.length) {
+          if (overwrite) { quizState.vocabularyQuestions = data.vocabularyQuestions; }
+          else { data.vocabularyQuestions.forEach(q => {
+            if (!q.id) q.id = uid('v');
+            if (quizState.vocabularyQuestions.find(x => x.id === q.id)) q.id = uid('v');
+            quizState.vocabularyQuestions.push(q);
+          }); }
+        }
+
+        if (data.currentQuizSetId) quizState.currentQuizSetId = Object.assign(quizState.currentQuizSetId || {}, data.currentQuizSetId);
+        if (data.activeQuizSetIds) quizState.activeQuizSetIds = Object.assign(quizState.activeQuizSetIds || {}, data.activeQuizSetIds);
       }
     }
     if (tab === 'wordbook' || (!tab && data.wordBook?.length)) {
