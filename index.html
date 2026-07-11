@@ -618,9 +618,9 @@ textarea { resize: vertical; }
 .memory-status-pill.new { color:var(--ink); background:rgba(162,132,94,0.15); border-color:rgba(162,132,94,0.35); }
 .memory-status-pill.learning { color:var(--ink); background:rgba(0,0,0,0.04); }
 .memory-status-pill.known { color:var(--bg); background:var(--accent); border-color:var(--accent); }
-.qs-float-menu { position:fixed;z-index:8000;background:rgba(29,29,31,0.94);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);border:1px solid rgba(255,255,255,0.12);border-radius:18px;padding:5px;display:flex;gap:4px;flex-wrap:wrap;box-shadow:0 10px 30px rgba(0,0,0,0.26);animation:floatMenuIn 0.16s cubic-bezier(0.25,1,0.5,1);pointer-events:all;max-width:calc(100vw - 16px); }
+.qs-float-menu { position:fixed;z-index:8000;background:rgba(29,29,31,0.94);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);border:1px solid rgba(255,255,255,0.12);border-radius:14px;padding:5px 8px;display:flex;gap:3px;flex-wrap:nowrap;box-shadow:0 10px 30px rgba(0,0,0,0.26);animation:floatMenuIn 0.16s cubic-bezier(0.25,1,0.5,1);pointer-events:all;max-width:calc(100vw - 16px);width:auto;box-sizing:border-box; }
 @keyframes floatMenuIn { from{opacity:0;transform:scale(0.92) translateY(4px)}to{opacity:1;transform:scale(1) translateY(0)} }
-.qs-float-btn { background:transparent;border:1px solid rgba(255,255,255,0.16);color:#fff;border-radius:13px;padding:6px 12px;font-size:12px;font-weight:650;cursor:pointer;white-space:nowrap;transition:background 0.14s ease,border-color 0.14s ease,transform 0.14s ease;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',sans-serif; }
+.qs-float-btn { background:transparent;border:1px solid rgba(255,255,255,0.16);color:#fff;border-radius:10px;padding:4px 10px;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;transition:background 0.14s ease,border-color 0.14s ease,transform 0.14s ease;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',sans-serif; }
 .qs-float-btn:hover { background:rgba(255,255,255,0.14); }
 .qs-float-btn:active { transform:scale(0.97); }
 .qs-float-btn.added { background:rgba(162,132,94,0.5);border-color:#A2845E; }
@@ -636,7 +636,7 @@ textarea { resize: vertical; }
   .q-text { font-size:14px !important; }
   .q-opt { font-size:13px;padding:10px 10px; }
   .q-actions button { font-size:12px;padding:8px 10px; }
-  .qs-float-menu { left:8px !important;right:8px;width:auto;flex-wrap:wrap;border-radius:14px; }
+  .qs-float-menu { left:8px !important;right:auto !important;width:auto;flex-wrap:nowrap;border-radius:14px; }
   .qs-float-btn { font-size:11px;padding:5px 10px; }
   .quiz-tabs { gap:4px; }
   .quiz-tab { font-size:12px;padding:7px 12px; }
@@ -2191,9 +2191,12 @@ img, svg, video, canvas, iframe, table, pre, code {
 .sheet-foot,
 .explain-actions,
 .topbar,
-.sel-menu,
-.qs-float-menu {
+.sel-menu {
   flex-wrap: wrap;
+}
+
+.qs-float-menu {
+  flex-wrap: nowrap;
 }
 
 .res-card,
@@ -3274,6 +3277,17 @@ img, svg, video, canvas, iframe, table, pre, code {
 <div class="toast" id="toast"></div>
 
 <script>
+const APP_GLOBALS = {
+  homeQuoteDragState: null,
+  homeQuoteEditingId: null,
+  homeQuoteSkipBlur: false,
+  rdTouchContext: false,
+  rdLastTap: { token: null, time: 0 },
+  rdTouchTapState: { token: null, time: 0, count: 0 },
+  rdMenuGuardUntil: 0,
+  wbFilter: 'all',
+  wbCurrentIndex: 0
+};
 /* ================================================================
    UNIFIED STATE MANAGEMENT
    ================================================================ */
@@ -3340,7 +3354,7 @@ let quizMeta = { lastExportTs:0, lastBackupTs:0, gist:{token:'',gistId:'',filena
 
 // === READING MODULE STATE ===
 const READING_STORE_KEY = 'study_reading_collections_v1';
-const DEFAULT_READING_PROMPT = `你是一个 Reading JSON 生成助手。请根据我提供的要求生成一篇英文阅读文章，并同时给出完整中文翻译。
+const DEFAULT_READING_PROMPT = `你是一个 Reading JSON 生成助手。请根据我提供的要求生成一篇英文阅读文章，并同时给出逐段对应的中文翻译。
 
 请严格只输出合法 JSON，不要 Markdown，不要代码块标记，不要解释文字。
 
@@ -3348,14 +3362,16 @@ const DEFAULT_READING_PROMPT = `你是一个 Reading JSON 生成助手。请根�
 {
   "name": "文章标题",
   "text": "完整英文文章正文。段落之间用\\n\\n分隔。",
-  "translation": "完整中文翻译。段落顺序必须和英文正文一致。",
+  "translation": ["第一段中文翻译", "第二段中文翻译", "第三段中文翻译"],
   "highlights": []
 }
 
 规则：
 - name：简短标题。
-- text：只放英文正文，不要夹杂中文。
-- translation：放整篇中文翻译，不要留空。
+- text：只放英文正文，不要夹杂中文，段落之间必须用 \\n\\n 分隔。
+- translation：按段落顺序，每段对应一个翻译，放在数组里。
+- 如果文章有 N 个段落，translation 数组必须有 N 个元素，顺序与英文段落一一对应。
+- 不允许出现整篇翻译合并成一个字符串。
 - highlights：可选数组；如果没有预设高亮，就输出空数组 []。
 - 所有换行必须写成 JSON 字符串里的 \\n。
 - 不允许输出任何联网、AI 接口、来源链接或额外字段。
@@ -3367,6 +3383,7 @@ let readingState = JSON.parse(localStorage.getItem(READING_STORE_KEY) || 'null')
   currentId: null,
   fontSize: 17,
   translationCollapsed: false,
+  paragraphCollapsed: {},
   promptTemplate: DEFAULT_READING_PROMPT
 };
 function saveReading() { localStorage.setItem(READING_STORE_KEY, JSON.stringify(readingState)); }
@@ -3923,9 +3940,6 @@ function getMonthCompletionRate() {
   return Math.round(total / archives.length);
 }
 
-let homeQuoteDragState = null;
-let homeQuoteEditingId = null;
-let homeQuoteSkipBlur = false;
 
 function renderSingleQuoteItem(q) {
   const qid = esc(String(q.id)).replace(/'/g, "\'");
@@ -3933,7 +3947,7 @@ function renderSingleQuoteItem(q) {
     <div class="home-quote-item ${q.done ? 'done' : ''} ${q.focus ? 'focus' : ''}" data-quote-id="${esc(String(q.id))}">
       <span class="home-quote-dot home-quote-grip" title="Drag to reorder">•</span>
       <div class="home-quote-body">
-        ${homeQuoteEditingId === String(q.id)
+        ${APP_GLOBALS.homeQuoteEditingId === String(q.id)
           ? `<textarea id="homeQuoteEditor" class="home-quote-editor" oninput="autoSizeHomeQuoteEditor(this)" onkeydown="handleHomeQuoteEditorKeydown(event, '${qid}')" onblur="handleHomeQuoteEditorBlur('${qid}', this)">${esc(q.text)}</textarea>`
           : `<div class="home-quote-text" ondblclick="startInlineQuoteEdit('${qid}')" title="Double-click to edit">${esc(q.text)}</div>`}
         <div class="home-quote-meta">
@@ -3982,7 +3996,7 @@ function addQuote() {
 }
 
 function startInlineQuoteEdit(id) {
-  homeQuoteEditingId = String(id);
+  APP_GLOBALS.homeQuoteEditingId = String(id);
   render();
 }
 
@@ -4004,7 +4018,7 @@ function autoSizeHomeQuoteEditor(el) {
 function saveInlineQuoteEdit(id, value) {
   const quotes = getStudyQuotes();
   const target = quotes.find(q => String(q.id) === String(id));
-  homeQuoteEditingId = null;
+  APP_GLOBALS.homeQuoteEditingId = null;
   if (!target) {
     render();
     return;
@@ -4021,10 +4035,10 @@ function saveInlineQuoteEdit(id, value) {
 }
 
 function cancelInlineQuoteEdit() {
-  homeQuoteSkipBlur = true;
-  homeQuoteEditingId = null;
+  APP_GLOBALS.homeQuoteSkipBlur = true;
+  APP_GLOBALS.homeQuoteEditingId = null;
   render();
-  setTimeout(() => { homeQuoteSkipBlur = false; }, 0);
+  setTimeout(() => { APP_GLOBALS.homeQuoteSkipBlur = false; }, 0);
 }
 
 function handleHomeQuoteEditorKeydown(event, id) {
@@ -4038,7 +4052,7 @@ function handleHomeQuoteEditorKeydown(event, id) {
 }
 
 function handleHomeQuoteEditorBlur(id, el) {
-  if (homeQuoteSkipBlur) return;
+  if (APP_GLOBALS.homeQuoteSkipBlur) return;
   saveInlineQuoteEdit(id, el.value);
 }
 
@@ -4083,7 +4097,7 @@ function deleteQuote(id) {
   const target = quotes.find(q => String(q.id) === String(id));
   if (!target) return;
   if (!confirm('Delete this study note?')) return;
-  homeQuoteEditingId = homeQuoteEditingId === String(id) ? null : homeQuoteEditingId;
+  APP_GLOBALS.homeQuoteEditingId = APP_GLOBALS.homeQuoteEditingId === String(id) ? null : APP_GLOBALS.homeQuoteEditingId;
   saveStudyQuotes(quotes.filter(q => String(q.id) !== String(id)));
   render();
 }
@@ -4096,11 +4110,11 @@ function initHomeQuoteDrag() {
         const item = e.target.closest('.home-quote-item');
         if (!item) return;
         e.preventDefault();
-        homeQuoteDragState = { item, group: list.dataset.quoteGroup || 'regular' };
+        APP_GLOBALS.homeQuoteDragState = { item, group: list.dataset.quoteGroup || 'regular' };
         item.classList.add('dragging');
 
         const onMove = me => {
-          if (!homeQuoteDragState) return;
+          if (!APP_GLOBALS.homeQuoteDragState) return;
           const siblings = Array.from(list.querySelectorAll('.home-quote-item:not(.dragging)'));
           siblings.forEach(el => el.classList.remove('drag-over'));
           const over = siblings.find(s => {
@@ -4128,11 +4142,11 @@ function initHomeQuoteDrag() {
             const found = quotes.find(q => String(q.id) === id);
             if (found) moving.push(found);
           });
-          const untouched = quotes.filter(q => homeQuoteDragState.group === 'pinned' ? !q.pinned : q.pinned);
+          const untouched = quotes.filter(q => APP_GLOBALS.homeQuoteDragState.group === 'pinned' ? !q.pinned : q.pinned);
           if (moving.length) {
-            saveStudyQuotes(homeQuoteDragState.group === 'pinned' ? [...moving, ...untouched] : [...untouched, ...moving]);
+            saveStudyQuotes(APP_GLOBALS.homeQuoteDragState.group === 'pinned' ? [...moving, ...untouched] : [...untouched, ...moving]);
           }
-          homeQuoteDragState = null;
+          APP_GLOBALS.homeQuoteDragState = null;
           render();
         };
 
@@ -4339,7 +4353,7 @@ function renderHomePage(container) {
 
       <div style="font-size:16px; color:var(--ink-secondary);">📭 No archived data for this month</div>
 
-      <button class="apple-btn primary" onclick="switchModule('weekly_planner')">Start Your First Week</button>
+      <button class="apple-btn primary home-start-btn" onclick="switchModule('weekly_planner')">Start Your First Week</button>
 
     </div>`;
 
@@ -4363,7 +4377,7 @@ function renderHomePage(container) {
 
   initHomeQuoteDrag();
 
-  if (homeQuoteEditingId) {
+  if (APP_GLOBALS.homeQuoteEditingId) {
     setTimeout(() => {
       focusHomeQuoteEditor();
     }, 0);
@@ -4455,46 +4469,58 @@ function onGlobalSearch(val) {
 //  RENDER DISPATCHER
 // ================================================================
 function render() {
-  if (typeof normalizeUnifiedExercises === 'function') { normalizeUnifiedExercises(); autoArchiveCompletedExercises(); }
-  if (typeof syncWordBookMemory === 'function') syncWordBookMemory();
-  renderSidebar();
-  renderSharedStats();
-  const main = document.getElementById('mainContent');
+  try {
+    if (typeof normalizeUnifiedExercises === 'function') { normalizeUnifiedExercises(); autoArchiveCompletedExercises(); }
+    if (typeof syncWordBookMemory === 'function') syncWordBookMemory();
+    renderSidebar();
+    renderSharedStats();
+    const main = document.getElementById('mainContent');
 
-  if (appState.currentModule === 'review' && typeof renderReviewCenter === 'function') {
-    renderReviewCenter(_reviewCenterActiveTab || 'wordbook');
-    return;
-  }
-  
-  if (appState.currentModule === 'home') {
-    renderHomePage(main);
-    return;
-  }
-  
-  const showDashboard = false; // Hidden: Study Overview Dashboard and Milestone Panel
-  main.innerHTML = `${showDashboard ? renderStudyOverviewDashboard() : ''}<div class="module-content-stack" id="moduleContentMount"></div>`;
-  const moduleMain = document.getElementById('moduleContentMount');
+    if (appState.currentModule === 'review' && typeof renderReviewCenter === 'function') {
+      renderReviewCenter(_reviewCenterActiveTab || 'wordbook');
+      return;
+    }
+    
+    if (appState.currentModule === 'home') {
+      renderHomePage(main);
+      return;
+    }
+    
+    const showDashboard = false; // Hidden: Study Overview Dashboard and Milestone Panel
+    main.innerHTML = `${showDashboard ? renderStudyOverviewDashboard() : ''}<div class="module-content-stack" id="moduleContentMount"></div>`;
+    const moduleMain = document.getElementById('moduleContentMount');
 
-  if (appState.searchQuery) {
-    moduleMain.innerHTML = renderGlobalSearch();
-    return;
-  }
+    if (appState.searchQuery) {
+      moduleMain.innerHTML = renderGlobalSearch();
+      return;
+    }
 
-  if (appState.currentModule === 'quiz') {
-    renderQuizHub(moduleMain);
-  } else if (appState.currentModule === 'reading') {
-    renderReadingHub(moduleMain);
-  } else if (appState.currentModule === 'review') {
-    renderReviewCenter('wordbook');
-  } else if (appState.currentModule === 'roadmap') {
-    renderStudyRoadmap(moduleMain);
-  } else if (appState.currentModule === 'weekly_planner') {
-    if (typeof migrateOldTasksToGoals === 'function') migrateOldTasksToGoals();
-    renderWeeklyPlanner(moduleMain);
-  } else if (appState.currentModule === 'progress_check') {
-    renderProgressCheck(moduleMain);
-  } else {
-    renderStudyResources(moduleMain);
+    if (appState.currentModule === 'quiz') {
+      renderQuizHub(moduleMain);
+    } else if (appState.currentModule === 'reading') {
+      renderReadingHub(moduleMain);
+    } else if (appState.currentModule === 'review') {
+      renderReviewCenter('wordbook');
+    } else if (appState.currentModule === 'roadmap') {
+      renderStudyRoadmap(moduleMain);
+    } else if (appState.currentModule === 'weekly_planner') {
+      if (typeof migrateOldTasksToGoals === 'function') migrateOldTasksToGoals();
+      renderWeeklyPlanner(moduleMain);
+    } else if (appState.currentModule === 'progress_check') {
+      renderProgressCheck(moduleMain);
+    } else {
+      renderStudyResources(moduleMain);
+    }
+  } catch (e) {
+    console.error('Render error:', e);
+    const main = document.getElementById('mainContent');
+    if (main) {
+      main.innerHTML = `<div class="empty-state" style="padding:40px;text-align:center;">
+        <div style="font-size:18px;font-weight:800;margin-bottom:12px;">⚠️ 页面渲染出错</div>
+        <div style="font-size:13px;color:var(--ink-secondary);margin-bottom:16px;">${esc(e.message || '未知错误')}</div>
+        <button class="apple-btn primary" onclick="location.reload()">🔄 刷新重试</button>
+      </div>`;
+    }
   }
 }
 
@@ -4613,20 +4639,42 @@ function renderGlobalSearch() {
 // ================================================================
 //  READING MODULE
 // ================================================================
+function readingParagraphsFromText(text) {
+  const paragraphs = String(text || '').split(/\n\s*\n/).map(p => p.trim()).filter(Boolean);
+  return paragraphs.length ? paragraphs : (String(text || '').trim() ? [String(text || '').trim()] : []);
+}
+function normalizeReadingTranslation(c) {
+  const paragraphs = readingParagraphsFromText(c?.text || '');
+  if (Array.isArray(c.translation)) {
+    c.translation = c.translation.map(t => String(t || '').trim());
+  } else if (typeof c.translation === 'string') {
+    const raw = c.translation.trim();
+    const split = raw ? raw.split(/\n\s*\n/).map(p => p.trim()).filter(Boolean) : [];
+    c.translation = split.length > 1 ? split : (raw ? [raw] : []);
+  } else {
+    c.translation = [];
+  }
+  while (c.translation.length < paragraphs.length) c.translation.push('');
+  if (c.translation.length > paragraphs.length && paragraphs.length) {
+    c.translation = c.translation.slice(0, paragraphs.length);
+  }
+  return c.translation;
+}
 function normalizeReadingCollections() {
   readingState.collections = Array.isArray(readingState.collections) ? readingState.collections : [];
+  if (!readingState.paragraphCollapsed || typeof readingState.paragraphCollapsed !== 'object') readingState.paragraphCollapsed = {};
   readingState.collections.forEach((c, i) => {
     if (!c.id) c.id = uid('rd');
     if (!c.name) c.name = 'Reading ' + (i + 1);
     if (typeof c.text !== 'string') c.text = '';
-    if (typeof c.translation !== 'string') c.translation = '';
+    normalizeReadingTranslation(c);
     if (!Array.isArray(c.highlights)) c.highlights = [];
   });
   if (readingState.collections.length && !readingState.collections.find(c => c.id === readingState.currentId)) {
     readingState.currentId = readingState.collections[0].id;
   }
   if (!readingState.collections.length) readingState.currentId = null;
-  if (!readingState.promptTemplate || String(readingState.promptTemplate).includes('提取核心生词')) readingState.promptTemplate = DEFAULT_READING_PROMPT;
+  if (!readingState.promptTemplate || String(readingState.promptTemplate).includes('提取核心生词') || !String(readingState.promptTemplate).includes('translation 数组必须有 N 个元素')) readingState.promptTemplate = DEFAULT_READING_PROMPT;
   if (!readingState.fontSize) readingState.fontSize = 17;
 }
 function currentReadingCollection() {
@@ -4650,7 +4698,7 @@ function renderReadingHub(container) {
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:10px;">
       <div>
         <h2 style="font-size:20px;font-weight:800;margin:0;color:var(--ink);">Reading</h2>
-        <div style="font-size:12px;color:var(--ink-secondary);margin-top:2px;">Local collections · Manual paste only</div>
+        <div style="font-size:12px;color:var(--ink-secondary);margin-top:2px;">Local collections · Paragraph translation</div>
       </div>
       <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
         <button class="apple-btn small" onclick="openReadingPrompt()">Prompt</button>
@@ -4677,28 +4725,46 @@ function renderReadingHub(container) {
   }
 
   html += `<div style="padding:18px 0;margin-bottom:16px;">
-    <div style="font-size:12px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-tertiary);margin-bottom:10px;">English Text</div>
-    <div id="readingBody" class="q-selectable" style="font-size:${readingState.fontSize}px;font-weight:500;color:var(--ink);line-height:1.8;white-space:pre-wrap;min-height:260px;">${renderReadingText(c)}</div>
-  </div>`;
-
-  const collapsed = !!readingState.translationCollapsed;
-  html += `<div class="ai-studio-panel" style="margin-top:16px;">
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:${collapsed ? '0' : '12px'};">
-      <button class="apple-btn small" onclick="toggleReadingTranslation()" style="width:28px;height:28px;padding:0;display:flex;align-items:center;justify-content:center;">
-        <span class="roadmap-subject-caret" style="transform:${collapsed?'rotate(-90deg)':'rotate(0deg)'};">▼</span>
-      </button>
-      <div style="font-size:15px;font-weight:800;color:var(--ink);">Translation</div>
-    </div>
-    <textarea id="readingTranslationInput" oninput="saveReadingTranslation(this.value)" style="display:${collapsed?'none':'block'};width:100%;min-height:220px;line-height:1.7;" placeholder="Paste the full Chinese translation here.">${esc(c.translation || '')}</textarea>
+    <div style="font-size:12px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-tertiary);margin-bottom:10px;">English Text · Paragraph Translation</div>
+    <div id="readingBody" class="q-selectable" style="min-height:260px;">${renderReadingParagraphs(c)}</div>
   </div>`;
 
   container.innerHTML = html;
   bindReadingModuleEvents();
 }
-function renderReadingText(c) {
+function renderReadingParagraphs(c) {
+  const paragraphs = readingParagraphsFromText(c?.text || '');
+  const translations = normalizeReadingTranslation(c);
+  if (!readingState.paragraphCollapsed || typeof readingState.paragraphCollapsed !== 'object') readingState.paragraphCollapsed = {};
+  if (!paragraphs.length) return `<div class="empty-state">No English text yet.</div>`;
+
+  return paragraphs.map((p, idx) => {
+    const key = `${c.id}_${idx}`;
+    if (!(key in readingState.paragraphCollapsed)) readingState.paragraphCollapsed[key] = idx === 0 ? false : true;
+    const collapsed = readingState.paragraphCollapsed[key] !== false;
+    const trans = translations[idx] || '';
+    return `
+      <div class="paragraph-block" style="margin-bottom:16px;border:1px solid var(--line-light);border-radius:var(--radius);overflow:hidden;background:var(--bg-card);">
+        <div class="paragraph-head" onclick="toggleParagraphTranslation('${rdSafeInline(key)}')" style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 14px;background:var(--bg-elev);cursor:pointer;user-select:none;">
+          <span style="font-size:12px;font-weight:700;color:var(--ink-tertiary);">📄 Paragraph ${idx + 1}</span>
+          <span style="font-size:12px;color:var(--ink-tertiary);white-space:nowrap;">${collapsed ? '▶ 显示翻译' : '▼ 隐藏翻译'}</span>
+        </div>
+        <div style="padding:12px 14px;font-size:${readingState.fontSize || 17}px;font-weight:500;color:var(--ink);line-height:1.8;white-space:pre-wrap;">
+          ${renderReadingText(c, p)}
+        </div>
+        <div style="${collapsed ? 'display:none;' : 'display:block;'}padding:0 14px 12px;">
+          <div style="border-top:1px dashed var(--line-light);padding-top:10px;font-size:14px;color:var(--ink-secondary);line-height:1.8;white-space:pre-wrap;">
+            ${trans ? esc(trans) : '<span style="color:var(--ink-tertiary);">暂无本段翻译</span>'}
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+function renderReadingText(c, textPart = null) {
   const marked = rdHighlightedWordSet(c);
   let idx = 0;
-  return String(c.text || '').split(/([A-Za-z]+(?:['’-][A-Za-z]+)?)/g).map(part => {
+  return String(textPart ?? c.text ?? '').split(/([A-Za-z]+(?:['’-][A-Za-z]+)?)/g).map(part => {
     if (!part) return '';
     if (/^[A-Za-z]+(?:['’-][A-Za-z]+)?$/.test(part)) {
       const hl = marked.has(rdNorm(part)) ? ' qs-hl-persist' : '';
@@ -4706,6 +4772,12 @@ function renderReadingText(c) {
     }
     return esc(part);
   }).join('');
+}
+function toggleParagraphTranslation(key) {
+  if (!readingState.paragraphCollapsed || typeof readingState.paragraphCollapsed !== 'object') readingState.paragraphCollapsed = {};
+  readingState.paragraphCollapsed[key] = !(readingState.paragraphCollapsed[key] !== false);
+  saveReading();
+  render();
 }
 function switchReadingCollection(id) { readingState.currentId = id; saveReading(); render(); }
 function addReadingCollection() {
@@ -4725,7 +4797,7 @@ function saveNewReadingCollection() {
   const text = document.getElementById('readingNewText')?.value.trim();
   if (!name) { toast('Name cannot be empty'); return; }
   if (!text) { toast('Text cannot be empty'); return; }
-  const c = { id:uid('rd'), name, text, translation:'', highlights:[], createdAt:Date.now(), updatedAt:Date.now() };
+  const c = { id:uid('rd'), name, text, translation:[], highlights:[], createdAt:Date.now(), updatedAt:Date.now() };
   readingState.collections.push(c);
   readingState.currentId = c.id;
   saveReading();
@@ -4749,7 +4821,7 @@ function openReadingImport() {
       <div style="font-size:13px;color:var(--ink-secondary);line-height:1.6;">
         把 AI 按 Prompt 生成的完整 JSON 粘贴到这里。导入后会自动创建 Reading 文集，并同步填入英文正文和 Translation。
       </div>
-      <textarea id="readingImportText" placeholder='{"name":"...","text":"...","translation":"...","highlights":[]}' style="width:100%;min-height:360px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;line-height:1.6;"></textarea>
+      <textarea id="readingImportText" placeholder='{"name":"...","text":"...","translation":["第1段翻译","第2段翻译"],"highlights":[]}' style="width:100%;min-height:360px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;line-height:1.6;"></textarea>
     </div>`, [
     { text:'Cancel', onclick:()=>closeSheet('genericSheet') },
     { text:'Import', cls:'primary', onclick:()=>importReadingJSON() }
@@ -4764,7 +4836,8 @@ function importReadingJSON() {
   if (!item || typeof item !== 'object') { toast('Reading JSON 格式不正确'); return; }
   const name = String(item.name || item.title || '').trim();
   const text = String(item.text || item.articleText || item.content || '').trim();
-  const translation = String(item.translation || item.chinese || item.cn || item.zh || '').trim();
+  const rawTranslation = item.translation ?? item.chinese ?? item.cn ?? item.zh ?? '';
+  const translation = Array.isArray(rawTranslation) ? rawTranslation.map(t => String(t || '').trim()) : String(rawTranslation || '').trim();
   if (!name) { toast('缺少 name 标题'); return; }
   if (!text) { toast('缺少 text 英文正文'); return; }
   const highlights = Array.isArray(item.highlights)
@@ -4801,52 +4874,55 @@ function toggleReadingTranslation() {
   readingState.translationCollapsed = !readingState.translationCollapsed;
   saveReading(); render();
 }
-function saveReadingTranslation(value) {
+function saveReadingTranslation(value, index = null) {
   const c = currentReadingCollection(); if (!c) return;
-  c.translation = value; c.updatedAt = Date.now(); saveReading();
+  normalizeReadingTranslation(c);
+  if (index === null) {
+    c.translation = String(value || '').split(/\n\s*\n/).map(p => p.trim()).filter(Boolean);
+  } else {
+    c.translation[index] = String(value || '').trim();
+  }
+  c.updatedAt = Date.now();
+  saveReading();
 }
 
-let rdTouchContext = false;
-let rdLastTap = { token:null, time:0 };
-let rdTouchTapState = { token:null, time:0, count:0 };
-let rdMenuGuardUntil = 0;
 const RD_DOUBLE_TAP_MS = 300;
 const RD_TRIPLE_TAP_MS = 560;
 function rdWordDown(e, token) {
   if (e.pointerType === 'touch') {
-    rdTouchContext = true;
+    APP_GLOBALS.rdTouchContext = true;
     const now = Date.now();
-    if (rdTouchTapState.token === token && now - rdTouchTapState.time < RD_TRIPLE_TAP_MS) {
-      rdTouchTapState.count += 1;
+    if (APP_GLOBALS.rdTouchTapState.token === token && now - APP_GLOBALS.rdTouchTapState.time < RD_TRIPLE_TAP_MS) {
+      APP_GLOBALS.rdTouchTapState.count += 1;
     } else {
-      rdTouchTapState = { token, time:now, count:1 };
+      APP_GLOBALS.rdTouchTapState = { token, time:now, count:1 };
     }
-    rdTouchTapState.time = now;
-    if (rdTouchTapState.count >= 3) {
-      rdTouchTapState = { token:null, time:0, count:0 };
+    APP_GLOBALS.rdTouchTapState.time = now;
+    if (APP_GLOBALS.rdTouchTapState.count >= 3) {
+      APP_GLOBALS.rdTouchTapState = { token:null, time:0, count:0 };
       e.preventDefault(); e.stopPropagation();
-      rdMenuGuardUntil = Date.now() + 350;
+      APP_GLOBALS.rdMenuGuardUntil = Date.now() + 350;
       rdShowFloatMenu([token]);
       return;
     }
   }
   if (quizDeviceProfile.type === 'phone') {
     const now = Date.now();
-    if (rdLastTap.token === token && now - rdLastTap.time < RD_DOUBLE_TAP_MS) {
-      rdLastTap = { token:null, time:0 };
+    if (APP_GLOBALS.rdLastTap.token === token && now - APP_GLOBALS.rdLastTap.time < RD_DOUBLE_TAP_MS) {
+      APP_GLOBALS.rdLastTap = { token:null, time:0 };
       e.preventDefault(); e.stopPropagation();
       rdShowFloatMenu([token]);
     } else {
-      rdLastTap = { token, time:now };
+      APP_GLOBALS.rdLastTap = { token, time:now };
       e.stopPropagation();
     }
   }
 }
 function rdWordContextMenu(e, token) {
   if (quizDeviceProfile.isPhone) return;
-  if (quizDeviceProfile.isIPad && rdTouchContext) { rdTouchContext = false; return; }
+  if (quizDeviceProfile.isIPad && APP_GLOBALS.rdTouchContext) { APP_GLOBALS.rdTouchContext = false; return; }
   e.preventDefault(); e.stopPropagation();
-  rdMenuGuardUntil = Date.now() + 350;
+  APP_GLOBALS.rdMenuGuardUntil = Date.now() + 350;
   rdShowFloatMenu([token]);
 }
 function rdWordClick(e, token) {
@@ -4856,7 +4932,7 @@ function rdWordClick(e, token) {
   const text = String(token?.textContent || '').trim();
   const highlighted = (c?.highlights || []).some(h => rdNorm(h.text || h) === rdNorm(text));
   if (highlighted) {
-    rdMenuGuardUntil = Date.now() + 350;
+    APP_GLOBALS.rdMenuGuardUntil = Date.now() + 350;
     rdShowFloatMenu([token]);
   }
 }
@@ -4866,7 +4942,7 @@ function rdRemoveFloatMenu() {
 }
 function rdShowFloatMenu(tokens) {
   rdRemoveFloatMenu();
-  rdMenuGuardUntil = Date.now() + 350;
+  APP_GLOBALS.rdMenuGuardUntil = Date.now() + 350;
   const text = String(tokens.map(t => t.textContent).join(' ')).trim();
   if (!text) return;
   const c = currentReadingCollection();
@@ -4875,18 +4951,23 @@ function rdShowFloatMenu(tokens) {
   const menu = document.createElement('div');
   menu.id = 'rdFloatMenu';
   menu.className = 'qs-float-menu';
+  menu.style.cssText = 'position:fixed;z-index:8000;background:rgba(29,29,31,0.94);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);border:1px solid rgba(255,255,255,0.12);border-radius:14px;padding:5px 8px;display:flex;gap:3px;flex-wrap:nowrap;box-shadow:0 10px 30px rgba(0,0,0,0.26);pointer-events:all;max-width:calc(100vw - 16px);width:auto;box-sizing:border-box;';
   const addButton = (label, handler, cls='') => {
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'qs-float-btn' + (cls ? ' ' + cls : '');
     btn.textContent = label;
+    btn.style.cssText = 'background:transparent;border:1px solid rgba(255,255,255,0.12);color:#fff;border-radius:10px;padding:4px 10px;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;transition:all 0.12s ease;flex:0 0 auto;';
     btn.addEventListener('pointerdown', ev => ev.stopPropagation());
     btn.addEventListener('click', ev => { ev.preventDefault(); ev.stopPropagation(); handler(btn); });
     menu.appendChild(btn);
   };
-  if (highlighted) addButton('Remove', () => rdRemoveHighlightText(text), 'danger');
   addButton('Highlight', () => rdHighlightText(text), highlighted ? 'added' : '');
-  addButton(alreadyIn ? '✓' : '+', () => rdAddToVocab(text), alreadyIn ? 'added' : '');
+  addButton('+ Synonym', () => qsAddToSynGroup(text));
+  addButton(alreadyIn ? '✓' : '+', btn => qsAddToWordBook(btn, text), alreadyIn ? 'added' : '');
+  if (highlighted) {
+    addButton('Remove', () => rdRemoveHighlightText(text), 'danger');
+  }
   document.body.appendChild(menu);
   rdPositionMenu(menu, tokens[0].getBoundingClientRect(), tokens[tokens.length - 1].getBoundingClientRect());
 }
@@ -4944,7 +5025,7 @@ function bindReadingModuleEvents() {
   body.addEventListener('touchend', () => setTimeout(() => rdHandleSelection(), 0));
 }
 function rdHandleSelection() {
-  if (Date.now() < rdMenuGuardUntil) return;
+  if (Date.now() < APP_GLOBALS.rdMenuGuardUntil) return;
   rdRemoveFloatMenu();
   const sel = window.getSelection();
   const body = document.getElementById('readingBody');
@@ -4988,7 +5069,7 @@ function copyReadingElementText(id) {
   else { document.execCommand('copy'); toast('Copied'); }
 }
 document.addEventListener('pointerdown', e => {
-  if (Date.now() < rdMenuGuardUntil) return;
+  if (Date.now() < APP_GLOBALS.rdMenuGuardUntil) return;
   const menu = document.getElementById('rdFloatMenu') || document.getElementById('rdSelectionMenu');
   if (menu && !menu.contains(e.target) && !e.target.closest('.rd-word-token') && !e.target.closest('#readingBody')) rdRemoveFloatMenu();
 }, true);
@@ -5466,8 +5547,8 @@ function redoAllWrongBookQuestions() {
   const p = currentPassage();
   const all = [...quizState.wrongBook];
   let filtered = p ? all.filter(w => w.passageId === p.id) : all;
-  if (wbFilter === 'unresolved') filtered = filtered.filter(w => !w.completed);
-  if (wbFilter === 'resolved') filtered = filtered.filter(w => w.completed);
+  if (APP_GLOBALS.wbFilter === 'unresolved') filtered = filtered.filter(w => !w.completed);
+  if (APP_GLOBALS.wbFilter === 'resolved') filtered = filtered.filter(w => w.completed);
 
   if (!filtered.length) { toast('No questions to reset'); return; }
   if (!confirm(`确定要重置当前视图下的 ${filtered.length} 道错题的答题状态吗？\n方便您重新从第一题自测刷题！`)) return;
@@ -5476,8 +5557,8 @@ function redoAllWrongBookQuestions() {
     w._chosen = null;
     w._checked = false;
   });
-  wbCurrentIndex = 0;
-  openQuizWrongBook(0, wbFilter);
+  APP_GLOBALS.wbCurrentIndex = 0;
+  openQuizWrongBook(0, APP_GLOBALS.wbFilter);
   toast('错题已全部重置！请重新做题 ↻');
 }
 
@@ -5918,18 +5999,20 @@ function qsShowFloatMenu(tokens) {
   const alreadyIn = (quizState.wordBook||[]).some(w => qsNorm(w.text || w.word) === qsNorm(text));
   const highlighted = qsIsHighlighted(text);
   const tokenContext = wordMemoryContextFromToken(tokens[0]);
-  const mem = wordMemoryEnsure(text, highlighted ? 'Highlight' : '', tokenContext);
+  wordMemoryEnsure(text, highlighted ? 'Highlight' : '', tokenContext);
   saveQuiz();
 
   const menu = document.createElement('div');
   menu.id = 'qsFloatMenu';
   menu.className = 'qs-float-menu';
+  menu.style.cssText = 'position:fixed;z-index:8000;background:rgba(29,29,31,0.94);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);border:1px solid rgba(255,255,255,0.12);border-radius:14px;padding:5px 8px;display:flex;gap:3px;flex-wrap:nowrap;box-shadow:0 10px 30px rgba(0,0,0,0.26);pointer-events:all;max-width:calc(100vw - 16px);width:auto;box-sizing:border-box;';
 
   const addButton = (label, handler, cls='') => {
     const btn = document.createElement('button');
     btn.className = 'qs-float-btn' + (cls ? ' ' + cls : '');
     btn.type = 'button';
     btn.textContent = label;
+    btn.style.cssText = 'background:transparent;border:1px solid rgba(255,255,255,0.12);color:#fff;border-radius:10px;padding:4px 10px;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;transition:all 0.12s ease;flex:0 0 auto;';
     btn.addEventListener('pointerdown', ev => ev.stopPropagation());
     btn.addEventListener('click', ev => { ev.preventDefault(); ev.stopPropagation(); handler(btn); });
     menu.appendChild(btn);
@@ -5939,7 +6022,7 @@ function qsShowFloatMenu(tokens) {
   addButton('+ Synonym', () => qsAddToSynGroup(text));
   addButton(alreadyIn ? '✓' : '+', btn => qsAddToWordBook(btn, text), alreadyIn ? 'added' : '');
   if (highlighted) {
-    addButton('Remove', () => qsRemoveHighlight(text));
+    addButton('Remove', () => qsRemoveHighlight(text), 'danger');
   }
 
   document.body.appendChild(menu);
@@ -6222,6 +6305,69 @@ let wbkSearchQ = '';
 let wbkSort = 'dateDesc'; // 'dateDesc', 'alpha', 'highlight'
 let wbkTab = 'all'; // 'all', 'due', 'highlight', 'starred'
 
+async function batchAutoLookupWords() {
+  const words = (quizState.wordBook || []).filter(w => !w.meaning || String(w.meaning).trim() === '');
+  if (!words.length) {
+    toast('🎉 所有单词已有中文释义！');
+    return;
+  }
+
+  let successCount = 0;
+  let failCount = 0;
+  const total = words.length;
+  const batchSize = 5;
+  const batches = [];
+
+  toast(`⏳ 正在处理 ${total} 个单词...`);
+
+  for (let i = 0; i < words.length; i += batchSize) {
+    batches.push(words.slice(i, i + batchSize));
+  }
+
+  for (let batch of batches) {
+    const promises = batch.map(async (w) => {
+      try {
+        const wordText = String(w.text || w.word || '').trim();
+        if (!wordText) {
+          failCount++;
+          return;
+        }
+
+        const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(wordText)}&langpair=en|zh-CN`;
+        const res = await fetch(url);
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const data = await res.json();
+
+        if (data.responseData && data.responseData.translatedText) {
+          const translated = String(data.responseData.translatedText || '').trim();
+          if (translated && translated.toLowerCase() !== wordText.toLowerCase()) {
+            w.meaning = translated;
+            successCount++;
+          } else {
+            w.meaning = wordText;
+            failCount++;
+          }
+        } else {
+          failCount++;
+        }
+      } catch (e) {
+        failCount++;
+        console.warn(`查词失败: ${w.text || w.word || ''}`, e);
+      }
+    });
+
+    await Promise.all(promises);
+
+    const done = successCount + failCount;
+    toast(`⏳ 已处理 ${done}/${total} 个单词 (成功: ${successCount}, 失败: ${failCount})`);
+  }
+
+  saveQuiz();
+  renderSharedStats();
+  openQuizWordBook(wbkSearchQ, null, wbkSort, wbkTab);
+  toast(`✅ 完成！成功: ${successCount}, 失败: ${failCount}`);
+}
+
 function openQuizWordBook(searchQ = wbkSearchQ, _unused, filterSort = wbkSort, filterTab = wbkTab) {
   if (typeof searchQ === 'string') wbkSearchQ = searchQ;
   if (filterSort) wbkSort = filterSort;
@@ -6262,7 +6408,10 @@ function openQuizWordBook(searchQ = wbkSearchQ, _unused, filterSort = wbkSort, f
     <div style="display:flex;gap:4px;flex-wrap:wrap;background:var(--bg-elev);border:1px solid var(--line);border-radius:var(--radius-sm);padding:3px;">${tabBtn('all','All',counts.all)}${tabBtn('new','New',counts.new)}${tabBtn('learning','Learning',counts.learning)}${tabBtn('known','Known',counts.known)}${tabBtn('due','Due',counts.due)}</div>
     <div style="display:flex;gap:4px;flex-wrap:wrap;"><button class="apple-btn primary small" onclick="startWordBookReview('due')">Review Due (${counts.due})</button><button class="apple-btn small" onclick="startWordBookReview('all')">Review All</button></div>
     <div style="flex:1;min-width:160px;display:flex;align-items:center;gap:6px;background:var(--bg-card);border:1px solid var(--line);border-radius:var(--radius-sm);padding:6px 10px;"><span style="font-size:13px;color:var(--ink-tertiary);">⌕</span><input type="text" placeholder="Search word book…" value="${esc(wbkSearchQ)}" style="flex:1;border:none;background:transparent;font-size:13px;font-weight:500;color:var(--ink);outline:none;" oninput="openQuizWordBook(this.value, null, wbkSort, wbkTab)"/></div>
-    <button class="apple-btn primary" style="height:34px;padding:0 14px;font-size:13px;font-weight:700;" onclick="openAddWordBookDialog('', '', '')">+ Add</button>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+      <button class="apple-btn primary" style="height:34px;padding:0 14px;font-size:13px;font-weight:700;" onclick="openAddWordBookDialog('', '', '')">+ Add</button>
+      <button class="apple-btn" style="height:34px;padding:0 14px;font-size:13px;font-weight:600;" onclick="batchAutoLookupWords()">📖 一键全部自查</button>
+    </div>
   </div>`;
 
   const listHTML = items.length ? items.map(w => {
@@ -6488,11 +6637,46 @@ function markWordBookReviewItem(id, result) {
 // ================================================================
 //  ADD / EDIT WORDBOOK DIALOG & SELECTION ADD ENGINE
 // ================================================================
+async function autoLookupWord() {
+  const wordInput = document.getElementById('add_wbk_text');
+  const meaningInput = document.getElementById('add_wbk_mean');
+  if (!wordInput || !meaningInput) return;
+
+  const word = wordInput.value.trim();
+  if (!word) { toast('请先输入单词或短语'); return; }
+
+  try {
+    const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(word)}&langpair=en|zh-CN`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+
+    if (data.responseData && data.responseData.translatedText) {
+      const translated = String(data.responseData.translatedText || '').trim();
+      if (!translated || translated.toLowerCase() === word.toLowerCase()) {
+        toast('⚠️ 未找到有效翻译，请手动输入');
+        return;
+      }
+      meaningInput.value = translated;
+      meaningInput.dispatchEvent(new Event('input', { bubbles: true }));
+      toast('✅ 中文释义已自动填充');
+    } else {
+      toast('⚠️ 查词失败，请手动输入');
+    }
+  } catch (e) {
+    toast('❌ 网络请求失败，请手动输入');
+    console.warn('Auto lookup error:', e);
+  }
+}
+
 function openAddWordBookDialog(defaultText = '', defaultExample = '', defaultSource = '', _unusedSubj = '', editId = null) {
   const item = editId ? quizState.wordBook.find(x => x.id === editId) : null;
 
   openGenericSheet(editId ? 'Edit Word (编辑生词)' : 'Add to Word Book (录入生词)', `
-    <div class="field"><label style="font-weight:700;">Word / Phrase</label><input id="add_wbk_text" value="${esc(item ? item.text : defaultText)}" placeholder="e.g. abandon · depend on"/></div>
+    <div style="display:flex;gap:8px;align-items:flex-end;">
+      <div class="field" style="flex:1;margin-bottom:0;"><label style="font-weight:700;">Word / Phrase</label><input id="add_wbk_text" value="${esc(item ? item.text : defaultText)}" placeholder="e.g. abandon · depend on"/></div>
+      <button type="button" class="apple-btn small" style="margin-bottom:0;flex-shrink:0;white-space:nowrap;" onclick="autoLookupWord()">🔍 自动查中文</button>
+    </div>
     <div class="field"><label style="font-weight:700;">Meaning (释义)</label><input id="add_wbk_mean" value="${esc(item ? item.meaning : '')}" placeholder="e.g. 放弃；依赖"/></div>
     <div class="field"><label style="font-weight:700;">Example (例句)</label><textarea id="add_wbk_ex" rows="2" placeholder="e.g. The project depends on careful planning.">${esc(item ? item.example : defaultExample)}</textarea></div>
     <div class="field"><label style="font-weight:700;">Source (出处)</label><input id="add_wbk_src" value="${esc(item ? item.source : (defaultSource || 'Quiz Hub'))}"/></div>
@@ -6660,104 +6844,6 @@ function openAddSynonymDialog(qId) {
 // ================================================================
 //  WRONG BOOK — INTERACTIVE QUESTION PRACTICING INTERFACE
 // ================================================================
-let wbCurrentIndex = 0;
-let wbFilter = 'all'; // 'all', 'unresolved', 'resolved'
-
-function openQuizWrongBookLegacy(idx = 0, filter = 'all') {
-  if (typeof idx === 'number') wbCurrentIndex = idx;
-  if (filter) wbFilter = filter;
-  const p = currentPassage();
-  const all = [...quizState.wrongBook];
-  let filtered = p ? all.filter(w => w.passageId === p.id) : all;
-  if (wbFilter === 'unresolved') filtered = filtered.filter(w => !w.completed);
-  if (wbFilter === 'resolved') filtered = filtered.filter(w => w.completed);
-
-  if (wbCurrentIndex >= filtered.length) wbCurrentIndex = Math.max(0, filtered.length - 1);
-  if (wbCurrentIndex < 0) wbCurrentIndex = 0;
-
-  const totalAll = all.length;
-  const totalUnres = all.filter(w => !w.completed).length;
-  const totalRes = all.filter(w => w.completed).length;
-
-  const filterBar = `<div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;align-items:center;">
-    <span style="font-size:12px;font-weight:700;color:var(--ink-secondary);margin-right:4px;">Filter:</span>
-    <button class="apple-btn small ${wbFilter === 'all' && !p ? 'active' : ''}" onclick="quizState.currentPassageId=null;openQuizWrongBook(0, 'all')">All (${totalAll})</button>
-    <button class="apple-btn small ${wbFilter === 'unresolved' ? 'active' : ''}" onclick="openQuizWrongBook(0, 'unresolved')">Unresolved (${totalUnres})</button>
-    <button class="apple-btn small ${wbFilter === 'resolved' ? 'active' : ''}" onclick="openQuizWrongBook(0, 'resolved')">Resolved (${totalRes})</button>
-    ${quizState.passages.map(pp => `<button class="apple-btn small ${pp.id === p?.id ? 'active' : ''}" onclick="quizState.currentPassageId='${pp.id}';openQuizWrongBook(0, '${wbFilter}')">${esc(pp.customName)}</button>`).join('')}
-    <button class="apple-btn small primary" style="margin-left:auto;font-weight:700;" onclick="redoAllWrongBookQuestions()">↻ Reset All in View (全部重做)</button>
-  </div>`;
-
-  if (!filtered.length) {
-    openGenericSheet('X Wrong Book Practice', filterBar + `<div class="empty-state">No wrong questions found in this filter!</div>`, [
-      { text: 'Close', cls: 'primary', onclick: () => closeSheet('genericSheet') }
-    ]);
-    return;
-  }
-
-  const w = filtered[wbCurrentIndex];
-  const qNum = wbCurrentIndex + 1;
-  const total = filtered.length;
-  const isResolved = !!w.completed;
-
-  // Options rendering
-  let optionsHTML = `<div class="q-options" style="margin-top:12px;margin-bottom:16px;">`;
-  (w.options || []).forEach(opt => {
-    const letter = (opt.match(/^([A-Z])[.\s、)]/) || [])[1] || opt[0];
-    let cls = 'q-opt wb-opt';
-    if (w._checked) {
-      if (letter === w.correctAnswer) cls += ' correct';
-      else if (letter === w._chosen) cls += ' wrong';
-    } else if (w._chosen === letter) {
-      cls += ' selected';
-    }
-    optionsHTML += `<button class="${cls}" style="text-align:left;width:100%;padding:10px 14px;margin-bottom:6px;border-radius:var(--radius-sm);border:1px solid var(--line);" onclick="selectWbOption(this, '${letter}', '${w.id}')">${esc(opt)}</button>`;
-  });
-  optionsHTML += `</div>`;
-
-  // Explanation if checked
-  let explainHTML = '';
-  if (w._checked) {
-    const isOk = w._chosen === w.correctAnswer;
-    explainHTML = `<div class="q-status ${isOk ? 'ok' : 'err'}" style="margin-top:12px;padding:10px;border-radius:var(--radius-sm);background:${isOk?'rgba(52,199,89,0.1)':'rgba(255,59,48,0.1)'};color:${isOk?'var(--green)':'var(--red)'};font-weight:700;">
-      ${isOk ? 'OK Correct!' : 'X Wrong · Correct Answer: ' + esc(w.correctAnswer)}
-    </div>
-    <div class="q-explain show" style="margin-top:10px;padding:14px;background:var(--bg-elev);border:1px solid var(--line);border-radius:var(--radius-sm);">
-      <div style="font-weight:700;margin-bottom:6px;font-size:13px;color:var(--ink);">Explanation (答案解析):</div>
-      <div style="font-size:14px;color:var(--ink-secondary);line-height:1.5;">${esc(w.explanation || 'No explanation provided.')}</div>
-    </div>`;
-  }
-
-  const cardHTML = `<div class="q-card wb-practice-card" data-wbid="${w.id}" style="padding:18px;background:var(--bg-card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow-sm);">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;border-bottom:1px solid var(--line);padding-bottom:10px;">
-      <span style="font-size:13px;font-weight:700;color:var(--accent);">Question ${qNum} of ${total} (${w.qType ? w.qType.toUpperCase() : 'QUIZ'})</span>
-      <div style="display:flex;gap:6px;align-items:center;">
-        ${isResolved ? `<span style="background:var(--green);color:#fff;font-size:11px;font-weight:700;padding:3px 10px;border-radius:12px;">✓ Resolved</span>` : `<span style="background:var(--red);color:#fff;font-size:11px;font-weight:700;padding:3px 10px;border-radius:12px;">Unresolved</span>`}
-      </div>
-    </div>
-    <div class="q-text" style="font-size:16px;font-weight:600;color:var(--ink);line-height:1.4;">${esc(w.question)}</div>
-    ${optionsHTML}
-    ${explainHTML}
-    <div style="display:flex;gap:8px;margin-top:18px;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:14px;align-items:center;">
-      <button class="apple-btn primary" onclick="checkWbAnswer('${w.id}')">Check Answer (做题)</button>
-      <button class="apple-btn" onclick="retryWbQuestion('${w.id}')">Retry (重新做)</button>
-      <button class="apple-btn" style="${isResolved ? 'color:var(--orange);' : 'color:var(--green);font-weight:600;'}" onclick="toggleWbResolved('${w.id}')">
-        ${isResolved ? 'Unmark / Add Back (再次加入错题)' : '✓ Mark Completed (标记完成)'}
-      </button>
-      <button class="apple-btn danger" style="margin-left:auto;" onclick="deleteWbQuestion('${w.id}')">Delete (删除错题)</button>
-    </div>
-  </div>
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-top:16px;">
-    <button class="apple-btn" onclick="openQuizWrongBook(${wbCurrentIndex - 1}, '${wbFilter}')" ${wbCurrentIndex === 0 ? 'disabled' : ''}>← Previous</button>
-    <span style="font-size:12px;color:var(--ink-secondary);font-weight:500;">Wrong Book Practice Mode</span>
-    <button class="apple-btn" onclick="openQuizWrongBook(${wbCurrentIndex + 1}, '${wbFilter}')" ${wbCurrentIndex >= total - 1 ? 'disabled' : ''}>Next →</button>
-  </div>`;
-
-  openGenericSheet(`X Wrong Book (${all.length}) — Practice Mode`, filterBar + cardHTML, [
-    { text: 'Close', cls: 'primary', onclick: () => { closeSheet('genericSheet'); render(); } }
-  ]);
-}
-
 function selectWbOption(btn, letter, wbId) {
   const card = btn.closest('.wb-practice-card');
   card.querySelectorAll('.wb-opt').forEach(o => o.classList.remove('selected'));
@@ -6771,7 +6857,7 @@ function checkWbAnswer(wbId) {
   if (!w) return;
   if (!w._chosen) { toast('Select an option first'); return; }
   w._checked = true;
-  openQuizWrongBook(wbCurrentIndex, wbFilter);
+  openQuizWrongBook(APP_GLOBALS.wbCurrentIndex, APP_GLOBALS.wbFilter);
 }
 
 function retryWbQuestion(wbId) {
@@ -6779,7 +6865,7 @@ function retryWbQuestion(wbId) {
   if (!w) return;
   w._chosen = null;
   w._checked = false;
-  openQuizWrongBook(wbCurrentIndex, wbFilter);
+  openQuizWrongBook(APP_GLOBALS.wbCurrentIndex, APP_GLOBALS.wbFilter);
   toast('Question reset for retry');
 }
 
@@ -6789,7 +6875,7 @@ function toggleWbResolved(wbId) {
   w.completed = !w.completed;
   saveQuiz();
   renderSharedStats();
-  openQuizWrongBook(wbCurrentIndex, wbFilter);
+  openQuizWrongBook(APP_GLOBALS.wbCurrentIndex, APP_GLOBALS.wbFilter);
   toast(w.completed ? 'Marked as completed / resolved!' : 'Added back to unresolved wrong book!');
 }
 
@@ -6798,7 +6884,7 @@ function deleteWbQuestion(wbId) {
   quizState.wrongBook = quizState.wrongBook.filter(x => x.id !== wbId);
   saveQuiz();
   renderSharedStats();
-  openQuizWrongBook(wbCurrentIndex, wbFilter);
+  openQuizWrongBook(APP_GLOBALS.wbCurrentIndex, APP_GLOBALS.wbFilter);
   toast('Deleted from Wrong Book');
 }
 
@@ -7755,8 +7841,97 @@ function confirmAIImport(tab) {
       const targetPassageId = document.getElementById('aiTargetPassage')?.value;
       const forcePassage = document.getElementById('aiForcePassage')?.checked !== false;
 
-      if (targetPassageId && forcePassage) {
-        // ===== 强制使用选中板块：完全忽略 AI 生成的 passages，不新增任何板块 =====
+      const hasMultipleQuizSets = Array.isArray(data.quizSets) && data.quizSets.length > 1;
+
+      if (hasMultipleQuizSets) {
+        // ===== 核心修复：JSON 已包含多个 quizSet 时，保留原始分组，不强制合并到 Imported Set =====
+        const grammar = Array.isArray(data.grammarQuestions) ? data.grammarQuestions : [];
+        const vocab = Array.isArray(data.vocabularyQuestions) ? data.vocabularyQuestions : [];
+        const importedSets = data.quizSets;
+
+        if (targetPassageId && forcePassage) {
+          // 强制板块只修正 passageId，不改变 quizSet 的 id/name，也不新增 JSON 里的 passages。
+          data.passages = [];
+        }
+
+        importedSets.forEach((qs, index) => {
+          if (!qs.id) qs.id = uid('qs');
+          qs.passageId = (targetPassageId && forcePassage) ? targetPassageId : (qs.passageId || targetPassageId || quizState.currentPassageId);
+          if (!qs.name || !String(qs.name).trim()) qs.name = 'Test ' + (index + 1);
+          if (!qs.createdAt) qs.createdAt = Date.now();
+        });
+
+        const firstSetId = importedSets[0]?.id;
+        const ensureImportedSet = (setId, fallbackIndex) => {
+          let targetSet = importedSets.find(qs => qs.id === setId);
+          if (!targetSet) {
+            targetSet = {
+              id: setId || uid('qs'),
+              passageId: targetPassageId || quizState.currentPassageId,
+              name: 'Test ' + (fallbackIndex + 1),
+              createdAt: Date.now()
+            };
+            importedSets.push(targetSet);
+          }
+          if (targetPassageId && forcePassage) targetSet.passageId = targetPassageId;
+          if (!targetSet.name || !String(targetSet.name).trim()) targetSet.name = 'Test ' + (fallbackIndex + 1);
+          return targetSet;
+        };
+
+        const grammarBySet = {};
+        const vocabBySet = {};
+        grammar.forEach(q => {
+          const set = q.quizSetId || firstSetId;
+          if (!grammarBySet[set]) grammarBySet[set] = [];
+          grammarBySet[set].push(q);
+        });
+        vocab.forEach(q => {
+          const set = q.quizSetId || firstSetId;
+          if (!vocabBySet[set]) vocabBySet[set] = [];
+          vocabBySet[set].push(q);
+        });
+
+        Object.keys(grammarBySet).forEach((setId, index) => {
+          const targetSet = ensureImportedSet(setId, index);
+          grammarBySet[setId].forEach(q => {
+            q.passageId = targetSet.passageId || targetPassageId;
+            q.quizSetId = targetSet.id;
+            if (!q.id || quizState.grammarQuestions.find(x => x.id === q.id)) q.id = uid('g');
+            quizState.grammarQuestions.push(q);
+          });
+        });
+
+        Object.keys(vocabBySet).forEach((setId, index) => {
+          const targetSet = ensureImportedSet(setId, index);
+          vocabBySet[setId].forEach(q => {
+            q.passageId = targetSet.passageId || targetPassageId;
+            q.quizSetId = targetSet.id;
+            if (!q.id || quizState.vocabularyQuestions.find(x => x.id === q.id)) q.id = uid('v');
+            quizState.vocabularyQuestions.push(q);
+          });
+        });
+
+        importedSets.forEach(qs => {
+          qs.passageId = (targetPassageId && forcePassage) ? targetPassageId : (qs.passageId || targetPassageId || quizState.currentPassageId);
+          const existing = quizState.quizSets.find(x => x.id === qs.id);
+          if (!existing) {
+            quizState.quizSets.push(qs);
+          } else if (qs.name && qs.name !== 'Imported Set') {
+            existing.name = qs.name;
+            if (qs.passageId) existing.passageId = qs.passageId;
+          }
+        });
+
+        const activePassageId = targetPassageId || importedSets[0]?.passageId;
+        if (activePassageId && importedSets.length) {
+          quizState.currentQuizSetId = quizState.currentQuizSetId || {};
+          quizState.activeQuizSetIds = quizState.activeQuizSetIds || {};
+          quizState.currentQuizSetId[activePassageId] = importedSets[0].id;
+          quizState.activeQuizSetIds[activePassageId] = importedSets.map(qs => qs.id);
+        }
+
+      } else if (targetPassageId && forcePassage) {
+        // ===== 强制使用选中板块：仅在 JSON 没有多个 quizSet 时才合并 =====
         data.passages = []; // 清空，防止新增板块
 
         const grammar = Array.isArray(data.grammarQuestions) ? data.grammarQuestions : [];
@@ -11994,8 +12169,8 @@ function _wrongBookStatusBadge(w) {
 }
 
 function openQuizWrongBook(idx = 0, filter = 'all') {
-  if (typeof idx === 'number') wbCurrentIndex = idx;
-  wbFilter = filter || 'all';
+  if (typeof idx === 'number') APP_GLOBALS.wbCurrentIndex = idx;
+  APP_GLOBALS.wbFilter = filter || 'all';
   migrateWrongBookToEbbinghaus();
   renderWrongBookListView();
 }
@@ -12314,6 +12489,243 @@ function deleteWrongBookItem(id) {
 
 
 
+
+/* ================================================================
+   REVIEW IMPORT UI — Word Book / Wrong Book / Synonyms
+   ================================================================ */
+const REVIEW_IMPORT_TYPES = {
+  wordbook: {
+    label: '📚 单词',
+    shortLabel: '单词',
+    prompt: (typeof AI_WIZARD_PROMPTS !== 'undefined' && AI_WIZARD_PROMPTS.wordbook) ? AI_WIZARD_PROMPTS.wordbook : `你是一个 JSON 转换助手。请将我粘贴的单词/词组列表转换成以下格式，直接输出 JSON，不要任何多余文字或代码块标记。
+
+格式：
+{"wordBook":[{"id":"wbk_001","text":"单词或词组","meaning":"中文释义","example":"例句","subject":"english","source":"来源","dateAdded":"${todayISO()}","highlight":false,"starred":false,"srsBox":0,"srsReviews":0,"srsLapses":0}]}
+
+规则：
+- 只输出合法 JSON
+- id 从 wbk_001 递增
+- subject 默认填 "english"
+- 没有例句就留空字符串
+- dateAdded 填今天日期 ${todayISO()}`,
+    target: 'wordBook',
+    aliases: ['wordBook', 'vocabularyBook', 'words', 'vocabulary'],
+    validate: (data) => Array.isArray(data.wordBook) && data.wordBook.length > 0
+  },
+  wrongbook: {
+    label: '❌ 错题',
+    shortLabel: '错题',
+    prompt: `你是一个 JSON 转换助手。请将我粘贴的错题整理成 Review Wrong Book 可导入格式，直接输出 JSON，不要任何多余文字或代码块标记。
+
+格式：
+{"wrongBook":[{"id":"wb_001","qType":"grammar","qId":"g_001","passageId":"","quizSetId":"","question":"题目内容","options":["A. 选项","B. 选项","C. 选项","D. 选项"],"correctAnswer":"A","yourAnswer":"","explanation":"中文解析","completed":false,"reviewStage":0,"nextReviewDate":"${todayISO()}","lastReviewDate":null,"reviewCount":0,"mastered":false,"consecutiveCorrect":0}]}
+
+规则：
+- 只输出合法 JSON
+- qType 可选 "grammar" 或 "vocab"
+- options 必须是数组；如果原题没有选项就输出 []
+- correctAnswer 只写答案字母或正确答案文本
+- explanation 用中文
+- 不确定的 passageId / quizSetId / yourAnswer 用空字符串`,
+    target: 'wrongBook',
+    aliases: ['wrongBook', 'wrongQuestions', 'mistakes', 'errors'],
+    validate: (data) => Array.isArray(data.wrongBook) && data.wrongBook.length > 0
+  },
+  synonyms: {
+    label: '🔗 同义词',
+    shortLabel: '同义词',
+    prompt: (typeof AI_WIZARD_PROMPTS !== 'undefined' && AI_WIZARD_PROMPTS.synonyms) ? AI_WIZARD_PROMPTS.synonyms : `你是一个 JSON 转换助手。请将我粘贴的同义词组转换成以下格式，直接输出 JSON，不要任何多余文字或代码块标记。
+
+格式：
+{"synonymLibrary":[{"id":"syn_001","groupName":"组名/核心词","words":["词1","词2","词3"],"notes":"中文说明","srsBox":0,"srsReviews":0,"srsLapses":0}]}
+
+规则：
+- 只输出合法 JSON
+- id 从 syn_001 递增
+- groupName 用最核心的词或短语
+- notes 简短说明用法区别（中文）`,
+    target: 'synonymLibrary',
+    aliases: ['synonymLibrary', 'synonyms', 'synonymGroups', 'groups'],
+    validate: (data) => Array.isArray(data.synonymLibrary) && data.synonymLibrary.length > 0
+  }
+};
+
+let reviewImportType = 'wordbook';
+
+function reviewFallbackCopyText(text) {
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.position = 'fixed';
+  ta.style.left = '-9999px';
+  document.body.appendChild(ta);
+  ta.focus();
+  ta.select();
+  try {
+    document.execCommand('copy');
+    toast('Prompt 已复制');
+  } catch (e) {
+    toast('复制失败，请手动选中复制');
+  }
+  document.body.removeChild(ta);
+}
+
+function reviewCopyPrompt(type) {
+  const prompt = REVIEW_IMPORT_TYPES[type]?.prompt || '';
+  if (!prompt) return;
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(prompt).then(() => toast('Prompt 已复制')).catch(() => reviewFallbackCopyText(prompt));
+  } else {
+    reviewFallbackCopyText(prompt);
+  }
+}
+
+function reviewParseImportJSON(text) {
+  return JSON.parse(typeof sanitizeJSON === 'function' ? sanitizeJSON(text) : String(text || '').trim());
+}
+
+function reviewExtractImportItems(data, config) {
+  if (Array.isArray(data)) return data;
+  for (const key of (config.aliases || [config.target])) {
+    if (Array.isArray(data?.[key])) return data[key];
+  }
+  return [];
+}
+
+function initReviewImportWrongBookFields(item) {
+  if (!item.id) item.id = uid('wb');
+  if (!item.qType) item.qType = 'grammar';
+  if (!item.qId) item.qId = item.question ? ('manual_' + memoryKey(item.question).slice(0, 24)) : uid('q');
+  if (!Array.isArray(item.options)) item.options = item.options ? [String(item.options)] : [];
+  item.question = String(item.question || '').trim();
+  item.correctAnswer = String(item.correctAnswer || item.answer || '').trim();
+  item.yourAnswer = item.yourAnswer ?? '';
+  item.explanation = normalizeQuizExplanationValue(item.explanation || item.analysis || item.reason || '');
+  if (typeof item.completed !== 'boolean') item.completed = false;
+  if (typeof item.reviewStage !== 'number') item.reviewStage = 0;
+  if (!item.nextReviewDate) item.nextReviewDate = todayISO();
+  if (!('lastReviewDate' in item)) item.lastReviewDate = null;
+  if (typeof item.reviewCount !== 'number') item.reviewCount = 0;
+  if (typeof item.mastered !== 'boolean') item.mastered = false;
+  if (typeof item.consecutiveCorrect !== 'number') item.consecutiveCorrect = 0;
+  if (!item.ts) item.ts = Date.now();
+  return (typeof initWrongBookEbbinghausFields === 'function') ? initWrongBookEbbinghausFields(item) : item;
+}
+
+function reviewNormalizeImportItem(item, target, index = 0) {
+  const obj = (item && typeof item === 'object') ? { ...item } : {};
+  if (target === 'wordBook') {
+    if (!obj.id) obj.id = uid('wbk');
+    obj.text = String(obj.text || obj.word || obj.phrase || '').trim();
+    obj.meaning = String(obj.meaning || obj.translation || obj.cn || '').trim();
+    obj.example = String(obj.example || '').trim();
+    obj.subject = obj.subject || 'english';
+    obj.source = obj.source || 'Review Import';
+    obj.dateAdded = obj.dateAdded || todayISO();
+    obj.addedAt = obj.addedAt || Date.now() + index;
+    if (typeof obj.highlight !== 'boolean') obj.highlight = false;
+    if (typeof obj.starred !== 'boolean') obj.starred = false;
+    ensureSrs(obj);
+  } else if (target === 'synonymLibrary') {
+    if (!obj.id) obj.id = uid('syn');
+    obj.groupName = String(obj.groupName || obj.name || obj.core || obj.word || 'Group').trim();
+    obj.words = Array.isArray(obj.words) ? obj.words.map(w => String(w || '').trim()).filter(Boolean) : [];
+    obj.notes = String(obj.notes || obj.meaning || obj.description || '').trim();
+    ensureSrs(obj);
+  } else if (target === 'wrongBook') {
+    initReviewImportWrongBookFields(obj);
+  }
+  return obj;
+}
+
+function reviewImportKey(item, target) {
+  if (target === 'wordBook') return memoryKey(item.text || item.word || item.id || '');
+  if (target === 'synonymLibrary') return memoryKey(item.groupName || (item.words || []).join('|') || item.id || '');
+  if (target === 'wrongBook') return item.qId ? String(item.qId) : memoryKey(item.question || item.id || '');
+  return String(item.id || JSON.stringify(item));
+}
+
+function reviewImportPreview(type) {
+  const text = document.getElementById('reviewImportText')?.value?.trim();
+  const status = document.getElementById('reviewImportStatus');
+  if (!text || !status) return;
+
+  try {
+    const data = reviewParseImportJSON(text);
+    const config = REVIEW_IMPORT_TYPES[type] || REVIEW_IMPORT_TYPES.wordbook;
+    const items = reviewExtractImportItems(data, config);
+
+    if (!items.length) {
+      status.innerHTML = `⚠️ 未检测到 ${config.label} 数据`;
+      return;
+    }
+
+    status.innerHTML = `
+      <div style="background:var(--bg-elev);padding:10px;border-radius:var(--radius);border:1px solid var(--line-light);">
+        ✅ 检测到 ${items.length} 条 ${config.label} 数据<br>
+        <span style="font-size:11px;color:var(--ink-tertiary);white-space:pre-wrap;">
+          示例：${esc(JSON.stringify(items[0], null, 2).slice(0, 180))}...
+        </span>
+      </div>
+    `;
+  } catch (e) {
+    status.innerHTML = `❌ JSON 格式错误：${esc(e.message)}`;
+  }
+}
+
+function reviewImportExecute(type) {
+  const text = document.getElementById('reviewImportText')?.value?.trim();
+  const status = document.getElementById('reviewImportStatus');
+  if (!text || !status) { toast('请先粘贴 JSON'); return; }
+
+  const mode = document.querySelector('input[name="reviewImportMode"]:checked')?.value || 'merge';
+
+  try {
+    const data = reviewParseImportJSON(text);
+    const config = REVIEW_IMPORT_TYPES[type] || REVIEW_IMPORT_TYPES.wordbook;
+    const target = config.target;
+    const items = reviewExtractImportItems(data, config).map((item, idx) => reviewNormalizeImportItem(item, target, idx)).filter(item => {
+      if (target === 'wordBook') return !!item.text;
+      if (target === 'synonymLibrary') return !!item.groupName && item.words.length > 0;
+      if (target === 'wrongBook') return !!item.question;
+      return true;
+    });
+
+    if (!items.length) { toast('未检测到有效数据'); return; }
+
+    const existing = Array.isArray(quizState[target]) ? quizState[target] : [];
+    let importedCount = items.length;
+    let skippedCount = 0;
+
+    if (mode === 'overwrite') {
+      quizState[target] = items;
+    } else {
+      const existingKeys = new Set(existing.map(item => reviewImportKey(item, target)).filter(Boolean));
+      const newItems = items.filter(item => {
+        const key = reviewImportKey(item, target);
+        if (key && existingKeys.has(key)) return false;
+        if (key) existingKeys.add(key);
+        return true;
+      });
+      skippedCount = items.length - newItems.length;
+      importedCount = newItems.length;
+      quizState[target] = [...existing, ...newItems];
+    }
+
+    if (typeof syncWordBookMemory === 'function' && (target === 'wordBook' || target === 'synonymLibrary')) syncWordBookMemory();
+    saveQuiz();
+    renderSharedStats();
+    renderReviewCenter(_reviewCenterActiveTab);
+    const newStatus = document.getElementById('reviewImportStatus');
+    const msg = `✅ 成功导入 ${importedCount} 条 ${config.label} 数据（${mode === 'overwrite' ? '覆盖' : '合并'}模式）${skippedCount ? `，跳过重复 ${skippedCount} 条` : ''}`;
+    if (newStatus) newStatus.innerHTML = msg;
+    toast(`✅ 已导入 ${importedCount} 条 ${config.label}`);
+  } catch (e) {
+    status.innerHTML = `❌ 导入失败：${esc(e.message)}`;
+    toast('导入失败：' + e.message);
+  }
+}
+
+
 /* ================================================================
    REVIEW CENTER — full-screen main content entry for Word Book / Wrong Book / Synonyms
    Existing module renderers are preserved; their Sheet target IDs are provided inside #mainContent.
@@ -12332,11 +12744,110 @@ function _reviewTabButton(label, tab) {
 }
 
 function _reviewTabsHTML() {
+  const active = _reviewCenterActiveTab;
   return `<div id="reviewCenterTabs" data-review-tabs="true" style="display:flex;align-items:center;gap:22px;flex-wrap:wrap;margin-bottom:16px;padding-bottom:10px;border-bottom:1px solid var(--line-light);">
     ${_reviewTabButton('Word Book', 'wordbook')}
     ${_reviewTabButton('Wrong Book', 'wrongbook')}
     ${_reviewTabButton('Synonyms', 'synonyms')}
+    ${_reviewTabButton('AI Prompt', 'prompt')}
   </div>`;
+}
+
+let _reviewPromptType = 'wordbook';
+
+function getReviewPromptConfig(type) {
+  const key = REVIEW_IMPORT_TYPES[type] ? type : 'wordbook';
+  const cfg = REVIEW_IMPORT_TYPES[key];
+  const labels = {
+    wordbook: '📚 单词 Prompt',
+    synonyms: '🔗 同义词 Prompt',
+    wrongbook: '❌ 错题 Prompt'
+  };
+  return {
+    key,
+    label: labels[key] || cfg.label || key,
+    content: cfg.prompt || ''
+  };
+}
+
+function renderReviewPromptPanel(container) {
+  if (!container) return;
+  if (!_reviewPromptType) _reviewPromptType = 'wordbook';
+
+  const promptKeys = ['wordbook', 'wrongbook', 'synonyms'];
+  const current = getReviewPromptConfig(_reviewPromptType);
+  const type = REVIEW_IMPORT_TYPES[current.key] || REVIEW_IMPORT_TYPES.wordbook;
+  reviewImportType = current.key;
+
+  container.innerHTML = `
+    <div style="display:flex;flex-direction:column;gap:16px;">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        ${promptKeys.map(key => {
+          const p = getReviewPromptConfig(key);
+          return `
+            <button class="apple-btn ${_reviewPromptType === key ? 'primary' : ''}" onclick="_reviewPromptType='${key}';renderReviewCenter('prompt')">
+              ${esc(p.label)}
+            </button>
+          `;
+        }).join('')}
+      </div>
+
+      <div style="background:var(--bg-card);border:1px solid var(--line);border-radius:var(--radius);padding:16px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px;">
+          <div style="font-size:12px;font-weight:800;color:var(--ink-secondary);letter-spacing:.04em;text-transform:uppercase;">Prompt</div>
+          <button class="apple-btn small" onclick="copyReviewPrompt('${current.key}')">📋 复制</button>
+        </div>
+
+        <div style="background:var(--bg-elev);border:1px solid var(--line-light);border-radius:var(--radius-sm);padding:14px;max-height:300px;overflow:auto;white-space:pre-wrap;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;color:var(--ink-secondary);line-height:1.6;">
+          ${esc(current.content || '')}
+        </div>
+      </div>
+
+      <div id="reviewImportPanel" style="background:var(--bg-card);border:1px solid var(--line);border-radius:var(--radius);padding:16px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:10px;">
+          <div style="font-size:12px;font-weight:800;color:var(--ink-secondary);letter-spacing:.04em;text-transform:uppercase;">导入 JSON</div>
+
+          <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+            <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;color:var(--ink-secondary);">
+              <input type="radio" name="reviewImportMode" value="merge" checked> 合并
+            </label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer;color:var(--ink-secondary);">
+              <input type="radio" name="reviewImportMode" value="overwrite"> 覆盖
+            </label>
+          </div>
+        </div>
+
+        <textarea
+          id="reviewImportText"
+          placeholder="粘贴 ${esc(type.label || current.label || current.key)} JSON 到这里..."
+          style="width:100%;min-height:140px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;line-height:1.55;padding:12px;border:1px solid var(--line);border-radius:var(--radius-sm);background:var(--bg-elev);color:var(--ink);resize:vertical;box-sizing:border-box;outline:none;"
+        ></textarea>
+
+        <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;">
+          <button class="apple-btn" onclick="reviewImportPreview('${current.key}')">预览</button>
+          <button class="apple-btn primary" onclick="reviewImportExecute('${current.key}')">导入</button>
+          <button class="apple-btn" onclick="document.getElementById('reviewImportText').value='';document.getElementById('reviewImportStatus').textContent='已清空。';">清空</button>
+        </div>
+
+        <div id="reviewImportStatus" class="ai-studio-status" style="margin-top:10px;">等待导入...</div>
+      </div>
+    </div>
+  `;
+}function copyReviewPrompt(type) {
+  reviewCopyPrompt(type);
+  const status = document.getElementById('reviewPromptStatus');
+  if (status) status.textContent = 'Prompt 已复制。去 AI 生成 JSON 后，点击“导入 JSON”回到导入面板。';
+}
+
+function openReviewImportModal(type) {
+  const key = REVIEW_IMPORT_TYPES[type] ? type : 'wordbook';
+  reviewImportType = key;
+  _reviewPromptType = key;
+  renderReviewCenter('prompt');
+  setTimeout(() => {
+    document.getElementById('reviewImportText')?.focus();
+    document.getElementById('reviewImportPanel')?.scrollIntoView({ behavior:'smooth', block:'start' });
+  }, 50);
 }
 
 function _setReviewNavActive() {
@@ -12404,8 +12915,10 @@ function renderReviewCenter(tab = _reviewCenterActiveTab || 'wordbook', ...args)
   if (typeof saveAppState === 'function') saveAppState();
   _setReviewNavActive();
   _reviewCenterRendering = true;
-  _prepareReviewMainShell();
-  if (_reviewCenterActiveTab === 'wrongbook') {
+  const body = _prepareReviewMainShell();
+  if (_reviewCenterActiveTab === 'prompt') {
+    renderReviewPromptPanel(body);
+  } else if (_reviewCenterActiveTab === 'wrongbook') {
     if (_reviewOrigOpenQuizWrongBook) _reviewOrigOpenQuizWrongBook(...args);
   } else if (_reviewCenterActiveTab === 'synonyms') {
     if (_reviewOrigOpenSidebarSynonyms) _reviewOrigOpenSidebarSynonyms(...args);
@@ -12507,7 +13020,7 @@ function applyAppLanguage(root = document.body) {
     acceptNode(node) {
       const parent = node.parentElement;
       if (!parent) return NodeFilter.FILTER_REJECT;
-      if (parent.closest('textarea,input,select,pre,code,script,style,[data-no-i18n]')) return NodeFilter.FILTER_REJECT;
+      if (parent.closest('textarea,input,select,pre,code,script,style,[data-no-i18n],[contenteditable]')) return NodeFilter.FILTER_REJECT;
       if (!node.nodeValue || !node.nodeValue.trim()) return NodeFilter.FILTER_REJECT;
       return NodeFilter.FILTER_ACCEPT;
     }
@@ -12519,7 +13032,7 @@ function applyAppLanguage(root = document.body) {
   });
 
   document.querySelectorAll('input[placeholder], textarea[placeholder], button[title], [title]').forEach(el => {
-    if (el.closest('[data-no-i18n]')) return;
+    if (el.closest('[data-no-i18n],[contenteditable]')) return;
     if (el.placeholder) el.placeholder = i18nTextValue(el.placeholder);
     if (el.title) el.title = i18nTextValue(el.title);
     if (el.getAttribute && el.getAttribute('aria-label')) el.setAttribute('aria-label', i18nTextValue(el.getAttribute('aria-label')));
