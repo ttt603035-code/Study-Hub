@@ -3413,7 +3413,7 @@ const APP_GLOBALS = {
 const StudyStorage = (() => {
   const NS = 'shub@';                      // namespace prefix
   const REG_KEY = NS + 'registry';         // module registry
-  const MIGRATED_KEY = NS + 'migrated_v1'; // migration flag
+  const MIGRATED_KEY = NS + 'migrated_v2'; // migration flag (bumped to v2 for re-migration)
 
   // Module → [subkey, ...] registry (avoids scanning all ls keys)
   let _reg = null;
@@ -3598,13 +3598,14 @@ const StudyStorage = (() => {
       const legacy = MIGRATION_MAP[newK];
       const val = localStorage.getItem(legacy);
       if (val !== null) {
+        const fullKey = NS + newK;
         // Only migrate if new key doesn't already exist
-        if (localStorage.getItem(newK) === null) {
-          localStorage.setItem(newK, val);
+        if (localStorage.getItem(fullKey) === null) {
+          localStorage.setItem(fullKey, val);
           migrated++;
         }
         // Register the key
-        const parts = newK.slice(NS.length).split('/');
+        const parts = newK.split('/');
         if (parts.length === 2) _register(parts[0], parts[1]);
       }
     });
@@ -3617,6 +3618,11 @@ const StudyStorage = (() => {
     }
     _saveReg();
     localStorage.setItem(MIGRATED_KEY, 'true');
+    // Clean up old incorrectly-written keys (from v1 bug)
+    Object.keys(MIGRATION_MAP).forEach(newK => {
+      if (localStorage.getItem(newK) !== null) localStorage.removeItem(newK);
+    });
+    localStorage.removeItem(NS + 'migrated_v1');
     if (migrated > 0) console.log('[StudyStorage] Migrated', migrated, 'keys to new namespace');
   }
 
@@ -3637,7 +3643,7 @@ const StudyStorage = (() => {
       const legacy = MIGRATION_MAP[newK];
       const val = localStorage.getItem(legacy);
       if (val !== null && val !== undefined) {
-        const parts = newK.slice(NS.length).split('/');
+        const parts = newK.split('/');
         if (parts.length === 2) {
           const [mod, sub] = parts;
           if (!payload.modules[mod]) payload.modules[mod] = {};
