@@ -575,6 +575,17 @@ textarea { resize: vertical; }
 .reading-body .hl { cursor: pointer; border-radius: 2px; padding: 0 1px; }
 .reading-body .hl.has-note { box-shadow: inset 0 -2px 0 rgba(255,255,255,0.4); }
 .reading-body .replaced { color: #666; font-weight: 600; }
+.reading-body .study-word {
+  background: linear-gradient(120deg, rgba(255,214,165,0.35) 0%, rgba(255,214,165,0.15) 100%);
+  border-bottom: 2px solid var(--accent);
+  padding: 0 2px;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+.reading-body .study-word:hover {
+  background: linear-gradient(120deg, rgba(255,214,165,0.6) 0%, rgba(255,214,165,0.3) 100%);
+}
 
 .sel-menu {
   position: fixed;
@@ -3392,11 +3403,283 @@ const APP_GLOBALS = {
   wbCurrentIndex: 0
 };
 /* ================================================================
+   STUDY STORAGE — Modular localStorage Layer
+   ================================================================
+   Unified namespace: shub@{module}/{subkey}
+   Data envelope:    { _v:1, _ts: number, data: T }
+   Provides module-scoped read/write/clear and auto-migration
+   from legacy keys (preserving all user data).
+   ================================================================ */
+const StudyStorage = (() => {
+  const NS = 'shub@';                      // namespace prefix
+  const REG_KEY = NS + 'registry';         // module registry
+  const MIGRATED_KEY = NS + 'migrated_v1'; // migration flag
+
+  // Module → [subkey, ...] registry (avoids scanning all ls keys)
+  let _reg = null;
+  function _loadReg() {
+    try { _reg = JSON.parse(localStorage.getItem(REG_KEY)) || {}; } catch(_) { _reg = {}; }
+  }
+  function _saveReg() {
+    try { localStorage.setItem(REG_KEY, JSON.stringify(_reg)); } catch(_) {}
+  }
+  function _ensureReg() { if (!_reg) _loadReg(); }
+
+  // Build the full localStorage key
+  function key(module, sub) { return NS + module + '/' + sub; }
+
+  // Return all subkeys registered for a module
+  function moduleKeys(module) {
+    _ensureReg();
+    return (_reg[module] || []);
+  }
+
+  // Register a subkey (idempotent)
+  function _register(module, sub) {
+    _ensureReg();
+    if (!_reg[module]) _reg[module] = [];
+    if (!_reg[module].includes(sub)) _reg[module].push(sub);
+  }
+
+  // Internal: wrap data in envelope
+  function _wrap(data) {
+    return JSON.stringify({ _v: 1, _ts: Date.now(), data });
+  }
+
+  // Internal: unwrap envelope, return null on failure
+  function _unwrap(raw) {
+    try {
+      if (!raw) return null;
+      const p = JSON.parse(raw);
+      // Accept both envelope format and raw JSON (backward compat)
+      if (p && typeof p === 'object' && '_v' in p && 'data' in p) return p.data;
+      // Raw JSON without envelope — return as-is
+      return p;
+    } catch (_) { return null; }
+  }
+
+  // ---- PUBLIC API ----
+
+  // Read module data
+  function get(module, sub, fallback) {
+    const k = key(module, sub);
+    const d = _unwrap(localStorage.getItem(k));
+    return d !== null && d !== undefined ? d : (fallback !== undefined ? fallback : null);
+  }
+
+  // Write module data
+  function set(module, sub, data) {
+    _register(module, sub);
+    localStorage.setItem(key(module, sub), _wrap(data));
+    _saveReg();
+  }
+
+  // Remove one subkey
+  function remove(module, sub) {
+    localStorage.removeItem(key(module, sub));
+  }
+
+  // Clear all data for a specific module
+  function clearModule(module) {
+    _ensureReg();
+    const subs = _reg[module] || [];
+    subs.forEach(sub => localStorage.removeItem(key(module, sub)));
+    delete _reg[module];
+    _saveReg();
+  }
+
+  // Clear all Study Hub data (but preserves non-shub keys)
+  function clearAll() {
+    _ensureReg();
+    Object.keys(_reg).forEach(mod => clearModule(mod));
+    localStorage.removeItem(REG_KEY);
+    localStorage.removeItem(MIGRATED_KEY);
+    _reg = {};
+  }
+
+  // List all registered modules
+  function modules() {
+    _ensureReg();
+    return Object.keys(_reg);
+  }
+
+  // Get raw localStorage key (for edge cases like import/export)
+  function rawKey(module, sub) { return key(module, sub); }
+
+  // Export a single module's data as { subkey: rawJsonString }
+  function exportModuleRaw(module) {
+    _ensureReg();
+    const out = {};
+    (_reg[module] || []).forEach(sub => {
+      const k = key(module, sub);
+      const v = localStorage.getItem(k);
+      if (v !== null) out[k] = v;
+    });
+    return out;
+  }
+
+  // Export all shub data as { key: rawJsonString }
+  function exportAllRaw() {
+    const out = {};
+    _ensureReg();
+    Object.keys(_reg).forEach(mod => {
+      Object.assign(out, exportModuleRaw(mod));
+    });
+    // Also include registry
+    const rv = localStorage.getItem(REG_KEY);
+    if (rv !== null) out[REG_KEY] = rv;
+    return out;
+  }
+
+  // Import module data from raw key-value pairs (used by backup restore)
+  function importModuleRaw(pairs) {
+    Object.keys(pairs).forEach(k => {
+      const v = pairs[k];
+      if (k.startsWith(NS) && v != null) {
+        localStorage.setItem(k, String(v));
+        // Register
+        const parts = k.slice(NS.length).split('/');
+        if (parts.length === 2) _register(parts[0], parts[1]);
+      }
+    });
+    _saveReg();
+  }
+
+  // Get all shub keys and their sizes (for inventory display)
+  function inventory() {
+    const rows = [];
+    _ensureReg();
+    Object.keys(_reg).forEach(mod => {
+      (_reg[mod] || []).forEach(sub => {
+        const k = key(mod, sub);
+        const v = localStorage.getItem(k) || '';
+        rows.push({ key: k, module: mod, sub, bytes: (k.length + v.length) * 2, raw: v });
+      });
+    });
+    return rows;
+  }
+
+  // ---- ONE-TIME MIGRATION ----
+  // Maps: { newKey(module, sub): legacyLocalStorageKey }
+  const MIGRATION_MAP = {
+    'quiz_hub/main':        'eng_dashboard_v2',
+    'quiz_hub/backup':      'eng_dashboard_v2_backup',
+    'quiz_hub/meta':        'eng_dashboard_meta',
+    'reading/state':        'study_reading_collections_v1',
+    'resources/subjects':   'study_subjects_pro',
+    'resources/resources':  'study_resources_pro',
+    'resources/exercises':  'study_exercises_pro',
+    'resources/scores':     'study_scores_pro',
+    'resources/countdown':  'study_countdown_pro',
+    'resources/mod_order':  'study_mod_order_pro',
+    'resources/learning':   'study_learning_pro',
+    'resources/tasks':      'study_tasks_pro',
+    'resources/suggest':    'study_suggest_unified',
+    'roadmap/plans':        'study_roadmap_plans_pro',
+    'roadmap/exams':        'study_roadmap_exams_pro',
+    'roadmap/milestones':   'study_roadmap_milestones_pro',
+    'roadmap/milestone_expanded':  'study_roadmap_milestone_expanded_pro',
+    'roadmap/subject_expanded':    'study_roadmap_subject_expanded_pro',
+    'weekly_planner/plan':  'study_weekly_planner_pro',
+    'weekly_planner/milestones':   'study_weekly_milestones_pro',
+    'weekly_planner/progress_check':'study_progress_checks_pro',
+    'notes/quotes':         'study_quotes',
+    'settings/ui_state':    'study_unified_app',
+    'settings/language':    'quizhub_ui_language_v1',
+    'settings/username':    'study_username',
+    'settings/sidebar_collapsed': 'study_sidebar_collapsed_pro',
+    'settings/sidebar_ia':  'study_sidebar_ia_sections_pro',
+  };
+
+  function migrate() {
+    if (localStorage.getItem(MIGRATED_KEY) === 'true') return;
+    let migrated = 0;
+    Object.keys(MIGRATION_MAP).forEach(newK => {
+      const legacy = MIGRATION_MAP[newK];
+      const val = localStorage.getItem(legacy);
+      if (val !== null) {
+        // Only migrate if new key doesn't already exist
+        if (localStorage.getItem(newK) === null) {
+          localStorage.setItem(newK, val);
+          migrated++;
+        }
+        // Register the key
+        const parts = newK.slice(NS.length).split('/');
+        if (parts.length === 2) _register(parts[0], parts[1]);
+      }
+    });
+    // Handle study_demo_data_removed flag → system/demo_flag
+    if (localStorage.getItem('study_demo_data_removed') !== null) {
+      if (localStorage.getItem(NS + 'system/demo_flag') === null) {
+        localStorage.setItem(NS + 'system/demo_flag', localStorage.getItem('study_demo_data_removed'));
+      }
+      _register('system', 'demo_flag');
+    }
+    _saveReg();
+    localStorage.setItem(MIGRATED_KEY, 'true');
+    if (migrated > 0) console.log('[StudyStorage] Migrated', migrated, 'keys to new namespace');
+  }
+
+  // ---- CLOUD SYNC PAYLOAD BUILDERS ----
+  // Build a unified sync payload for cloud backup (all modules)
+  function getSyncPayload() {
+    const payload = { version: 1, timestamp: new Date().toISOString(), modules: {} };
+    _ensureReg();
+    Object.keys(_reg).forEach(mod => {
+      payload.modules[mod] = {};
+      (_reg[mod] || []).forEach(sub => {
+        const v = _unwrap(localStorage.getItem(key(mod, sub)));
+        if (v !== null && v !== undefined) payload.modules[mod][sub] = v;
+      });
+    });
+    // Also include any legacy keys that exist but haven't been migrated
+    Object.keys(MIGRATION_MAP).forEach(newK => {
+      const legacy = MIGRATION_MAP[newK];
+      const val = localStorage.getItem(legacy);
+      if (val !== null && val !== undefined) {
+        const parts = newK.slice(NS.length).split('/');
+        if (parts.length === 2) {
+          const [mod, sub] = parts;
+          if (!payload.modules[mod]) payload.modules[mod] = {};
+          if (payload.modules[mod][sub] === undefined) {
+            try { payload.modules[mod][sub] = JSON.parse(val); } catch(_) { payload.modules[mod][sub] = val; }
+          }
+        }
+      }
+    });
+    return payload;
+  }
+
+  // Restore from a sync payload downloaded from cloud.
+  // Only restores modules we know about; preserves unknown modules.
+  function restoreFromSyncPayload(payload) {
+    if (!payload || typeof payload !== 'object') throw new Error('Invalid sync payload');
+    const data = payload.modules || payload.data || payload;
+    if (typeof data !== 'object') throw new Error('No modules found in payload');
+    // Support both v1 format {modules:{...}} and flat format
+    const mods = payload.modules || data;
+    Object.keys(mods).forEach(mod => {
+      const subs = mods[mod];
+      if (!subs || typeof subs !== 'object') return;
+      Object.keys(subs).forEach(sub => {
+        try { set(mod, sub, subs[sub]); } catch(_) {}
+      });
+    });
+    return Object.keys(mods).length;
+  }
+
+  return { key, get, set, remove, clearModule, clearAll, modules, moduleKeys, rawKey, exportModuleRaw, exportAllRaw, importModuleRaw, inventory, migrate, MIGRATION_MAP, getSyncPayload, restoreFromSyncPayload };
+})();
+
+// Run migration immediately (before any state init code)
+StudyStorage.migrate();
+
+/* ================================================================
    UNIFIED STATE MANAGEMENT
    ================================================================ */
 
-// === SHARED APP STATE ===
-const APP_STATE_KEY = 'study_unified_app';
+// === SHARED APP STATE (module: settings) ===
+const APP_STATE_KEY = 'study_unified_app'; // legacy key, kept for reference
 let appState = {
   currentModule: 'quiz',       // 'quiz' | 'roadmap' | 'resources'
   resourceFocus: 'resource',   // 'resource' | 'exercise'
@@ -3405,20 +3688,49 @@ let appState = {
   searchQuery: '',
 };
 
-// === SIDEBAR INFORMATION ARCHITECTURE STATE ===
-const SIDEBAR_IA_KEY = 'study_sidebar_ia_sections_pro';
-let sidebarIAState = JSON.parse(localStorage.getItem(SIDEBAR_IA_KEY) || 'null') || {
+// === GITHUB GIST CLOUD SYNC CONFIG (module: settings) ===
+let gistConfig = StudyStorage.get('settings', 'gist_sync', null) || {
+  token: '',
+  gistId: '',
+  lastSyncTs: 0,
+  lastSyncAt: ''
+};
+function saveGistConfig() { StudyStorage.set('settings', 'gist_sync', gistConfig); }
+
+function renderCloudSyncStatus() {
+  const last = gistConfig.lastSyncAt ? new Date(gistConfig.lastSyncAt) : null;
+  const ago = last ? Math.floor((Date.now() - last.getTime()) / 86400000) : null;
+  let badge = '';
+  if (!last) badge = '<span style="font-size:11px;color:var(--ink-tertiary);">Not synced yet</span>';
+  else if (ago > 7) badge = `<span style="font-size:11px;color:var(--red);">⚠ ${ago} days since last sync</span>`;
+  else if (ago > 0) badge = `<span style="font-size:11px;color:var(--ink-tertiary);">Last synced ${ago} day${ago>1?'s':''} ago</span>`;
+  else badge = '<span style="font-size:11px;color:var(--green);">✓ Synced today</span>';
+  return `<div style="font-size:11px;color:var(--ink-tertiary);">Token: ${gistConfig.token ? '●●●●●●●●●●●●' : 'Not set'} · Gist ID: ${gistConfig.gistId || 'Auto-create'} · ${badge}</div>`;
+}
+
+function saveGistConfigFromSettings() {
+  const token = document.getElementById('settingsGistToken')?.value?.trim() || '';
+  const gistId = document.getElementById('settingsGistId')?.value?.trim() || '';
+  gistConfig = { ...gistConfig, token, gistId };
+  saveGistConfig();
+  toast('Cloud sync configuration saved');
+  openQuizSettings();
+}
+
+// === SIDEBAR INFORMATION ARCHITECTURE STATE (module: settings) ===
+const SIDEBAR_IA_KEY = 'study_sidebar_ia_sections_pro'; // legacy key
+let sidebarIAState = StudyStorage.get('settings', 'sidebar_ia', null) || {
   planning: true,
   learning: true,
   practice: true,
   system: false
 };
-function saveSidebarIAState() { localStorage.setItem(SIDEBAR_IA_KEY, JSON.stringify(sidebarIAState)); }
+function saveSidebarIAState() { StudyStorage.set('settings', 'sidebar_ia', sidebarIAState); }
 
-// === QUIZ HUB STATE (from index.html) ===
-const QUIZ_STORE_KEY = 'eng_dashboard_v2';
-const QUIZ_BACKUP_KEY = 'eng_dashboard_v2_backup';
-const QUIZ_META_KEY = 'eng_dashboard_meta';
+// === QUIZ HUB STATE (module: quiz_hub) ===
+const QUIZ_STORE_KEY = 'eng_dashboard_v2'; // legacy key
+const QUIZ_BACKUP_KEY = 'eng_dashboard_v2_backup'; // legacy key
+const QUIZ_META_KEY = 'eng_dashboard_meta'; // legacy key
 const QUIZ_SCHEMA = 5;
 
 const SRS_INTERVALS_DAY = [0, 1, 2, 4, 7, 15, 30];
@@ -3453,10 +3765,10 @@ let quizState = {
   activeTab: 'grammar',
   activeQIndex: { grammar: {}, vocab: {} },
 };
-let quizMeta = { lastExportTs:0, lastBackupTs:0, gist:{token:'',gistId:'',filename:'dashboard.json',lastSyncTs:0} };
+let quizMeta = StudyStorage.get('quiz_hub', 'meta', null) || { lastExportTs:0, lastBackupTs:0, gist:{token:'',gistId:'',filename:'dashboard.json',lastSyncTs:0} };
 
 // === READING MODULE STATE ===
-const READING_STORE_KEY = 'study_reading_collections_v1';
+const READING_STORE_KEY = 'study_reading_collections_v1'; // legacy key
 const DEFAULT_READING_PROMPT = `你是一个 Reading JSON 生成助手。请根据我提供的要求生成一篇英文阅读文章，并同时给出逐段对应的中文翻译。
 
 请严格只输出合法 JSON，不要 Markdown，不要代码块标记，不要解释文字。
@@ -3481,7 +3793,7 @@ const DEFAULT_READING_PROMPT = `你是一个 Reading JSON 生成助手。请根�
 
 我的文章要求：
 [在这里写主题、难度、词汇范围、文章长度等要求]`;
-let readingState = JSON.parse(localStorage.getItem(READING_STORE_KEY) || 'null') || {
+let readingState = StudyStorage.get('reading', 'state', null) || {
   collections: [],
   currentId: null,
   fontSize: 17,
@@ -3489,10 +3801,10 @@ let readingState = JSON.parse(localStorage.getItem(READING_STORE_KEY) || 'null')
   paragraphCollapsed: {},
   promptTemplate: DEFAULT_READING_PROMPT
 };
-function saveReading() { localStorage.setItem(READING_STORE_KEY, JSON.stringify(readingState)); }
+function saveReading() { StudyStorage.set('reading', 'state', readingState); }
 
-// === STUDY RESOURCES STATE (from dashboard.html) ===
-let customSubjects = JSON.parse(localStorage.getItem('study_subjects_pro')) || {
+// === STUDY RESOURCES STATE (module: resources) ===
+let customSubjects = StudyStorage.get('resources', 'subjects', null) || {
   english: { label:'English', color:'#FFFFFF', tint:'rgba(0,0,0,0.04)', text:'#FFFFFF', tagline:'Academic Vocab · Grammar · Reading & Writing', isSample: true },
   chinese: { label:'Chinese', color:'#AAAAAA', tint:'rgba(0,0,0,0.03)', text:'#AAAAAA', tagline:'文言文120实词 · 议论文高分结构 · 诗词鉴赏', isSample: true },
   politic: { label:'Politics', color:'#777777', tint:'rgba(0,0,0,0.02)', text:'#777777', tagline:'马哲核心 · 政经公式 · 2026时政热点', isSample: true }
@@ -3532,11 +3844,11 @@ const sampleSubjectScores = {
 
 const sampleCountdown = { isSample: true, title:'2026 National Exam Target', targetDate:'2026-12-25' };
 
-let resources = JSON.parse(localStorage.getItem('study_resources_pro')) || sampleResources;
-let exercises = JSON.parse(localStorage.getItem('study_exercises_pro')) || sampleExercises;
-let subjectScores = JSON.parse(localStorage.getItem('study_scores_pro')) || sampleSubjectScores;
-let countdownConfig = JSON.parse(localStorage.getItem('study_countdown_pro')) || sampleCountdown;
-let modOrder = JSON.parse(localStorage.getItem('study_mod_order_pro')) || ['tasks', 'exercises', 'resources'];
+let resources = StudyStorage.get('resources', 'resources', null) || sampleResources;
+let exercises = StudyStorage.get('resources', 'exercises', null) || sampleExercises;
+let subjectScores = StudyStorage.get('resources', 'scores', null) || sampleSubjectScores;
+let countdownConfig = StudyStorage.get('resources', 'countdown', null) || sampleCountdown;
+let modOrder = StudyStorage.get('resources', 'mod_order', null) || ['tasks', 'exercises', 'resources'];
 
 const sampleLearningItems = [
   {isSample: true, id:'lr1', title:'Grammar Book', subject:'english', completed:false, currentPage:36, totalPages:120, order:0},
@@ -3549,8 +3861,8 @@ const sampleLearningItems = [
   {isSample: true, id:'lr8', title:'作文素材本', subject:'chinese', completed:false, currentPage:0, totalPages:60, order:1},
   {isSample: true, id:'lr9', title:'马哲核心笔记', subject:'politic', completed:false, currentPage:15, totalPages:50, order:0},
 ];
-let learningItems = JSON.parse(localStorage.getItem('study_learning_pro')) || sampleLearningItems;
-function saveLearning() { localStorage.setItem('study_learning_pro', JSON.stringify(learningItems)); }
+let learningItems = StudyStorage.get('resources', 'learning', null) || sampleLearningItems;
+function saveLearning() { StudyStorage.set('resources', 'learning', learningItems); }
 
 const sampleStudyTasks = [
   {isSample: true, id:'st_1', subject:'english', title:'Review Non-finite Verbs grammar rules', priority:'high', status:'completed', dueDate:'2026-07-01'},
@@ -3561,16 +3873,17 @@ const sampleStudyTasks = [
   {isSample: true, id:'st_6', subject:'politic', title:'熟记唯物辩证法对立统一规律答题模板', priority:'high', status:'completed', dueDate:'2026-07-01'},
   {isSample: true, id:'st_7', subject:'politic', title:'全真模拟真题第38题大题限时自测', priority:'medium', status:'pending', dueDate:'2026-07-02'}
 ];
-let studyTasks = JSON.parse(localStorage.getItem('study_tasks_pro')) || sampleStudyTasks;
+let studyTasks = StudyStorage.get('resources', 'tasks', null) || sampleStudyTasks;
 
-// === STUDY SUGGEST STATE ===
-const SUGGEST_KEY = 'study_suggest_unified';
-let studySuggest = JSON.parse(localStorage.getItem(SUGGEST_KEY)) || {
+// === STUDY SUGGEST STATE (module: resources) ===
+const SUGGEST_KEY = 'study_suggest_unified'; // legacy key
+let studySuggest = StudyStorage.get('resources', 'suggest', null) || {
   notes: '',
   links: []
 };
 
-const STUDY_QUOTES_KEY = 'study_quotes';
+// === STUDY QUOTES (module: notes) ===
+const STUDY_QUOTES_KEY = 'study_quotes'; // legacy key
 const DEFAULT_STUDY_QUOTES = [
   { id: 'q1', text: 'The secret of getting ahead is getting started.', createdAt: Date.now(), pinned: false, done: false, focus: true },
   { id: 'q2', text: 'Success is the sum of small efforts repeated day in and day out.', createdAt: Date.now(), pinned: false, done: false, focus: false },
@@ -3585,14 +3898,12 @@ function normalizeStudyQuotes(quotes) {
 }
 function getStudyQuotes() {
   try {
-    const raw = localStorage.getItem(STUDY_QUOTES_KEY);
-    if (raw === null) {
+    const data = StudyStorage.get('notes', 'quotes', null);
+    if (data === null || !Array.isArray(data)) {
       saveStudyQuotes(DEFAULT_STUDY_QUOTES);
       return DEFAULT_STUDY_QUOTES.slice();
     }
-    const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed)) throw new Error('Invalid study quotes data');
-    return normalizeStudyQuotes(parsed.filter(item => item && typeof item === 'object' && typeof item.text === 'string').map(item => ({
+    return normalizeStudyQuotes(data.filter(item => item && typeof item === 'object' && typeof item.text === 'string').map(item => ({
       id: item.id || uid('quote'),
       text: String(item.text),
       createdAt: typeof item.createdAt === 'number' ? item.createdAt : Date.now(),
@@ -3606,7 +3917,7 @@ function getStudyQuotes() {
   }
 }
 function saveStudyQuotes(quotes) {
-  localStorage.setItem(STUDY_QUOTES_KEY, JSON.stringify(normalizeStudyQuotes(Array.isArray(quotes) ? quotes : [])));
+  StudyStorage.set('notes', 'quotes', normalizeStudyQuotes(Array.isArray(quotes) ? quotes : []));
 }
 
 // === RESOURCE VIEW STATE ===
@@ -3629,9 +3940,9 @@ function getSidebarSubjectKeys() {
   return fixed.concat(extras);
 }
 function ensureFixedSidebarSubjects() {
-  if (localStorage.getItem('study_demo_data_removed') === 'true') return;
+  if (localStorage.getItem('study_demo_data_removed') === 'true' || StudyStorage.get('system', 'demo_flag', null) === 'true') return;
   let changed = false;
-  const hasExistingSubjectData = localStorage.getItem('study_subjects_pro') !== null;
+  const hasExistingSubjectData = StudyStorage.get('resources', 'subjects', null) !== null || localStorage.getItem('study_subjects_pro') !== null;
   FIXED_SUBJECT_ORDER.forEach(k => {
     if (!hasExistingSubjectData) {
       if (!customSubjects[k]) { customSubjects[k] = { ...FIXED_SUBJECT_DEFAULTS[k] }; changed = true; }
@@ -3650,30 +3961,28 @@ function ensureFixedSidebarSubjects() {
   getSidebarSubjectKeys().forEach(k => { ordered[k] = customSubjects[k]; });
   customSubjects = ordered;
   if (!customSubjects[appState.currentSubject]) { appState.currentSubject = Object.keys(customSubjects)[0] || ''; changed = true; }
-  if (changed) { localStorage.setItem('study_subjects_pro', JSON.stringify(customSubjects)); localStorage.setItem('study_scores_pro', JSON.stringify(subjectScores)); saveAppState(); }
+  if (changed) { StudyStorage.set('resources', 'subjects', customSubjects); StudyStorage.set('resources', 'scores', subjectScores); saveAppState(); }
 }
 
-// === STUDY ROADMAP STATE ===
-const ROADMAP_KEY = 'study_roadmap_plans_pro';
-const ROADMAP_EXAMS_KEY = 'study_roadmap_exams_pro';
-const ROADMAP_MILESTONES_KEY = 'study_roadmap_milestones_pro';
-const ROADMAP_MILESTONE_EXPANDED_KEY = 'study_roadmap_milestone_expanded_pro';
-const ROADMAP_SUBJECT_EXPANDED_KEY = 'study_roadmap_subject_expanded_pro';
-const WEEKLY_PLAN_KEY = 'study_weekly_planner_pro';
+// === STUDY ROADMAP STATE (module: roadmap) ===
+const ROADMAP_KEY = 'study_roadmap_plans_pro'; // legacy key
+const ROADMAP_EXAMS_KEY = 'study_roadmap_exams_pro'; // legacy key
+const ROADMAP_MILESTONES_KEY = 'study_roadmap_milestones_pro'; // legacy key
+const ROADMAP_MILESTONE_EXPANDED_KEY = 'study_roadmap_milestone_expanded_pro'; // legacy key
+const ROADMAP_SUBJECT_EXPANDED_KEY = 'study_roadmap_subject_expanded_pro'; // legacy key
+const WEEKLY_PLAN_KEY = 'study_weekly_planner_pro'; // legacy key
 
-const WEEKLY_MILESTONES_KEY = 'study_weekly_milestones_pro';
+const WEEKLY_MILESTONES_KEY = 'study_weekly_milestones_pro'; // legacy key
 
-let studyMilestones = JSON.parse(localStorage.getItem(WEEKLY_MILESTONES_KEY) || '[]');
+let studyMilestones = StudyStorage.get('weekly_planner', 'milestones', null) || [];
 
 if (!Array.isArray(studyMilestones)) studyMilestones = [];
 
 function saveStudyMilestones() {
-
-  localStorage.setItem(WEEKLY_MILESTONES_KEY, JSON.stringify(studyMilestones || []));
-
+  StudyStorage.set('weekly_planner', 'milestones', studyMilestones || []);
 }
 
-let weeklyPlan = JSON.parse(localStorage.getItem(WEEKLY_PLAN_KEY)) || {
+let weeklyPlan = StudyStorage.get('weekly_planner', 'plan', null) || {
   currentWeek: 1,
   startDate: '',
   endDate: '',
@@ -3693,7 +4002,7 @@ let weeklyPlan = JSON.parse(localStorage.getItem(WEEKLY_PLAN_KEY)) || {
   },
   plannerTab: 'current', isSample: true // 'current', 'archive', 'stats', 'prompt'
 };
-function saveWeeklyPlan() { localStorage.setItem(WEEKLY_PLAN_KEY, JSON.stringify(weeklyPlan)); }
+function saveWeeklyPlan() { StudyStorage.set('weekly_planner', 'plan', weeklyPlan); }
 const sampleRoadmapMilestones = [
   {isSample: true, id:'rm1', title:'Foundation', startDate:'2026-07-01', targetFinishDate:'2026-08-31', status:'in_progress', notes:'Build the basic framework for all subjects.', order:0, createdAt:'2026-07-01'},
   {isSample: true, id:'rm2', title:'Skill Building', startDate:'2026-09-01', targetFinishDate:'2026-10-31', status:'not_started', notes:'Move from foundation to subject-specific skills.', order:1, createdAt:'2026-07-01'},
@@ -3715,38 +4024,41 @@ const sampleRoadmapExams = [
   {isSample: true, id:'rex2', subject:'chinese', title:'Final Exam', examDate:'2026-12-01', notes:'Chinese final exam', createdAt:'2026-07-01'},
   {isSample: true, id:'rex3', subject:'politic', title:'Politics Exam', examDate:'2027-01-01', notes:'Politics target exam', createdAt:'2026-07-01'}
 ];
-let roadmapMilestones = JSON.parse(localStorage.getItem(ROADMAP_MILESTONES_KEY)) || sampleRoadmapMilestones;
-let roadmapPlans = JSON.parse(localStorage.getItem(ROADMAP_KEY)) || sampleRoadmapPlans;
-let roadmapExams = JSON.parse(localStorage.getItem(ROADMAP_EXAMS_KEY)) || sampleRoadmapExams;
-let roadmapMilestoneExpanded = JSON.parse(localStorage.getItem(ROADMAP_MILESTONE_EXPANDED_KEY) || 'null');
-let roadmapSubjectExpanded = JSON.parse(localStorage.getItem(ROADMAP_SUBJECT_EXPANDED_KEY) || 'null');
+let roadmapMilestones = StudyStorage.get('roadmap', 'milestones', null) || sampleRoadmapMilestones;
+let roadmapPlans = StudyStorage.get('roadmap', 'plans', null) || sampleRoadmapPlans;
+let roadmapExams = StudyStorage.get('roadmap', 'exams', null) || sampleRoadmapExams;
+let roadmapMilestoneExpanded = StudyStorage.get('roadmap', 'milestone_expanded', null);
+let roadmapSubjectExpanded = StudyStorage.get('roadmap', 'subject_expanded', null);
 function saveRoadmap() {
-  localStorage.setItem(ROADMAP_KEY, JSON.stringify(roadmapPlans));
-  localStorage.setItem(ROADMAP_EXAMS_KEY, JSON.stringify(roadmapExams));
-  localStorage.setItem(ROADMAP_MILESTONES_KEY, JSON.stringify(roadmapMilestones));
-  localStorage.setItem(ROADMAP_MILESTONE_EXPANDED_KEY, JSON.stringify(roadmapMilestoneExpanded || {}));
-  localStorage.setItem(ROADMAP_SUBJECT_EXPANDED_KEY, JSON.stringify(roadmapSubjectExpanded || {}));
+  StudyStorage.set('roadmap', 'plans', roadmapPlans);
+  StudyStorage.set('roadmap', 'exams', roadmapExams);
+  StudyStorage.set('roadmap', 'milestones', roadmapMilestones);
+  StudyStorage.set('roadmap', 'milestone_expanded', roadmapMilestoneExpanded || {});
+  StudyStorage.set('roadmap', 'subject_expanded', roadmapSubjectExpanded || {});
 }
 
 // ================================================================
 //  SAVE / LOAD
 // ================================================================
-function saveAppState() { localStorage.setItem(APP_STATE_KEY, JSON.stringify(appState)); }
+function saveAppState() { StudyStorage.set('settings', 'ui_state', appState); }
 function loadAppState() {
-  try { const s = localStorage.getItem(APP_STATE_KEY); if(s) appState = Object.assign(appState, JSON.parse(s)); } catch(e){}
+  try {
+    const s = StudyStorage.get('settings', 'ui_state', null);
+    if(s) appState = Object.assign(appState, s);
+  } catch(e){}
 }
 
 function saveQuiz() {
   try {
     const json = JSON.stringify(quizState);
-    localStorage.setItem(QUIZ_STORE_KEY, json);
-    try { localStorage.setItem(QUIZ_BACKUP_KEY, json); } catch(_){}
+    StudyStorage.set('quiz_hub', 'main', quizState);
+    try { StudyStorage.set('quiz_hub', 'backup', quizState); } catch(_){}
   } catch(e) { toast('Quiz save failed: '+e.message); }
 }
 function loadQuiz() {
   try {
-    let raw = localStorage.getItem(QUIZ_STORE_KEY);
-    if (!raw) { const bak = localStorage.getItem(QUIZ_BACKUP_KEY); if(bak) raw = bak; }
+    let raw = localStorage.getItem(StudyStorage.rawKey('quiz_hub', 'main'));
+    if (!raw) { const bak = localStorage.getItem(StudyStorage.rawKey('quiz_hub', 'backup')); if(bak) raw = bak; }
     if (raw) {
       let parsed = JSON.parse(raw);
       parsed = migrateQuiz(parsed);
@@ -3794,16 +4106,16 @@ function migrateQuiz(parsed) {
 }
 
 function saveResState() {
-  localStorage.setItem('study_subjects_pro', JSON.stringify(customSubjects));
-  localStorage.setItem('study_resources_pro', JSON.stringify(resources));
-  localStorage.setItem('study_exercises_pro', JSON.stringify(exercises));
-  localStorage.setItem('study_scores_pro', JSON.stringify(subjectScores));
-  localStorage.setItem('study_countdown_pro', JSON.stringify(countdownConfig));
-  localStorage.setItem('study_mod_order_pro', JSON.stringify(modOrder));
-  localStorage.setItem('study_tasks_pro', JSON.stringify(studyTasks));
+  StudyStorage.set('resources', 'subjects', customSubjects);
+  StudyStorage.set('resources', 'resources', resources);
+  StudyStorage.set('resources', 'exercises', exercises);
+  StudyStorage.set('resources', 'scores', subjectScores);
+  StudyStorage.set('resources', 'countdown', countdownConfig);
+  StudyStorage.set('resources', 'mod_order', modOrder);
+  StudyStorage.set('resources', 'tasks', studyTasks);
   saveLearning();
 }
-function saveSuggest() { localStorage.setItem(SUGGEST_KEY, JSON.stringify(studySuggest)); }
+function saveSuggest() { StudyStorage.set('resources', 'suggest', studySuggest); }
 
 function saveAll() { saveAppState(); saveQuiz(); saveResState(); saveSuggest(); saveRoadmap(); }
 
@@ -4463,7 +4775,7 @@ function renderHomePage(container) {
 
   // ===== 安全获取数据 =====
 
-  const username = localStorage.getItem('study_username') || 'Scholar';
+  const username = StudyStorage.get('settings', 'username', null) || 'Scholar';
 
   const tasks = weeklyPlan.tasks || [];
 
@@ -4592,10 +4904,10 @@ function renderHomePage(container) {
 }
 
 function editUsername() {
-  const current = localStorage.getItem('study_username') || 'Scholar';
+  const current = StudyStorage.get('settings', 'username', null) || 'Scholar';
   miniPrompt('Enter your name:', current, newName => {
     if (newName !== null && newName.trim() !== '') {
-      localStorage.setItem('study_username', newName.trim());
+      StudyStorage.set('settings', 'username', newName.trim());
       render();
     }
   });
@@ -4969,12 +5281,14 @@ function renderReadingParagraphs(c) {
 }
 function renderReadingText(c, textPart = null) {
   const marked = rdHighlightedWordSet(c);
+  const studySet = new Set((c.studyWords || []).map(w => w.toLowerCase()));
   let idx = 0;
   return String(textPart ?? c.text ?? '').split(/([A-Za-z]+(?:['’-][A-Za-z]+)?)/g).map(part => {
     if (!part) return '';
     if (/^[A-Za-z]+(?:['’-][A-Za-z]+)?$/.test(part)) {
       const hl = marked.has(rdNorm(part)) ? ' qs-hl-persist' : '';
-      return `<span class="q-word-token rd-word-token${hl}" data-area="rd_${esc(c.id)}" data-idx="${idx++}" data-word="${esc(part)}" onpointerdown="rdWordDown(event,this)" oncontextmenu="rdWordContextMenu(event,this)" onclick="rdWordClick(event,this)">${esc(part)}</span>`;
+      const sw = studySet.has(part.toLowerCase()) ? ' study-word' : '';
+      return `<span class="q-word-token rd-word-token${hl}${sw}" data-area="rd_${esc(c.id)}" data-idx="${idx++}" data-word="${esc(part)}" onpointerdown="rdWordDown(event,this)" oncontextmenu="rdWordContextMenu(event,this)" onclick="rdWordClick(event,this)">${esc(part)}</span>`;
     }
     return esc(part);
   }).join('');
@@ -5050,7 +5364,14 @@ function importReadingJSON() {
   const highlights = Array.isArray(item.highlights)
     ? item.highlights.map(h => typeof h === 'string' ? h : (h?.text || '')).map(s => String(s).trim()).filter(Boolean).map(s => ({ id:uid('rdhl'), text:s, ts:Date.now() }))
     : [];
-  const c = { id:uid('rd'), name, text, translation, highlights, createdAt:Date.now(), updatedAt:Date.now() };
+  // Extract study-word targets from AI-generated HTML and clean tags
+  const studyWords = [];
+  const processedText = text.replace(/<span\s+class=["']study-word["']\s*>(.*?)<\/span>/gi, (_, word) => {
+    const w = word.trim().toLowerCase();
+    if (w && !studyWords.includes(w)) studyWords.push(w);
+    return word; // remove HTML tags, keep plain text
+  });
+  const c = { id:uid('rd'), name, text: processedText, translation, highlights, studyWords, createdAt:Date.now(), updatedAt:Date.now() };
   readingState.collections.push(c);
   readingState.currentId = c.id;
   saveReading();
@@ -7271,6 +7592,30 @@ function openQuizSettings() {
     <div style="display:flex;flex-direction:column;gap:14px;">
       ${renderLocalDataManagementPanel()}
       <div style="padding:16px;background:var(--bg-card);border:1px solid var(--line);border-radius:var(--radius-lg);">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:10px;">
+          <div>
+            <div style="font-weight:800;font-size:15px;margin-bottom:4px;letter-spacing:-0.01em;">Cloud Sync</div>
+            <div style="font-size:12px;color:var(--ink-tertiary);line-height:1.5;">Sync all Study Hub data across devices via GitHub Gist. Token and Gist ID are saved locally — never shared.</div>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+          <div class="field" style="margin:0;">
+            <label style="display:block;font-size:11px;font-weight:700;color:var(--ink-tertiary);text-transform:uppercase;letter-spacing:0.03em;margin-bottom:5px;">GitHub Token</label>
+            <input id="settingsGistToken" type="password" value="${esc(gistConfig.token||'')}" placeholder="ghp_..." style="width:100%;padding:9px 12px;border-radius:var(--radius-sm);border:1px solid var(--line);background:var(--bg-card);font-size:13px;color:var(--ink);box-sizing:border-box;" />
+          </div>
+          <div class="field" style="margin:0;">
+            <label style="display:block;font-size:11px;font-weight:700;color:var(--ink-tertiary);text-transform:uppercase;letter-spacing:0.03em;margin-bottom:5px;">Gist ID</label>
+            <input id="settingsGistId" value="${esc(gistConfig.gistId||'')}" placeholder="Optional" style="width:100%;padding:9px 12px;border-radius:var(--radius-sm);border:1px solid var(--line);background:var(--bg-card);font-size:13px;color:var(--ink);box-sizing:border-box;" />
+          </div>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;">
+          <button class="apple-btn primary" onclick="saveGistConfigFromSettings()">Save Configuration</button>
+          <button class="apple-btn" onclick="saveToCloud()">☁ Save to Cloud</button>
+          <button class="apple-btn" onclick="syncFromCloud()">☁ Sync from Cloud</button>
+        </div>
+        ${renderCloudSyncStatus()}
+      </div>
+      <div style="padding:16px;background:var(--bg-card);border:1px solid var(--line);border-radius:var(--radius-lg);">
         <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
           <div>
             <div style="font-weight:800;font-size:15px;margin-bottom:4px;letter-spacing:-0.01em;">Language</div>
@@ -7421,6 +7766,7 @@ function clearAllQuiz() {
 
 function loadSeedData() {
   localStorage.removeItem('study_demo_data_removed');
+  StudyStorage.remove('system', 'demo_flag');
   if(quizState.passages.length&&!confirm('Merge sample data?')) return;
   const seed = getSeedData();
   seed.passages.forEach(p=>{if(!quizState.passages.find(x=>x.id===p.id))quizState.passages.push(p);});
@@ -8404,22 +8750,83 @@ function confirmAIImport(tab) {
 }
 
 function openCloudSync() {
-  const g = quizMeta.gist;
-  openGenericSheet('Cloud Cloud Sync (GitHub Gist)',`
+  const g = gistConfig;
+  openGenericSheet('Cloud Sync (GitHub Gist)',`
     <div style="font-size:12px;color:var(--ink-secondary);margin-bottom:12px">Use your GitHub token to sync data to a private Gist.</div>
-    <div class="field"><label>GitHub Token</label><input id="gistToken" type="password" value="${esc(g.token||'')}"/></div>
-    <div class="field"><label>Gist ID</label><input id="gistId" value="${esc(g.gistId||'')}"/></div>
-    <div class="field"><label>Filename</label><input id="gistFn" value="${esc(g.filename||'dashboard.json')}"/></div>
+    <div class="field"><label>GitHub Token</label><input id="gistToken" type="password" value="${esc(g.token||'')}" /></div>
+    <div class="field"><label>Gist ID</label><input id="gistId" value="${esc(g.gistId||'')}" /></div>
+    <div class="field"><label>Filename</label><input id="gistFn" value="${esc('studyhub.json')}" /></div>
+    ${renderCloudSyncStatus()}
   `,[
-    {text:'↑ Upload',onclick:()=>cloudUpload()},
-    {text:'↓ Download',onclick:()=>cloudDownload()},
-    {text:'Save Config',cls:'primary',onclick:()=>{quizMeta.gist={token:document.getElementById('gistToken').value.trim(),gistId:document.getElementById('gistId').value.trim(),filename:document.getElementById('gistFn').value.trim()||'dashboard.json',lastSyncTs:g.lastSyncTs};try{localStorage.setItem(QUIZ_META_KEY,JSON.stringify(quizMeta));}catch(_){}toast('Config saved');closeSheet('genericSheet');}}
+    {text:'☁ Save to Cloud',onclick:()=>saveToCloud()},
+    {text:'☁ Sync from Cloud',onclick:()=>syncFromCloud()},
+    {text:'Save Config',cls:'primary',onclick:()=>{gistConfig={token:document.getElementById('gistToken').value.trim(),gistId:document.getElementById('gistId').value.trim(),lastSyncTs:gistConfig.lastSyncTs,lastSyncAt:gistConfig.lastSyncAt};saveGistConfig();toast('Config saved');closeSheet('genericSheet');}}
   ]);
 }
 
+async function saveToCloud() {
+  if (!gistConfig.token) { alert('Please set your GitHub Token first'); return; }
+  try {
+    toast('Uploading to cloud...');
+    const payload = StudyStorage.getSyncPayload();
+    const content = JSON.stringify(payload, null, 2);
+    const filename = 'studyhub.json';
+    const body = { description: 'Study Hub — Cross-Device Sync', public: false, files: { [filename]: { content } } };
+    let url = 'https://api.github.com/gists';
+    let method = 'POST';
+    if (gistConfig.gistId) { url += '/' + gistConfig.gistId; method = 'PATCH'; }
+    const res = await fetch(url, {
+      method,
+      headers: { 'Accept': 'application/vnd.github+json', 'Authorization': 'Bearer ' + gistConfig.token, 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.message || 'HTTP ' + res.status);
+    }
+    const data = await res.json();
+    gistConfig.gistId = data.id || gistConfig.gistId;
+    gistConfig.lastSyncTs = Date.now();
+    gistConfig.lastSyncAt = new Date().toISOString();
+    saveGistConfig();
+    toast('Cloud backup successful');
+  } catch (e) {
+    alert('Upload failed: ' + (e.message || 'Unknown error'));
+  }
+}
+
+async function syncFromCloud() {
+  if (!gistConfig.token || !gistConfig.gistId) { alert('Token and Gist ID required'); return; }
+  if (!confirm('Cloud data will replace current local data. Continue?')) return;
+  try {
+    toast('Downloading from cloud...');
+    const res = await fetch('https://api.github.com/gists/' + gistConfig.gistId, {
+      headers: { 'Accept': 'application/vnd.github+json', 'Authorization': 'Bearer ' + gistConfig.token }
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.message || 'HTTP ' + res.status);
+    }
+    const data = await res.json();
+    const file = data.files?.['studyhub.json'] || Object.values(data.files || {})[0];
+    if (!file?.content) throw new Error('No data file found in Gist');
+    const payload = JSON.parse(file.content);
+    if (payload.version !== 1) throw new Error('Unsupported payload version: ' + payload.version);
+    const restored = StudyStorage.restoreFromSyncPayload(payload);
+    gistConfig.lastSyncTs = Date.now();
+    gistConfig.lastSyncAt = new Date().toISOString();
+    saveGistConfig();
+    toast('Sync successful — ' + restored + ' modules restored. Refreshing...');
+    setTimeout(() => location.reload(), 800);
+  } catch (e) {
+    alert('Sync failed: ' + (e.message || 'Unknown error'));
+  }
+}
+
+// Legacy per-quiz cloud sync (kept for backward compatibility)
 async function cloudUpload() {
-  const token=(document.getElementById('gistToken')?.value||'').trim();
-  const gistId=(document.getElementById('gistId')?.value||'').trim();
+  const token=(document.getElementById('gistToken')?.value||gistConfig.token||'').trim();
+  const gistId=(document.getElementById('gistId')?.value||gistConfig.gistId||'').trim();
   const filename=(document.getElementById('gistFn')?.value||'dashboard.json').trim();
   if(!token){alert('Token required');return;}
   try{
@@ -8430,15 +8837,15 @@ async function cloudUpload() {
     const res=await fetch(url,{method,headers:{'Accept':'application/vnd.github+json','Authorization':'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify(body)});
     if(!res.ok) throw new Error(res.status);
     const data=await res.json();
-    quizMeta.gist={token,gistId:data.id||gistId,filename,lastSyncTs:Date.now()};
-    try{localStorage.setItem(QUIZ_META_KEY,JSON.stringify(quizMeta));}catch(_){}
+    gistConfig.gistId=data.id||gistId;
+    saveGistConfig();
     toast('OK Uploaded');
   }catch(e){alert('Upload failed: '+e.message);}
 }
 
 async function cloudDownload() {
-  const token=(document.getElementById('gistToken')?.value||'').trim();
-  const gistId=(document.getElementById('gistId')?.value||'').trim();
+  const token=(document.getElementById('gistToken')?.value||gistConfig.token||'').trim();
+  const gistId=(document.getElementById('gistId')?.value||gistConfig.gistId||'').trim();
   const filename=(document.getElementById('gistFn')?.value||'dashboard.json').trim();
   if(!token||!gistId){alert('Token and Gist ID required');return;}
   if(!confirm('Overwrite local data with cloud?')) return;
@@ -9115,8 +9522,8 @@ function executeRoadmapAIImport() {
   roadmapMilestoneExpanded = null;
   roadmapSubjectExpanded = null;
 
-  localStorage.setItem('study_roadmap_milestones_pro', JSON.stringify(roadmapMilestones));
-  localStorage.setItem('study_roadmap_plans_pro', JSON.stringify(roadmapPlans));
+  StudyStorage.set('roadmap', 'milestones', roadmapMilestones);
+  StudyStorage.set('roadmap', 'plans', roadmapPlans);
   if (typeof saveRoadmap === 'function') saveRoadmap();
 
   closeSheet('genericSheet');
@@ -10046,60 +10453,14 @@ function exportSelectedModules() {
 
 
 function removeDemoData() {
-  if (!confirm("⚠️ 确定要清空所有已添加的数据吗？此操作无法撤销！")) return;
+  if (!confirm("确定要清空 This Week Goals 的所有任务吗？此操作不可撤销。")) return;
 
-  // ===== 清空 Study Resources =====
-  resources = resources.filter(r => r.isSample === true);
-  exercises = exercises.filter(e => e.isSample === true);
-  studyTasks = studyTasks.filter(t => t.isSample === true);
-  learningItems = learningItems.filter(l => l.isSample === true);
+  // ===== 仅清空 This Week Goals 的任务列表（包括示例数据）=====
+  weeklyPlan.tasks = [];
+  weeklyPlan.suggestion = '';
 
-  // ===== 清空 Study Roadmap =====
-  roadmapMilestones = roadmapMilestones.filter(m => m.isSample === true);
-  roadmapPlans = roadmapPlans.filter(p => p.isSample === true);
-  roadmapExams = roadmapExams.filter(e => e.isSample === true);
-
-  // ===== 清空 Weekly Planner =====
-  weeklyPlan.tasks = weeklyPlan.tasks.filter(t => t.isSample === true);
-  weeklyPlan.history = weeklyPlan.history.filter(h => h.isSample === true);
-  weeklyPlan.suggestion = 'Data has been reset. Click AI Regenerate to create a new plan.';
-  weeklyPlan.currentWeek = 1;
-
-  // ===== 清空 Progress Check 历史 =====
-  if (progressCheckState) {
-    progressCheckState.history = progressCheckState.history.filter(h => h.isSample === true);
-    progressCheckState.active = null;
-  }
-
-  // ===== 清空 Study Suggest 中的自定义链接 =====
-  if (studySuggest) {
-    studySuggest.links = studySuggest.links.filter(l => l.isSample === true);
-    // 保留笔记内容不清空，因为可能是用户手动输入的
-  }
-
-  // ===== 清空 Subject Scores 中的自定义科目 =====
-  // 保留默认科目，只删除用户手动添加的科目
-  const defaultKeys = ['english', 'chinese', 'politic', 'collegeEnglish'];
-  Object.keys(customSubjects).forEach(key => {
-    if (!defaultKeys.includes(key)) {
-      delete customSubjects[key];
-      delete subjectScores[key];
-    }
-  });
-
-  // ===== 重置当前科目到 English =====
-  if (!customSubjects[appState.currentSubject]) {
-    appState.currentSubject = 'english';
-  }
-
-  // ===== 保存所有数据 =====
-  saveResState();
-  saveLearning();
+  // ===== 保存 Weekly Planner 数据 =====
   saveWeeklyPlan();
-  saveRoadmap();
-  saveSuggest();
-  if (typeof saveProgressCheck === 'function') saveProgressCheck();
-  if (typeof saveStudyMilestones === 'function') saveStudyMilestones();
 
   // ===== 重新渲染 =====
   if (appState.currentModule === 'weekly_planner') {
@@ -10107,12 +10468,13 @@ function removeDemoData() {
   } else {
     render();
   }
-  toast('✅ 所有手动添加的数据已清空，仅保留示例数据！');
+  toast('✅ This Week Goals 已清空');
 }
 
 
 function resetSelectedModules() {
   localStorage.removeItem('study_demo_data_removed');
+  StudyStorage.remove('system', 'demo_flag');
   const select = document.getElementById('resetModuleSelect');
   const selected = select ? Array.from(select.selectedOptions).map(opt => opt.value) : [];
   if (!selected.length) { toast('请至少选择一个要重置的模块'); return; }
@@ -10253,6 +10615,13 @@ function renderLocalDataManagementPanel() {
         <button class="apple-btn danger" onclick="clearAllLocalData()">清空本地数据</button>
         <input type="file" id="allLocalDataImportInput" accept=".json,application/json" style="display:none;" onchange="handleAllLocalDataImport(event)">
       </div>
+      <div style="margin-bottom:12px;padding:12px;border:1px solid var(--line-light);border-radius:12px;background:var(--bg-elev);">
+        <div style="font-weight:800;font-size:13px;margin-bottom:6px;letter-spacing:-0.01em;">Backup Status</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px;color:var(--ink-secondary);">
+          <div><span style="color:var(--ink-tertiary);">Last Export:</span> ${renderLastExportTime()}</div>
+          <div><span style="color:var(--ink-tertiary);">Backup Frequency:</span> Weekly</div>
+        </div>
+      </div>
       <details style="border:1px solid var(--line-light);border-radius:12px;background:var(--bg-elev);padding:0;overflow:hidden;">
         <summary style="cursor:pointer;list-style:revert;padding:11px 12px;font-size:12px;font-weight:800;color:var(--ink-secondary);user-select:none;">本地存储 Key</summary>
         <div style="padding:0 10px 10px;">
@@ -10292,9 +10661,19 @@ function buildAllLocalDataBackup() {
 
 function exportAllLocalData() {
   downloadJSON(buildAllLocalDataBackup(), 'study_dashboard_all_local_data_' + todayISO() + '.json');
+  // Record export time
+  const settings = StudyStorage.get('settings', 'backup_status', null) || {};
+  settings.lastExportTime = Date.now();
+  StudyStorage.set('settings', 'backup_status', settings);
   toast('已导出全部本地数据');
 }
 
+function renderLastExportTime() {
+  const s = StudyStorage.get('settings', 'backup_status', null);
+  if (!s || !s.lastExportTime) return 'Never';
+  const d = new Date(s.lastExportTime);
+  return d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+}
 function importAllLocalData() {
   const input = document.getElementById('allLocalDataImportInput');
   if (input) { input.value = ''; input.click(); }
@@ -10311,11 +10690,17 @@ function handleAllLocalDataImport(event) {
       if (!storage || typeof storage !== 'object' || Array.isArray(storage)) throw new Error('备份文件无效：缺少 localStorage 对象');
       const count = Object.keys(storage).length;
       if (!confirm(`确定导入 ${count} 个本地存储项吗？这会替换当前本地数据。建议先导出备份。`)) return;
-      localStorage.clear();
+      StudyStorage.clearAll();
+      // Also clear any remaining legacy keys that might conflict
+      Object.keys(StudyStorage.MIGRATION_MAP).forEach(k => localStorage.removeItem(StudyStorage.MIGRATION_MAP[k]));
+      localStorage.removeItem('study_demo_data_removed');
       Object.keys(storage).forEach(key => {
         const value = storage[key];
         localStorage.setItem(key, value == null ? '' : String(value));
       });
+      // Re-run migration to handle old-format keys in the imported backup
+      localStorage.removeItem('shub@migrated_v1');
+      StudyStorage.migrate();
       toast('备份已导入，正在刷新...');
       setTimeout(() => location.reload(), 400);
     } catch (err) {
@@ -10330,7 +10715,7 @@ function clearAllLocalData() {
   if (!inv.rows.length) { toast('没有可清空的本地数据'); return; }
   const confirmText = prompt(`将清空 ${inv.rows.length} 个本地存储项（${formatBytes(inv.totalBytes)}）。请输入 DELETE 继续。`);
   if (confirmText !== 'DELETE') { toast('已取消清空'); return; }
-  localStorage.clear();
+  StudyStorage.clearAll();
   toast('本地数据已清空，正在刷新...');
   setTimeout(() => location.reload(), 400);
 }
@@ -10522,15 +10907,15 @@ document.addEventListener('click', e => {
   if (!isMobileViewport() || sidebarCollapsed) return;
   if (e.target.closest('.sidebar') || e.target.closest('#topbarSidebarToggle')) return;
   sidebarCollapsed = true;
-  localStorage.setItem('study_sidebar_collapsed_pro', JSON.stringify(sidebarCollapsed));
+  StudyStorage.set('settings', 'sidebar_collapsed', sidebarCollapsed);
   initSidebarState();
 });
 
 // ================================================================
 //  SIDEBAR TOGGLE & HIGHLIGHT TRANSFER FUNCTIONS
 // ================================================================
-const sidebarPref = localStorage.getItem('study_sidebar_collapsed_pro');
-let sidebarCollapsed = window.innerWidth <= 768 ? true : (sidebarPref !== null ? JSON.parse(sidebarPref) : false);
+const sidebarPref = StudyStorage.get('settings', 'sidebar_collapsed', null);
+let sidebarCollapsed = window.innerWidth <= 768 ? true : (sidebarPref !== null ? !!sidebarPref : false);
 
 function isMobileViewport() {
   return window.innerWidth <= 768;
@@ -10548,7 +10933,7 @@ function initSidebarState(forceMobileCollapsed = false) {
 
 function toggleSidebar() {
   sidebarCollapsed = !sidebarCollapsed;
-  localStorage.setItem('study_sidebar_collapsed_pro', JSON.stringify(sidebarCollapsed));
+  StudyStorage.set('settings', 'sidebar_collapsed', sidebarCollapsed);
   initSidebarState();
   toast(sidebarCollapsed ? '◀ 左侧导航栏已折叠' : '▶ 左侧导航栏已展开');
 }
@@ -10559,8 +10944,8 @@ function handleResponsiveViewportChange() {
     initSidebarState(true);
     return;
   }
-  const stored = localStorage.getItem('study_sidebar_collapsed_pro');
-  sidebarCollapsed = stored !== null ? JSON.parse(stored) : false;
+  const stored = StudyStorage.get('settings', 'sidebar_collapsed', null);
+  sidebarCollapsed = stored !== null ? !!stored : false;
   initSidebarState();
 }
 
@@ -11216,7 +11601,7 @@ function initResourceDrag() {
           if (typeof saveResState === 'function') {
             saveResState();
           } else {
-            localStorage.setItem('study_resources_pro', JSON.stringify(resources));
+            StudyStorage.set('resources', 'resources', resources);
           }
         };
 
@@ -11530,9 +11915,9 @@ function getClosestExamDays() {
 // ================================================================
 //  WEEKLY AI PLANNER ENHANCEMENTS + PROGRESS CHECK
 // ================================================================
-const PROGRESS_CHECK_KEY = 'study_progress_checks_pro';
-let progressCheckState = JSON.parse(localStorage.getItem(PROGRESS_CHECK_KEY) || 'null') || { mode:'weekly', active:null, history:[] };
-function saveProgressCheck(){ localStorage.setItem(PROGRESS_CHECK_KEY, JSON.stringify(progressCheckState)); }
+const PROGRESS_CHECK_KEY = 'study_progress_checks_pro'; // legacy key
+let progressCheckState = StudyStorage.get('weekly_planner', 'progress_check', null) || { mode:'weekly', active:null, history:[] };
+function saveProgressCheck(){ StudyStorage.set('weekly_planner', 'progress_check', progressCheckState); }
 function pct(n,d){ return d ? Math.round((n/d)*100) : 0; }
 function clampNum(n,a,b){ return Math.max(a, Math.min(b, n)); }
 function dateInRange(tsOrDate, start, end){
@@ -11705,7 +12090,7 @@ function renderAIWeeklySummary(weekObj){
 }
 function detectStudyMilestones(){
   const existing = new Set(safeArray(studyMilestones).map(m=>m.key));
-  const add = (key,title) => { if(!existing.has(key)){ studyMilestones.push({key,title,date:todayISO(),id:uid('ms'), isSample: (localStorage.getItem('study_demo_data_removed') === 'true' ? false : true)}); existing.add(key); } };
+  const add = (key,title) => { if(!existing.has(key)){ studyMilestones.push({key,title,date:todayISO(),id:uid('ms'), isSample: (StudyStorage.get('system', 'demo_flag', null) === 'true' ? false : true)}); existing.add(key); } };
   const vocabCount = safeArray(quizState.wordBook).length;
   if(vocabCount >= 500) add('vocab_500','500 Vocabulary Mastered');
   if(vocabCount >= 1000) add('vocab_1000','1000 Vocabulary Mastered');
@@ -12167,12 +12552,15 @@ function viewArchivedWeek(startDate) {
       <div style="max-height:240px; overflow-y:auto; padding-right:4px;">${tasksHtml}</div>
     </div>
     <div class="ai-summary-card">
-      <div class="roadmap-section-head"><h3>Reflection</h3></div>
-      <textarea ${ae} placeholder="Write your reflection for this week..." oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px';weeklyPlan.history[${wIdx}].reflection=this.value;saveWeeklyPlan();">${esc(week.reflection)}</textarea>
+      <div class="roadmap-section-head" style="display:flex;justify-content:space-between;align-items:center;"><h3>Reflection</h3></div>
+      <textarea id="archReflection${wIdx}" ${ae} placeholder="Write your reflection for this week..." oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px';">${esc(week.reflection)}</textarea>
     </div>
     <div class="ai-summary-card">
-      <div class="roadmap-section-head"><h3>Achievement</h3></div>
-      <textarea ${ae} placeholder="Record your achievements for this week..." oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px';weeklyPlan.history[${wIdx}].achievement=this.value;saveWeeklyPlan();">${esc(week.achievement)}</textarea>
+      <div class="roadmap-section-head" style="display:flex;justify-content:space-between;align-items:center;"><h3>Achievement</h3></div>
+      <textarea id="archAchievement${wIdx}" ${ae} placeholder="Record your achievements for this week..." oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px';">${esc(week.achievement)}</textarea>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;">
+      <button class="apple-btn primary" onclick="saveArchivedWeekNotes('${esc(week.startDate)}')">Save</button>
     </div>
   </div>`, [
     {text:'Delete', cls:'danger', onclick:()=>{
@@ -12186,9 +12574,20 @@ function viewArchivedWeek(startDate) {
         toast('已删除归档记录');
       }
     }},
-    {text:'Close', cls:'primary', onclick:()=>closeSheet('genericSheet')}
+    {text:'Close', onclick:()=>closeSheet('genericSheet')}
   ]);
   setTimeout(()=>{document.querySelectorAll('#genericSheetBody textarea').forEach(ta=>{ta.style.height='auto';ta.style.height=ta.scrollHeight+'px';});},60);
+}
+function saveArchivedWeekNotes(startDate) {
+  const week = safeArray(weeklyPlan.history).find(h => h.startDate === startDate);
+  if (!week) return;
+  const wIdx = safeArray(weeklyPlan.history).indexOf(week);
+  const refl = document.getElementById('archReflection' + wIdx)?.value || '';
+  const ach = document.getElementById('archAchievement' + wIdx)?.value || '';
+  week.reflection = refl;
+  week.achievement = ach;
+  saveWeeklyPlan();
+  toast('Saved successfully');
 }
 function copyPlannerPromptPanel(tab) {
   const prompt = getPlannerPromptContent(tab || 'planning');
@@ -12204,28 +12603,20 @@ function copyPlannerPromptPanel(tab) {
 }
 
 function renderPlannerPromptPanel(tab, title, desc) {
-  return `<div class="roadmap-section" style="margin:0;display:flex;flex-direction:column;gap:10px;min-height:0;">
-    <div class="roadmap-section-head" style="margin-bottom:0;">
+  return `<div class="roadmap-section" style="margin:0;display:flex;flex-direction:column;gap:10px;height:100%;box-sizing:border-box;">
+    <div class="roadmap-section-head" style="margin-bottom:0;flex-shrink:0;">
       <div>
         <h3>${esc(title)}</h3>
         <div style="font-size:12px;color:var(--ink-tertiary);line-height:1.45;margin-top:3px;">${esc(desc)}</div>
       </div>
       <button class="apple-btn small" onclick="copyPlannerPromptPanel('${tab}')">Copy</button>
     </div>
-    <pre style="white-space:pre-wrap;background:var(--bg-elev);border:1px solid var(--line);border-radius:var(--radius);padding:12px;font-size:12px;line-height:1.55;max-height:260px;overflow:auto;margin:0;color:var(--ink-secondary);font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;">${esc(getPlannerPromptContent(tab))}</pre>
+    <pre style="white-space:pre-wrap;background:var(--bg-elev);border:1px solid var(--line);border-radius:var(--radius);padding:12px;font-size:12px;line-height:1.55;overflow:auto;margin:0;color:var(--ink-secondary);font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;flex:1 1 auto;min-height:0;">${esc(getPlannerPromptContent(tab))}</pre>
   </div>`;
 }
 
 function renderPromptEditor() {
   return `<div style="display:flex;flex-direction:column;gap:16px;">
-    <div class="roadmap-section">
-      <div class="roadmap-section-head"><h3>AI Prompt</h3></div>
-    </div>
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;align-items:start;">
-      ${renderPlannerPromptPanel('planning', 'Study Planning Prompt', '完整学习上下文，用来生成下周学习规划建议。')}
-      ${renderPlannerPromptPanel('json', 'JSON Format Prompt', '让 AI 严格输出 Weekly Planner 可导入的 JSON。')}
-      ${renderPlannerPromptPanel('split', '拆分 Prompt', '把本周总目标拆成每天可执行的小任务。')}
-    </div>
     <div class="roadmap-section">
       <div class="roadmap-section-head"><h3>AI 导入</h3></div>
       <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:10px;font-size:12px;color:var(--ink-secondary);">
@@ -12240,6 +12631,14 @@ function renderPromptEditor() {
         <button class="apple-btn" onclick="clearImportTextarea('importPlannerText','plannerAIImportPreview')">清空</button>
       </div>
       <div id="plannerAIImportPreview" class="ai-studio-status" style="margin-top:10px;">预览将显示任务数量、科目分布等摘要。</div>
+    </div>
+    <div class="roadmap-section">
+      <div class="roadmap-section-head"><h3>AI Prompt</h3></div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;align-items:stretch;">
+      ${renderPlannerPromptPanel('planning', 'Study Planning Prompt', '完整学习上下文，用来生成下周学习规划建议。')}
+      ${renderPlannerPromptPanel('json', 'JSON Format Prompt', '让 AI 严格输出 Weekly Planner 可导入的 JSON。')}
+      ${renderPlannerPromptPanel('split', '拆分 Prompt', '把本周总目标拆成每天可执行的小任务。')}
     </div>
   </div>`;
 }
@@ -13299,8 +13698,8 @@ if (_reviewOrigOpenSidebarSynonyms) {
 // ================================================================
 //  LANGUAGE SWITCH — UI TEXT ONLY
 // ================================================================
-const APP_LANG_KEY = 'quizhub_ui_language_v1';
-let appLanguage = localStorage.getItem(APP_LANG_KEY) || 'en';
+const APP_LANG_KEY = 'quizhub_ui_language_v1'; // legacy key
+let appLanguage = StudyStorage.get('settings', 'language', null) || 'en';
 
 const I18N_ZH = {
   'Home':'主页','Quiz Hub':'题库','Reading':'阅读','Review':'复习','Study Roadmap':'学习路线','Weekly AI Planner':'每周 AI 计划','Progress Check':'进度检测','Study Resource':'学习资料',
@@ -13381,14 +13780,14 @@ function applyAppLanguage(root = document.body) {
 
 function setAppLanguageFromSettings(lang) {
   appLanguage = lang === 'zh' ? 'zh' : 'en';
-  localStorage.setItem(APP_LANG_KEY, appLanguage);
+  StudyStorage.set('settings', 'language', appLanguage);
   render();
   setTimeout(openQuizSettings, 80);
 }
 
 function toggleAppLanguage() {
   appLanguage = appLanguage === 'zh' ? 'en' : 'zh';
-  localStorage.setItem(APP_LANG_KEY, appLanguage);
+  StudyStorage.set('settings', 'language', appLanguage);
   render();
 }
 
@@ -13917,6 +14316,54 @@ function importReviewFromFile() {
 
 // The render chain is now: _origRenderV4 (which includes _quizhubRenderBase + applyAppLanguage) → explanation selection rebinding
 // No need for additional override here since _origRenderV4 already handles language application
+
+// ---- AUTO BACKUP REMINDER ----
+function checkCloudBackupReminder() {
+  if (!gistConfig.token) return; // no config, don't nag
+  const last = gistConfig.lastSyncTs || 0;
+  const days = Math.floor((Date.now() - last) / 86400000);
+  if (days >= 7) {
+    setTimeout(() => {
+      openGenericSheet('Cloud Backup Reminder', `
+        <div style="padding:8px 0;text-align:center;">
+          <div style="font-size:32px;margin-bottom:8px;">☁️</div>
+          <div style="font-weight:800;font-size:15px;margin-bottom:6px;">Your Study Hub has not been synced for one week.</div>
+          <div style="font-size:12px;color:var(--ink-secondary);line-height:1.5;margin-bottom:16px;">Last sync: ${last ? new Date(last).toLocaleDateString() : 'Never'}. Sync now to keep your data safe across devices.</div>
+          <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
+            <button class="apple-btn primary" onclick="closeSheet('genericSheet');saveToCloud();">Sync Now</button>
+            <button class="apple-btn" onclick="closeSheet('genericSheet');">Remind Tomorrow</button>
+            <button class="apple-btn" onclick="closeSheet('genericSheet');">Dismiss</button>
+          </div>
+        </div>
+      `, []);
+    }, 2000);
+  }
+}
+checkCloudBackupReminder();
+
+// ---- WEEKLY LOCAL BACKUP REMINDER ----
+function checkWeeklyBackupReminder() {
+  const s = StudyStorage.get('settings', 'backup_status', null);
+  const last = s?.lastExportTime || 0;
+  const days = Math.floor((Date.now() - last) / 86400000);
+  if (days >= 7) {
+    setTimeout(() => {
+      openGenericSheet('Backup Reminder', `
+        <div style="padding:8px 0;text-align:center;">
+          <div style="font-size:32px;margin-bottom:8px;">💾</div>
+          <div style="font-weight:800;font-size:15px;margin-bottom:6px;">距离上次备份已经超过一周，建议立即导出数据。</div>
+          <div style="font-size:12px;color:var(--ink-secondary);line-height:1.5;margin-bottom:16px;">Last export: ${last ? new Date(last).toLocaleDateString() : 'Never'}. Export now to keep your data safe.</div>
+          <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
+            <button class="apple-btn primary" onclick="closeSheet('genericSheet');exportAllLocalData();">Export Now</button>
+            <button class="apple-btn" onclick="closeSheet('genericSheet');">Remind Me Tomorrow</button>
+            <button class="apple-btn" onclick="closeSheet('genericSheet');">Dismiss</button>
+          </div>
+        </div>
+      `, []);
+    }, 3000);
+  }
+}
+checkWeeklyBackupReminder();
 
 render();
 </script>
