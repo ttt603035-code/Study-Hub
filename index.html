@@ -3292,7 +3292,9 @@ async function syncPull() {
   const rows = await res.json();
   if (!rows.length || !rows[0].data) return false;
   const remote = rows[0].data;
-  Object.entries(remote).forEach(([k, v]) => { if (v !== null) localStorage.setItem(k, v); });
+  __isPulling = true;
+  Object.entries(remote).forEach(([k, v]) => { if (v !== null) __origSetItem(k, v); });
+  __isPulling = false;
   return true;
 }
 
@@ -3301,7 +3303,6 @@ window.__supabaseSyncReady = (async () => {
   try {
     const pulled = await syncPull();
     if (pulled) {
-      // 标记已同步，避免循环刷新
       if (!sessionStorage.getItem('__synced')) {
         sessionStorage.setItem('__synced', '1');
         location.reload();
@@ -3310,14 +3311,39 @@ window.__supabaseSyncReady = (async () => {
   } catch(e) { console.warn('Sync pull failed', e); }
 })();
 
-// 每次保存 localStorage 时自动推送（节流 5 秒）
+// 每次保存 localStorage 时自动推送（节流 5 秒，忽略pull期间的写入）
 let __syncTimer = null;
+let __isPulling = false;
 const __origSetItem = localStorage.setItem.bind(localStorage);
 localStorage.setItem = function(k, v) {
   __origSetItem(k, v);
+  if (__isPulling) return; // 拉取期间不触发推送
   clearTimeout(__syncTimer);
   __syncTimer = setTimeout(() => syncPush().catch(e => console.warn('Sync push failed', e)), 5000);
 };
+
+// 定时自动拉取（每30秒），保持两端同步
+setInterval(async () => {
+  if (document.hidden) return; // 页面隐藏时跳过
+  try {
+    const res = await fetch(SUPABASE_URL + '/rest/v1/user_data?sync_id=eq.' + SYNC_USER_ID + '&select=data', {
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
+    });
+    const rows = await res.json();
+    if (!rows.length || !rows[0].data) return;
+    const remote = rows[0].data;
+    let changed = false;
+    __isPulling = true;
+    Object.entries(remote).forEach(([k, v]) => {
+      if (v !== null && localStorage.getItem(k) !== v) {
+        __origSetItem(k, v);
+        changed = true;
+      }
+    });
+    __isPulling = false;
+    if (changed) location.reload(); // 有新数据就刷新页面
+  } catch(e) {}
+}, 30000);
 </script>
 <div id="miniDialog">
   <div id="miniDialogBox">
