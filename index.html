@@ -3257,34 +3257,54 @@ const SYNC_KEYS = [
   'study_learning_pro','study_weekly_planner_pro','study_weekly_milestones_pro',
   'study_roadmap_plans_pro','study_roadmap_exams_pro','study_roadmap_milestones_pro',
   'study_roadmap_milestone_expanded_pro','study_roadmap_subject_expanded_pro',
-  'study_username','study_demo_data_removed'
+  'study_username','study_demo_data_removed',
+  'study_remember_last_page' // 修复5：同步「记住上次页面」设置
 ];
 
+// 修复1：变量声明提前，确保 syncPull/syncPush 使用时已定义
+let __isPulling = false;
+let __syncTimer = null;
+let __syncPushFailed = false;
+const __origSetItem = localStorage.setItem.bind(localStorage);
+
+// 修复6：推送时记录失败状态，供外部感知
 async function syncPush() {
-  const payload = {};
-  SYNC_KEYS.forEach(k => { const v = localStorage.getItem(k); if (v !== null) payload[k] = v; });
-  // 先查有没有这行
-  const check = await fetch(`${SUPABASE_URL}/rest/v1/user_data?sync_id=eq.${SYNC_USER_ID}&select=id`, {
-    headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
-  });
-  const rows = await check.json();
-  if (rows.length) {
-    // update
-    await fetch(`${SUPABASE_URL}/rest/v1/user_data?sync_id=eq.${SYNC_USER_ID}`, {
-      method: 'PATCH',
-      headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ data: payload })
-    });
-  } else {
-    // insert
-    await fetch(`${SUPABASE_URL}/rest/v1/user_data`, {
+  try {
+    const payload = {};
+    // 修复3：推送时附带本地时间戳，供拉取时做新旧比较
+    payload['__sync_ts'] = String(Date.now());
+    SYNC_KEYS.forEach(k => { const v = localStorage.getItem(k); if (v !== null) payload[k] = v; });
+
+    // 修复4：改用 upsert，一次请求代替先查再写两次
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/user_data`, {
       method: 'POST',
-      headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json' },
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': 'Bearer ' + SUPABASE_KEY,
+        'Content-Type': 'application/json',
+        'Prefer': 'resolution=merge-duplicates'  // upsert：有则更新，无则插入
+      },
       body: JSON.stringify({ sync_id: SYNC_USER_ID, data: payload })
     });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    __syncPushFailed = false;
+  } catch(e) {
+    __syncPushFailed = true;
+    console.warn('Sync push failed:', e);
+    // 修复6：推送失败时在页面顶部显示一个不打扰操作的小提示（5秒后自消失）
+    const existing = document.getElementById('__syncFailBanner');
+    if (!existing) {
+      const banner = document.createElement('div');
+      banner.id = '__syncFailBanner';
+      banner.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;background:#ff3b30;color:#fff;font-size:12px;font-weight:700;text-align:center;padding:6px 12px;letter-spacing:0.02em;';
+      banner.textContent = '⚠ 云端同步失败，数据已保存到本地。请检查网络连接。';
+      document.body.prepend(banner);
+      setTimeout(() => banner.remove(), 5000);
+    }
   }
 }
 
+// 修复3：拉取时与本地时间戳比较，只有云端更新才覆盖
 async function syncPull() {
   const res = await fetch(`${SUPABASE_URL}/rest/v1/user_data?sync_id=eq.${SYNC_USER_ID}&select=data`, {
     headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
@@ -3292,39 +3312,45 @@ async function syncPull() {
   const rows = await res.json();
   if (!rows.length || !rows[0].data) return false;
   const remote = rows[0].data;
+
+  // 比较时间戳：云端数据不比本地新，则不覆盖
+  const remoteTs = parseInt(remote['__sync_ts'] || '0', 10);
+  const localTs  = parseInt(localStorage.getItem('__sync_ts') || '0', 10);
+  if (remoteTs <= localTs) return false; // 本地已经是最新，不需要覆盖
+
   __isPulling = true;
-  Object.entries(remote).forEach(([k, v]) => { if (v !== null) __origSetItem(k, v); });
+  Object.entries(remote).forEach(([k, v]) => {
+    if (k === '__sync_ts') { __origSetItem(k, v); return; }
+    if (v !== null && SYNC_KEYS.includes(k)) __origSetItem(k, v);
+  });
   __isPulling = false;
   return true;
 }
 
-// 页面加载时拉取云端数据，然后刷新
+// 拦截 localStorage.setItem，每次本地写入后节流5秒推送
+localStorage.setItem = function(k, v) {
+  __origSetItem(k, v);
+  if (__isPulling) return; // 拉取期间不触发推送，避免循环
+  clearTimeout(__syncTimer);
+  __syncTimer = setTimeout(() => syncPush(), 5000);
+};
+
+// 页面加载时：拉取云端数据，仅当云端更新时才 reload
 window.__supabaseSyncReady = (async () => {
   try {
     const pulled = await syncPull();
-    if (pulled) {
-      if (!sessionStorage.getItem('__synced')) {
-        sessionStorage.setItem('__synced', '1');
-        location.reload();
-      }
+    if (pulled && !sessionStorage.getItem('__synced')) {
+      sessionStorage.setItem('__synced', '1');
+      location.reload();
     }
-  } catch(e) { console.warn('Sync pull failed', e); }
+  } catch(e) { console.warn('Sync pull failed:', e); }
 })();
 
-// 每次保存 localStorage 时自动推送（节流 5 秒，忽略pull期间的写入）
-let __syncTimer = null;
-let __isPulling = false;
-const __origSetItem = localStorage.setItem.bind(localStorage);
-localStorage.setItem = function(k, v) {
-  __origSetItem(k, v);
-  if (__isPulling) return; // 拉取期间不触发推送
-  clearTimeout(__syncTimer);
-  __syncTimer = setTimeout(() => syncPush().catch(e => console.warn('Sync push failed', e)), 5000);
-};
-
-// 定时自动拉取（每30秒），保持两端同步
+// 修复2：定时拉取改为：检测到云端更新时，不直接 reload，
+// 而是弹出提示让用户自己决定是否刷新，避免打断正在进行的操作
 setInterval(async () => {
-  if (document.hidden) return; // 页面隐藏时跳过
+  if (document.hidden) return;
+  if (__syncPushFailed) return; // 推送失败时跳过拉取，避免用旧数据覆盖本地
   try {
     const res = await fetch(SUPABASE_URL + '/rest/v1/user_data?sync_id=eq.' + SYNC_USER_ID + '&select=data', {
       headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
@@ -3332,16 +3358,20 @@ setInterval(async () => {
     const rows = await res.json();
     if (!rows.length || !rows[0].data) return;
     const remote = rows[0].data;
-    let changed = false;
-    __isPulling = true;
-    Object.entries(remote).forEach(([k, v]) => {
-      if (v !== null && localStorage.getItem(k) !== v) {
-        __origSetItem(k, v);
-        changed = true;
-      }
-    });
-    __isPulling = false;
-    if (changed) location.reload(); // 有新数据就刷新页面
+
+    const remoteTs = parseInt(remote['__sync_ts'] || '0', 10);
+    const localTs  = parseInt(localStorage.getItem('__sync_ts') || '0', 10);
+    if (remoteTs <= localTs) return; // 云端不比本地新，跳过
+
+    // 有新数据：提示用户，不强制刷新
+    if (!document.getElementById('__syncUpdateBanner')) {
+      const banner = document.createElement('div');
+      banner.id = '__syncUpdateBanner';
+      banner.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:99999;background:var(--accent,#007aff);color:#fff;font-size:13px;font-weight:700;border-radius:20px;padding:10px 20px;box-shadow:0 4px 20px rgba(0,0,0,0.18);display:flex;align-items:center;gap:12px;white-space:nowrap;';
+      banner.innerHTML = `<span>📡 检测到云端有更新</span><button onclick="location.reload()" style="background:rgba(255,255,255,0.25);border:none;color:#fff;font-weight:800;font-size:12px;border-radius:12px;padding:4px 12px;cursor:pointer;">立即刷新</button><button onclick="this.parentElement.remove()" style="background:none;border:none;color:rgba(255,255,255,0.7);font-size:16px;cursor:pointer;padding:0 4px;">✕</button>`;
+      document.body.appendChild(banner);
+      setTimeout(() => banner?.remove(), 15000); // 15秒后自动消失
+    }
   } catch(e) {}
 }, 30000);
 </script>
@@ -3874,9 +3904,29 @@ function saveRoadmap() {
 // ================================================================
 //  SAVE / LOAD
 // ================================================================
+const REMEMBER_PAGE_KEY = 'study_remember_last_page';
+function getRememberLastPage() {
+  const v = localStorage.getItem(REMEMBER_PAGE_KEY);
+  return v === null ? true : v === 'true'; // 默认开启
+}
+function setRememberLastPage(val) {
+  localStorage.setItem(REMEMBER_PAGE_KEY, String(val));
+}
+
 function saveAppState() { localStorage.setItem(APP_STATE_KEY, JSON.stringify(appState)); }
 function loadAppState() {
-  try { const s = localStorage.getItem(APP_STATE_KEY); if(s) appState = Object.assign(appState, JSON.parse(s)); } catch(e){}
+  try {
+    const s = localStorage.getItem(APP_STATE_KEY);
+    if (s) {
+      const parsed = JSON.parse(s);
+      if (!getRememberLastPage()) {
+        // 关闭记忆时，只恢复非页面相关的状态，currentModule 固定为 dashboard
+        delete parsed.currentModule;
+      }
+      appState = Object.assign(appState, parsed);
+      if (!getRememberLastPage()) appState.currentModule = 'quiz';
+    }
+  } catch(e) {}
 }
 
 function saveQuiz() {
@@ -7451,6 +7501,18 @@ function openQuizSettings() {
             <button class="apple-btn small ${appLanguage === 'en' ? 'primary' : ''}" onclick="setAppLanguageFromSettings('en')">English</button>
             <button class="apple-btn small ${appLanguage === 'zh' ? 'primary' : ''}" onclick="setAppLanguageFromSettings('zh')">中文</button>
           </div>
+        </div>
+      </div>
+      <div style="padding:16px;background:var(--bg-card);border:1px solid var(--line);border-radius:var(--radius-lg);">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+          <div>
+            <div style="font-weight:800;font-size:15px;margin-bottom:4px;letter-spacing:-0.01em;">Remember Last Page</div>
+            <div style="font-size:12px;color:var(--ink-tertiary);line-height:1.5;">When enabled, reopening the app restores the last page you were on. When disabled, always opens Dashboard (Quiz Hub).</div>
+          </div>
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none;">
+            <input type="checkbox" id="settingsRememberPage" ${getRememberLastPage() ? 'checked' : ''} onchange="setRememberLastPage(this.checked);toast(this.checked ? '✓ Will remember last page' : '✓ Will always open Dashboard');" style="width:16px;height:16px;cursor:pointer;">
+            <span style="font-size:13px;font-weight:600;">Enabled</span>
+          </label>
         </div>
       </div>
       <div style="padding:16px;background:var(--bg-card);border:1px solid var(--line);border-radius:var(--radius-lg);">
@@ -12469,7 +12531,7 @@ function renderProgressCheck(container){
 //  INIT
 // ================================================================
 loadAppState();
-if (!['quiz','roadmap','resources','weekly_planner','progress_check','review'].includes(appState.currentModule)) appState.currentModule = 'quiz';
+if (!['quiz','roadmap','resources','weekly_planner','progress_check','review','home','reading'].includes(appState.currentModule)) appState.currentModule = 'quiz';
 loadQuiz();
 if (typeof migrateWrongBookToEbbinghaus === 'function') migrateWrongBookToEbbinghaus();
 
@@ -14138,10 +14200,10 @@ window.__manualSync = async function() {
   const btn = document.getElementById('sync-top-btn');
   const orig = btn ? btn.innerHTML : '';
   if (btn) btn.innerHTML = '⏳ Syncing…';
-  try {
-    await syncPush();
+  await syncPush();
+  if (!__syncPushFailed) {
     if (btn) { btn.innerHTML = '✅ Synced'; setTimeout(() => { btn.innerHTML = orig; }, 2500); }
-  } catch(e) {
+  } else {
     if (btn) { btn.innerHTML = '❌ Failed'; setTimeout(() => { btn.innerHTML = orig; }, 3000); }
   }
 };
