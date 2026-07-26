@@ -3238,6 +3238,46 @@ img, svg, video, canvas, iframe, table, pre, code {
 #miniDialogBtns button{padding:8px 18px;border-radius:20px;border:none;font-size:13px;font-weight:600;cursor:pointer;}
 #miniDialogCancel{background:var(--bg-elev,#eee);color:var(--ink,#111);}
 #miniDialogOk{background:var(--accent,#007aff);color:#fff;}
+
+/* ========== TRANSLATION JOURNAL TOGGLE ========== */
+.tj-toggle {
+  width: 44px;
+  height: 26px;
+  border-radius: 13px;
+  background: var(--line);
+  position: relative;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  flex-shrink: 0;
+  border: 1px solid var(--line);
+}
+.tj-toggle.on {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.tj-toggle-knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+  transition: transform 0.2s cubic-bezier(0.25,1,0.5,1);
+}
+.tj-toggle.on .tj-toggle-knob {
+  transform: translateX(18px);
+}
+#tjEntriesList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+@media (max-width: 640px) {
+  #tjPage .res-stats-row { grid-template-columns: repeat(2,1fr); }
+  #tjPage [style*="grid-template-columns:1fr 1fr"] { grid-template-columns: 1fr !important; }
+}
 </style>
 </head>
 <body>
@@ -3434,6 +3474,9 @@ setInterval(async () => {
             </div>
             <div class="capsule-item" data-module="review" onclick="switchModule('review')">
               <span class="icon" style="font-weight:800;font-size:13px;width:20px;text-align:center;">R</span> Review
+            </div>
+            <div class="capsule-item" data-module="translation_journal" onclick="switchModule('translation_journal')">
+              <span class="icon" style="font-weight:800;font-size:13px;width:20px;text-align:center;">📝</span> Translation Journal
             </div>
           </div>
         </div>
@@ -4294,6 +4337,7 @@ function getModuleTitle(mod) {
   if (mod === 'weekly_planner') return 'Weekly AI Planner';
   if (mod === 'progress_check') return 'Progress Check';
   if (mod === 'resources') return 'Study Resource';
+  if (mod === 'translation_journal') return 'Translation Journal';
   return 'Study Hub';
 }
 function updateNavigationActive() {
@@ -4907,6 +4951,8 @@ function render() {
       renderWeeklyPlanner(moduleMain);
     } else if (appState.currentModule === 'progress_check') {
       renderProgressCheck(moduleMain);
+    } else if (appState.currentModule === 'translation_journal') {
+      renderTranslationJournal(moduleMain);
     } else {
       renderStudyResources(moduleMain);
     }
@@ -12531,7 +12577,7 @@ function renderProgressCheck(container){
 //  INIT
 // ================================================================
 loadAppState();
-if (!['quiz','roadmap','resources','weekly_planner','progress_check','review','home','reading'].includes(appState.currentModule)) appState.currentModule = 'quiz';
+if (!['quiz','roadmap','resources','weekly_planner','progress_check','review','home','reading','translation_journal'].includes(appState.currentModule)) appState.currentModule = 'quiz';
 loadQuiz();
 if (typeof migrateWrongBookToEbbinghaus === 'function') migrateWrongBookToEbbinghaus();
 
@@ -14194,6 +14240,395 @@ render();
 <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a176fd6be87039c4',t:'MTc4MzQyODc4Mw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a1771d6388e9371d',t:'MTc4MzQzMDA5Mw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a1780a322deadbec',t:'MTc4MzQzOTc5Mg=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a1782a0d69249730',t:'MTc4MzQ0MTA5Nw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a1782f3ffe679f58',t:'MTc4MzQ0MTMxMA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a17c34b1cfa68cac',t:'MTc4MzQ4MzQ3Ng=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a17c3fc42bd2a9f1',t:'MTc4MzQ4MzkzMA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a17c848b8a0cacf2',t:'MTc4MzQ4Njc0Nw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script defer src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ==" data-cf-beacon='{"version":"2024.11.0","token":"1954b47c125f43f8b4338b3c4f804e4f","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
 <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a17ca904ca2fd2f5',t:'MTc4MzQ4ODI0MQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a17d5805ad6c326f',t:'MTc4MzQ5NTQwOQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a17d6f7f2868ebb6',t:'MTc4MzQ5NjM3MQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a17deceefa7294e3',t:'MTc4MzUwMTUwOA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a17e0b677877aace',t:'MTc4MzUwMjc1Nw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a17e133babc9f337',t:'MTc4MzUwMzA3Nw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a17e17c8cff73896',t:'MTc4MzUwMzI2NA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script defer src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496" integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ==" data-cf-beacon='{"version":"2024.11.0","token":"1954b47c125f43f8b4338b3c4f804e4f","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
 <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a17e76bca9de7aa8',t:'MTc4MzUwNzE1Mw=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a17e948f7f60bf5d',t:'MTc4MzUwODM3NA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a19f9be8fb1ee866',t:'MTc4Mzg1NDcwNg=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script><script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a19fe2ddb910d406',t:'MTc4Mzg1NzYxMg=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script>
+
+<script>
+// ================================================================
+//  TRANSLATION JOURNAL MODULE
+// ================================================================
+const TJ_STORE_KEY = 'study_translation_journal_v1';
+const TJ_TAGS = ['Daily','Grammar','Vocabulary','Writing','Idioms','Speaking'];
+
+let tjEntries = [];
+let tjSearchQuery = '';
+let tjEditingId = null;
+
+function tjLoad() {
+  try {
+    const raw = localStorage.getItem(TJ_STORE_KEY);
+    tjEntries = raw ? JSON.parse(raw) : [];
+    if (!Array.isArray(tjEntries)) tjEntries = [];
+  } catch(e) { tjEntries = []; }
+}
+
+function tjSave() {
+  localStorage.setItem(TJ_STORE_KEY, JSON.stringify(tjEntries));
+}
+
+function tjUid() {
+  return 'tj_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2,7);
+}
+
+function tjTodayISO() {
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+
+function tjNowTime() {
+  const d = new Date();
+  return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+}
+
+function tjThisWeekStart() {
+  const d = new Date();
+  const day = d.getDay();
+  const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+  const mon = new Date(d.setDate(diff));
+  return mon.getFullYear() + '-' + String(mon.getMonth()+1).padStart(2,'0') + '-' + String(mon.getDate()).padStart(2,'0');
+}
+
+function tjGetStats() {
+  const today = tjTodayISO();
+  const weekStart = tjThisWeekStart();
+  const todayCount = tjEntries.filter(e => e.date === today).length;
+  const weekCount = tjEntries.filter(e => e.date >= weekStart).length;
+  const lastEntry = tjEntries.length > 0 ? tjEntries[0] : null;
+  const lastUpdated = lastEntry ? (lastEntry.date + ' ' + lastEntry.time) : '—';
+  return { total: tjEntries.length, today: todayCount, week: weekCount, lastUpdated };
+}
+
+function tjFilteredEntries() {
+  const q = tjSearchQuery.toLowerCase().trim();
+  if (!q) return tjEntries;
+  return tjEntries.filter(e =>
+    (e.chinese||'').toLowerCase().includes(q) ||
+    (e.english||'').toLowerCase().includes(q) ||
+    (e.tags||[]).some(t => t.toLowerCase().includes(q))
+  );
+}
+
+function tjEsc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function renderTranslationJournal(container) {
+  tjLoad();
+  const stats = tjGetStats();
+  const filtered = tjFilteredEntries();
+
+  container.innerHTML = `
+<div class="roadmap-page" id="tjPage">
+  <!-- Stats Row -->
+  <div class="res-stats-row">
+    <div class="res-stat-card">
+      <div class="label">Entries</div>
+      <div class="value">${stats.total}</div>
+      <div class="sub">Total records</div>
+    </div>
+    <div class="res-stat-card">
+      <div class="label">Today</div>
+      <div class="value">${stats.today}</div>
+      <div class="sub">${tjTodayISO()}</div>
+    </div>
+    <div class="res-stat-card">
+      <div class="label">This Week</div>
+      <div class="value">${stats.week}</div>
+      <div class="sub">Since ${tjThisWeekStart()}</div>
+    </div>
+    <div class="res-stat-card">
+      <div class="label">Last Updated</div>
+      <div class="value" style="font-size:14px;font-weight:800;letter-spacing:-0.01em;">${tjEsc(stats.lastUpdated)}</div>
+      <div class="sub">Most recent entry</div>
+    </div>
+  </div>
+
+  <!-- New Entry Card -->
+  <div class="roadmap-section" id="tjNewEntryCard">
+    <div class="roadmap-section-head">
+      <h3 id="tjFormTitle">New Entry</h3>
+      <div style="display:flex;gap:8px;">
+        <button class="apple-btn small danger" id="tjCancelEditBtn" onclick="tjCancelEdit()" style="display:none;">Cancel</button>
+        <button class="apple-btn primary" onclick="tjSaveEntry()">Save</button>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
+      <div>
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;color:var(--ink-tertiary);margin-bottom:6px;">Chinese</div>
+        <textarea id="tjChinese" rows="5" placeholder="输入中文原文…" style="width:100%;border-radius:var(--radius-sm);padding:10px 12px;font-size:13px;line-height:1.6;background:var(--bg-elev);border:1px solid var(--line);resize:vertical;"></textarea>
+      </div>
+      <div>
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;color:var(--ink-tertiary);margin-bottom:6px;">English</div>
+        <textarea id="tjEnglish" rows="5" placeholder="Enter English translation…" style="width:100%;border-radius:var(--radius-sm);padding:10px 12px;font-size:13px;line-height:1.6;background:var(--bg-elev);border:1px solid var(--line);resize:vertical;"></textarea>
+      </div>
+    </div>
+    <div style="display:flex;align-items:flex-start;gap:24px;flex-wrap:wrap;">
+      <div style="flex:1;min-width:200px;">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;color:var(--ink-tertiary);margin-bottom:8px;">Tags</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;" id="tjTagPicker">
+          ${TJ_TAGS.map(t => `<div class="pill" data-tj-tag="${tjEsc(t)}" onclick="tjToggleTag(this)">${tjEsc(t)}</div>`).join('')}
+        </div>
+      </div>
+      <div>
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;color:var(--ink-tertiary);margin-bottom:8px;">Video Posted</div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div class="tj-toggle" id="tjVideoToggle" onclick="tjToggleVideo()" title="Toggle video posted status">
+            <div class="tj-toggle-knob"></div>
+          </div>
+          <span id="tjVideoLabel" style="font-size:12px;font-weight:600;color:var(--ink-tertiary);">Not Posted</span>
+        </div>
+      </div>
+    </div>
+    <input type="hidden" id="tjEditingId" value="">
+  </div>
+
+  <!-- Search + Actions Bar -->
+  <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+    <div style="flex:1;min-width:200px;position:relative;">
+      <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--ink-tertiary);font-size:14px;font-weight:700;">⌕</span>
+      <input type="text" id="tjSearch" placeholder="Search Chinese, English, or tag…" value="${tjEsc(tjSearchQuery)}"
+        oninput="tjOnSearch(this.value)"
+        style="width:100%;padding:8px 12px 8px 36px;border-radius:var(--radius-pill);background:var(--bg-card);border:1px solid var(--line);font-size:13px;">
+    </div>
+    <button class="apple-btn" onclick="tjExportJSON()">Export JSON</button>
+    <button class="apple-btn" onclick="tjImportJSON()">Import JSON</button>
+  </div>
+
+  <!-- Entries List -->
+  <div id="tjEntriesList">
+    ${filtered.length === 0 ? `<div class="empty-state" style="padding:40px;text-align:center;"><div style="font-size:32px;margin-bottom:12px;">📝</div><div style="font-size:15px;font-weight:700;margin-bottom:6px;">${tjSearchQuery ? 'No results found' : 'No entries yet'}</div><div style="font-size:13px;color:var(--ink-tertiary);">${tjSearchQuery ? 'Try a different keyword.' : 'Add your first translation above.'}</div></div>`
+      : filtered.map(e => tjRenderCard(e)).join('')}
+  </div>
+</div>`;
+}
+
+function tjRenderCard(e) {
+  const tags = (e.tags||[]).map(t => `<span style="display:inline-flex;align-items:center;height:20px;padding:0 8px;border-radius:999px;font-size:10px;font-weight:700;background:var(--bg-elev);border:1px solid var(--line);color:var(--ink-secondary);">${tjEsc(t)}</span>`).join('');
+  const videoPosted = e.videoPosted;
+  return `<div class="roadmap-section" style="margin-bottom:0;position:relative;" id="tjCard_${tjEsc(e.id)}">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;">
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+        <span style="font-size:12px;font-weight:700;color:var(--ink-tertiary);">${tjEsc(e.date)}</span>
+        <span style="font-size:12px;color:var(--ink-faint);">·</span>
+        <span style="font-size:12px;color:var(--ink-tertiary);">${tjEsc(e.time)}</span>
+        ${tags ? `<div style="display:flex;gap:4px;flex-wrap:wrap;">${tags}</div>` : ''}
+        <span style="display:inline-flex;align-items:center;height:20px;padding:0 8px;border-radius:999px;font-size:10px;font-weight:700;border:1px solid var(--line);${videoPosted ? 'background:var(--accent);color:#fff;border-color:var(--accent);' : 'background:var(--bg-elev);color:var(--ink-tertiary);'}">
+          ${videoPosted ? '● Posted' : '○ Not Posted'}
+        </span>
+      </div>
+      <div style="display:flex;gap:6px;align-items:center;flex-shrink:0;">
+        <button class="apple-btn small" onclick="tjCopyEnglish('${tjEsc(e.id)}')" title="Copy English">📋 Copy</button>
+        <button class="apple-btn small" onclick="tjStartEdit('${tjEsc(e.id)}')">Edit</button>
+        <button class="apple-btn small danger" onclick="tjDeleteEntry('${tjEsc(e.id)}')">🗑 Delete</button>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+      <div>
+        <div style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:0.05em;color:var(--ink-tertiary);margin-bottom:6px;">Chinese</div>
+        <div style="font-size:14px;line-height:1.7;color:var(--ink);white-space:pre-wrap;word-break:break-word;">${tjEsc(e.chinese||'')}</div>
+      </div>
+      <div>
+        <div style="font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:0.05em;color:var(--ink-tertiary);margin-bottom:6px;">English</div>
+        <div style="font-size:14px;line-height:1.7;color:var(--ink);white-space:pre-wrap;word-break:break-word;">${tjEsc(e.english||'')}</div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function tjToggleTag(el) {
+  el.classList.toggle('active');
+}
+
+function tjToggleVideo() {
+  const toggle = document.getElementById('tjVideoToggle');
+  const label = document.getElementById('tjVideoLabel');
+  if (!toggle) return;
+  const isOn = toggle.classList.toggle('on');
+  if (label) label.textContent = isOn ? 'Posted' : 'Not Posted';
+}
+
+function tjGetFormTags() {
+  const tags = [];
+  document.querySelectorAll('#tjTagPicker .pill.active').forEach(el => {
+    tags.push(el.dataset.tjTag);
+  });
+  return tags;
+}
+
+function tjSaveEntry() {
+  const chinese = (document.getElementById('tjChinese')||{}).value||'';
+  const english = (document.getElementById('tjEnglish')||{}).value||'';
+  const tags = tjGetFormTags();
+  const videoPosted = !!(document.getElementById('tjVideoToggle')||{}).classList?.contains('on');
+  const editingId = (document.getElementById('tjEditingId')||{}).value||'';
+
+  if (!chinese.trim() && !english.trim()) {
+    if (typeof toast === 'function') toast('Please enter Chinese or English text.');
+    return;
+  }
+
+  if (editingId) {
+    const idx = tjEntries.findIndex(e => e.id === editingId);
+    if (idx !== -1) {
+      tjEntries[idx].chinese = chinese;
+      tjEntries[idx].english = english;
+      tjEntries[idx].tags = tags;
+      tjEntries[idx].videoPosted = videoPosted;
+    }
+    tjEditingId = null;
+  } else {
+    const entry = {
+      id: tjUid(),
+      date: tjTodayISO(),
+      time: tjNowTime(),
+      chinese,
+      english,
+      tags,
+      videoPosted,
+      createdAt: Date.now()
+    };
+    tjEntries.unshift(entry);
+  }
+
+  tjSave();
+  tjCancelEdit();
+  if (appState.currentModule === 'translation_journal') {
+    const main = document.getElementById('moduleContentMount');
+    if (main) renderTranslationJournal(main);
+  }
+  if (typeof toast === 'function') toast('✅ Entry saved.');
+}
+
+function tjDeleteEntry(id) {
+  if (!confirm('Delete this entry? This cannot be undone.')) return;
+  tjEntries = tjEntries.filter(e => e.id !== id);
+  tjSave();
+  const card = document.getElementById('tjCard_' + id);
+  if (card) card.remove();
+  const main = document.getElementById('moduleContentMount');
+  if (main) renderTranslationJournal(main);
+}
+
+function tjStartEdit(id) {
+  tjLoad();
+  const entry = tjEntries.find(e => e.id === id);
+  if (!entry) return;
+  const chEl = document.getElementById('tjChinese');
+  const enEl = document.getElementById('tjEnglish');
+  const editIdEl = document.getElementById('tjEditingId');
+  const cancelBtn = document.getElementById('tjCancelEditBtn');
+  const formTitle = document.getElementById('tjFormTitle');
+  const toggle = document.getElementById('tjVideoToggle');
+  const label = document.getElementById('tjVideoLabel');
+
+  if (!chEl || !enEl) return;
+
+  chEl.value = entry.chinese || '';
+  enEl.value = entry.english || '';
+  if (editIdEl) editIdEl.value = id;
+  if (formTitle) formTitle.textContent = 'Edit Entry';
+  if (cancelBtn) cancelBtn.style.display = '';
+
+  // Reset tags
+  document.querySelectorAll('#tjTagPicker .pill').forEach(el => {
+    el.classList.toggle('active', (entry.tags||[]).includes(el.dataset.tjTag));
+  });
+
+  // Set video toggle
+  if (toggle) {
+    if (entry.videoPosted) toggle.classList.add('on');
+    else toggle.classList.remove('on');
+  }
+  if (label) label.textContent = entry.videoPosted ? 'Posted' : 'Not Posted';
+
+  // Scroll to form
+  const card = document.getElementById('tjNewEntryCard');
+  if (card) card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function tjCancelEdit() {
+  const chEl = document.getElementById('tjChinese');
+  const enEl = document.getElementById('tjEnglish');
+  const editIdEl = document.getElementById('tjEditingId');
+  const cancelBtn = document.getElementById('tjCancelEditBtn');
+  const formTitle = document.getElementById('tjFormTitle');
+  const toggle = document.getElementById('tjVideoToggle');
+  const label = document.getElementById('tjVideoLabel');
+
+  if (chEl) chEl.value = '';
+  if (enEl) enEl.value = '';
+  if (editIdEl) editIdEl.value = '';
+  if (formTitle) formTitle.textContent = 'New Entry';
+  if (cancelBtn) cancelBtn.style.display = 'none';
+  if (toggle) toggle.classList.remove('on');
+  if (label) label.textContent = 'Not Posted';
+  document.querySelectorAll('#tjTagPicker .pill').forEach(el => el.classList.remove('active'));
+  tjEditingId = null;
+}
+
+function tjOnSearch(val) {
+  tjSearchQuery = val;
+  const filtered = tjFilteredEntries();
+  const list = document.getElementById('tjEntriesList');
+  if (!list) return;
+  list.innerHTML = filtered.length === 0
+    ? `<div class="empty-state" style="padding:40px;text-align:center;"><div style="font-size:32px;margin-bottom:12px;">🔍</div><div style="font-size:15px;font-weight:700;margin-bottom:6px;">No results</div><div style="font-size:13px;color:var(--ink-tertiary);">Try a different keyword.</div></div>`
+    : filtered.map(e => tjRenderCard(e)).join('');
+}
+
+function tjCopyEnglish(id) {
+  const entry = tjEntries.find(e => e.id === id);
+  if (!entry || !entry.english) return;
+  navigator.clipboard.writeText(entry.english).then(() => {
+    if (typeof toast === 'function') toast('📋 English copied to clipboard!');
+  }).catch(() => {
+    if (typeof toast === 'function') toast('Copy failed — please copy manually.');
+  });
+}
+
+function tjExportJSON() {
+  tjLoad();
+  const blob = new Blob([JSON.stringify(tjEntries, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'translation_journal_' + tjTodayISO() + '.json';
+  a.click();
+  URL.revokeObjectURL(url);
+  if (typeof toast === 'function') toast('✅ Exported!');
+}
+
+function tjImportJSON() {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.json,application/json';
+  input.onchange = function() {
+    const file = input.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(ev) {
+      try {
+        let imported = JSON.parse(ev.target.result);
+        if (!Array.isArray(imported)) throw new Error('Expected JSON array');
+        tjLoad();
+        let added = 0;
+        imported.forEach(item => {
+          if (!item.id || !item.date) return;
+          const exists = tjEntries.find(e => e.id === item.id);
+          if (!exists) { tjEntries.unshift(item); added++; }
+        });
+        tjEntries.sort((a,b) => (b.createdAt||0) - (a.createdAt||0));
+        tjSave();
+        const main = document.getElementById('moduleContentMount');
+        if (main && appState.currentModule === 'translation_journal') renderTranslationJournal(main);
+        if (typeof toast === 'function') toast(`✅ Imported ${added} new entries.`);
+      } catch(err) {
+        if (typeof toast === 'function') toast('❌ Import failed: ' + err.message);
+      }
+    };
+    reader.readAsText(file);
+  };
+  input.click();
+}
+</script>
 
 <script>
 window.__manualSync = async function() {
