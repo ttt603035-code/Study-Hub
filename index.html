@@ -3297,7 +3297,7 @@ const SYNC_KEYS = [
   'study_learning_pro','study_weekly_planner_pro','study_weekly_milestones_pro',
   'study_roadmap_plans_pro','study_roadmap_exams_pro','study_roadmap_milestones_pro',
   'study_roadmap_milestone_expanded_pro','study_roadmap_subject_expanded_pro',
-  'study_username','study_demo_data_removed',
+  'study_username','study_demo_data_removed','study_translation_journal_v1',
   'study_remember_last_page' // 修复5：同步「记住上次页面」设置
 ];
 
@@ -3315,25 +3315,17 @@ async function syncPush() {
     payload['__sync_ts'] = String(Date.now());
     SYNC_KEYS.forEach(k => { const v = localStorage.getItem(k); if (v !== null) payload[k] = v; });
 
-    // upsert：先查有没有，有就 PATCH，没有就 POST
-    const checkRes = await fetch(`${SUPABASE_URL}/rest/v1/user_data?sync_id=eq.${SYNC_USER_ID}&select=id`, {
-      headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY }
+    // 修复4：改用 upsert，一次请求代替先查再写两次
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/user_data`, {
+      method: 'POST',
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': 'Bearer ' + SUPABASE_KEY,
+        'Content-Type': 'application/json',
+        'Prefer': 'resolution=merge-duplicates'  // upsert：有则更新，无则插入
+      },
+      body: JSON.stringify({ sync_id: SYNC_USER_ID, data: payload })
     });
-    const existing = await checkRes.json();
-    let res;
-    if (existing.length > 0) {
-      res = await fetch(`${SUPABASE_URL}/rest/v1/user_data?sync_id=eq.${SYNC_USER_ID}`, {
-        method: 'PATCH',
-        headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ data: payload })
-      });
-    } else {
-      res = await fetch(`${SUPABASE_URL}/rest/v1/user_data`, {
-        method: 'POST',
-        headers: { 'apikey': SUPABASE_KEY, 'Authorization': 'Bearer ' + SUPABASE_KEY, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sync_id: SYNC_USER_ID, data: payload })
-      });
-    }
     if (!res.ok) throw new Error('HTTP ' + res.status);
     __syncPushFailed = false;
   } catch(e) {
@@ -4960,7 +4952,8 @@ function render() {
     } else if (appState.currentModule === 'progress_check') {
       renderProgressCheck(moduleMain);
     } else if (appState.currentModule === 'translation_journal') {
-      renderTranslationJournal(moduleMain);
+      if (typeof renderTranslationJournal === 'function') renderTranslationJournal(moduleMain);
+      else moduleMain.innerHTML = '<div style="padding:40px;text-align:center;color:#999;">Loading...</div>';
     } else {
       renderStudyResources(moduleMain);
     }
@@ -14424,6 +14417,7 @@ function tjRenderCard(e) {
       </div>
       <div style="display:flex;gap:6px;align-items:center;flex-shrink:0;">
         <button class="apple-btn small" onclick="tjCopyEnglish('${tjEsc(e.id)}')" title="Copy English">📋 Copy</button>
+        <button class="apple-btn small" onclick="tjQuickToggleVideo('${tjEsc(e.id)}')" style="${videoPosted ? 'background:#111;color:#fff;border-color:#111;' : ''}">\ ${videoPosted ? '✓ Video' : '○ Video'}</button>
         <button class="apple-btn small" onclick="tjStartEdit('${tjEsc(e.id)}')">Edit</button>
         <button class="apple-btn small danger" onclick="tjDeleteEntry('${tjEsc(e.id)}')">🗑 Delete</button>
       </div>
@@ -14439,6 +14433,15 @@ function tjRenderCard(e) {
       </div>
     </div>
   </div>`;
+}
+
+function tjQuickToggleVideo(id) {
+  const idx = tjEntries.findIndex(e => e.id === id);
+  if (idx === -1) return;
+  tjEntries[idx].videoPosted = !tjEntries[idx].videoPosted;
+  tjSave();
+  const main = document.getElementById('moduleContentMount');
+  if (main) renderTranslationJournal(main);
 }
 
 function tjToggleTag(el) {
