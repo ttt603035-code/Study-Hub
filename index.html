@@ -4506,22 +4506,28 @@ async function syncPush() {
     payload['__sync_ts'] = String(Date.now());
     SYNC_KEYS.forEach(k => { const v = localStorage.getItem(k); if (v !== null) payload[k] = v; });
 
-    // 修复4：改用 upsert，一次请求代替先查再写两次
-    const res = await fetch(`${getSupabaseCfg().url}/rest/v1/user_data`, {
-      method: 'POST',
-      headers: {
-        'apikey': getSupabaseCfg().key,
-        'Authorization': 'Bearer ' + getSupabaseCfg().key,
-        'Content-Type': 'application/json',
-        'Prefer': 'resolution=merge-duplicates'  // upsert：有则更新，无则插入
-      },
-      body: JSON.stringify({ sync_id: getSupabaseCfg().uid, data: payload })
+    // 先查有没有，有就PATCH，没有就POST
+    const cfg2 = getSupabaseCfg();
+    const checkRes = await fetch(cfg2.url + '/rest/v1/user_data?sync_id=eq.' + cfg2.uid + '&select=id', {
+      headers: { 'apikey': cfg2.key, 'Authorization': 'Bearer ' + cfg2.key }
     });
+    const existing = await checkRes.json();
+    let res;
+    if (existing.length > 0) {
+      res = await fetch(cfg2.url + '/rest/v1/user_data?sync_id=eq.' + cfg2.uid, {
+        method: 'PATCH',
+        headers: { 'apikey': cfg2.key, 'Authorization': 'Bearer ' + cfg2.key, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ data: payload })
+      });
+    } else {
+      res = await fetch(cfg2.url + '/rest/v1/user_data', {
+        method: 'POST',
+        headers: { 'apikey': cfg2.key, 'Authorization': 'Bearer ' + cfg2.key, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sync_id: cfg2.uid, data: payload })
+      });
+    }
     if (!res.ok) throw new Error('HTTP ' + res.status);
     __syncPushFailed = false;
-    // 清掉失败banner
-    const b = document.getElementById('__syncFailBanner');
-    if (b) b.remove();
   } catch(e) {
     __syncPushFailed = true;
     console.warn('Sync push failed:', e);
@@ -4584,6 +4590,7 @@ window.__supabaseSyncReady = (async () => {
 // 而是弹出提示让用户自己决定是否刷新，避免打断正在进行的操作
 setInterval(async () => {
   if (document.hidden) return;
+  if (__syncPushFailed) return; // 推送失败时跳过拉取，避免用旧数据覆盖本地
   try {
     const res = await fetch(getSupabaseCfg().url + '/rest/v1/user_data?sync_id=eq.' + getSupabaseCfg().uid + '&select=data', {
       headers: { 'apikey': getSupabaseCfg().key, 'Authorization': 'Bearer ' + getSupabaseCfg().key }
