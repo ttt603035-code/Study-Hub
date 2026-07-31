@@ -255,6 +255,12 @@ textarea { resize: vertical; }
 .apple-btn.danger:hover { background: rgba(0,0,0,0.03); }
 .apple-btn.small { padding: 5px 10px; font-size: 11px; }
 .apple-btn.active { background: var(--accent); color: #FFFFFF; border-color: var(--accent); }
+/* Icon sizing inside Apple buttons — unsized SVGs (rcSvg) inflate button height on phone/iPad.
+   Lock icon size so icon buttons stay the same height as text buttons. */
+.apple-btn > svg,
+.apple-btn svg { width: 14px; height: 14px; flex: 0 0 auto; }
+.apple-btn.small > svg,
+.apple-btn.small svg { width: 12px; height: 12px; }
 /* Home "Start Your First Week" CTA — keep content-sized, centered, never stretched by mobile .apple-btn rules */
 .apple-btn.home-start-btn {
   flex: 0 0 auto;
@@ -4506,26 +4512,17 @@ async function syncPush() {
     payload['__sync_ts'] = String(Date.now());
     SYNC_KEYS.forEach(k => { const v = localStorage.getItem(k); if (v !== null) payload[k] = v; });
 
-    // 先查有没有，有就PATCH，没有就POST
-    const cfg2 = getSupabaseCfg();
-    const checkRes = await fetch(cfg2.url + '/rest/v1/user_data?sync_id=eq.' + cfg2.uid + '&select=id', {
-      headers: { 'apikey': cfg2.key, 'Authorization': 'Bearer ' + cfg2.key }
+    // 修复4：改用 upsert，一次请求代替先查再写两次
+    const res = await fetch(`${getSupabaseCfg().url}/rest/v1/user_data`, {
+      method: 'POST',
+      headers: {
+        'apikey': getSupabaseCfg().key,
+        'Authorization': 'Bearer ' + getSupabaseCfg().key,
+        'Content-Type': 'application/json',
+        'Prefer': 'resolution=merge-duplicates'  // upsert：有则更新，无则插入
+      },
+      body: JSON.stringify({ sync_id: getSupabaseCfg().uid, data: payload })
     });
-    const existing = await checkRes.json();
-    let res;
-    if (existing.length > 0) {
-      res = await fetch(cfg2.url + '/rest/v1/user_data?sync_id=eq.' + cfg2.uid, {
-        method: 'PATCH',
-        headers: { 'apikey': cfg2.key, 'Authorization': 'Bearer ' + cfg2.key, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ data: payload })
-      });
-    } else {
-      res = await fetch(cfg2.url + '/rest/v1/user_data', {
-        method: 'POST',
-        headers: { 'apikey': cfg2.key, 'Authorization': 'Bearer ' + cfg2.key, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sync_id: cfg2.uid, data: payload })
-      });
-    }
     if (!res.ok) throw new Error('HTTP ' + res.status);
     __syncPushFailed = false;
   } catch(e) {
@@ -17835,19 +17832,49 @@ function rcRenderDetailIfOpen() {
       </div>
       <div class="rc-adv-content">
         <div class="rc-insp-grid" style="margin-top:8px">
-          <div class="rc-insp-field"><div class="rc-if-label">${rcT('Subject')}</div><div class="rc-if-val">${esc(customSubjects[r.subject]?.label || r.subject || '—')}</div></div>
-          <div class="rc-insp-field"><div class="rc-if-label">${rcT('Category')}</div><div class="rc-if-val">${esc(r.category || '—')}</div></div>
-          <div class="rc-insp-field"><div class="rc-if-label">${rcT('Priority')}</div><div class="rc-if-val">${rcPrio(r.priority)}</div></div>
-          <div class="rc-insp-field"><div class="rc-if-label">${rcT('Difficulty')}</div><div class="rc-if-val">${esc(rcT((r.difficulty||'medium').charAt(0).toUpperCase()+(r.difficulty||'medium').slice(1)))}</div></div>
-          <div class="rc-insp-field"><div class="rc-if-label">${rcT('Resource Type')}</div><div class="rc-if-val">${esc(rcT(t.label))}</div></div>
-          <div class="rc-insp-field"><div class="rc-if-label">${rcT('Estimated Time')}</div><div class="rc-if-val">${esc(r.estimatedTime || '—')}</div></div>
-          <div class="rc-insp-field"><div class="rc-if-label">${rcT('Review Count')}</div><div class="rc-if-val">${esc(String(r.reviewCount||0))}</div></div>
-          <div class="rc-insp-field"><div class="rc-if-label">${rcT('Last Review')}</div><div class="rc-if-val">${esc(r.lastReview||'—')}</div></div>
-          <div class="rc-insp-field"><div class="rc-if-label">${rcT('Next Review')}</div><div class="rc-if-val">${r.nextReview ? `<span style="color:${rcIsNeedReview(r)?'var(--rc-orange)':'inherit'}">${esc(r.nextReview)}</span>` : '—'}</div></div>
+          <div class="rc-insp-field"><div class="rc-if-label">${rcT('Subject')}</div><div class="rc-if-val">
+            <select style="font-size:13px;border:1px solid var(--line);border-radius:6px;padding:2px 6px;background:var(--bg-card);color:var(--ink);" onchange="window._rcInspSet('${r.id}','subject',this.value);render()">
+              ${getSidebarSubjectKeys().map(k=>`<option value="${k}" ${r.subject===k?'selected':''}>${esc(customSubjects[k]?.label||k)}</option>`).join('')}
+            </select>
+          </div></div>
+          <div class="rc-insp-field"><div class="rc-if-label">${rcT('Category')}</div><div class="rc-if-val">
+            <input style="font-size:13px;border:1px solid var(--line);border-radius:6px;padding:2px 6px;background:var(--bg-card);color:var(--ink);width:100%;" value="${esc(r.category||'')}" placeholder="—" onchange="window._rcInspSet('${r.id}','category',this.value)" />
+          </div></div>
+          <div class="rc-insp-field"><div class="rc-if-label">${rcT('Priority')}</div><div class="rc-if-val">
+            <select style="font-size:13px;border:1px solid var(--line);border-radius:6px;padding:2px 6px;background:var(--bg-card);color:var(--ink);" onchange="window._rcInspSet('${r.id}','priority',this.value)">
+              <option value="high" ${(r.priority||'medium')==='high'?'selected':''}>High</option>
+              <option value="medium" ${(r.priority||'medium')==='medium'?'selected':''}>Medium</option>
+              <option value="low" ${(r.priority||'medium')==='low'?'selected':''}>Low</option>
+            </select>
+          </div></div>
+          <div class="rc-insp-field"><div class="rc-if-label">${rcT('Difficulty')}</div><div class="rc-if-val">
+            <select style="font-size:13px;border:1px solid var(--line);border-radius:6px;padding:2px 6px;background:var(--bg-card);color:var(--ink);" onchange="window._rcInspSet('${r.id}','difficulty',this.value)">
+              <option value="easy" ${(r.difficulty||'medium')==='easy'?'selected':''}>Easy</option>
+              <option value="medium" ${(r.difficulty||'medium')==='medium'?'selected':''}>Medium</option>
+              <option value="hard" ${(r.difficulty||'medium')==='hard'?'selected':''}>Hard</option>
+            </select>
+          </div></div>
+          <div class="rc-insp-field"><div class="rc-if-label">${rcT('Resource Type')}</div><div class="rc-if-val">
+            <select style="font-size:13px;border:1px solid var(--line);border-radius:6px;padding:2px 6px;background:var(--bg-card);color:var(--ink);" onchange="window._rcInspSet('${r.id}','type',this.value)">
+              ${['pdf','book','website','video','github','html','document','image'].map(tp=>`<option value="${tp}" ${r.type===tp?'selected':''}>${tp.toUpperCase()}</option>`).join('')}
+            </select>
+          </div></div>
+          <div class="rc-insp-field"><div class="rc-if-label">${rcT('Estimated Time')}</div><div class="rc-if-val">
+            <input style="font-size:13px;border:1px solid var(--line);border-radius:6px;padding:2px 6px;background:var(--bg-card);color:var(--ink);width:100%;" value="${esc(r.estimatedTime||'')}" placeholder="—" onchange="window._rcInspSet('${r.id}','estimatedTime',this.value)" />
+          </div></div>
+          <div class="rc-insp-field"><div class="rc-if-label">${rcT('Next Review')}</div><div class="rc-if-val">
+            <input type="date" style="font-size:13px;border:1px solid var(--line);border-radius:6px;padding:2px 6px;background:var(--bg-card);color:var(--ink);" value="${esc(r.nextReview||'')}" onchange="window._rcInspSet('${r.id}','nextReview',this.value)" />
+          </div></div>
           <div class="rc-insp-field"><div class="rc-if-label">${rcT('Created')}</div><div class="rc-if-val">${esc(r.createdAt||'—')}</div></div>
-          <div class="rc-insp-field full"><div class="rc-if-label">${rcT('URL / File')}</div><div class="rc-if-val">${link ? `<a href="${esc(link)}" target="_blank" rel="noopener">${esc(link)}</a>` : '—'}</div></div>
-          ${r.description ? `<div class="rc-insp-field full"><div class="rc-if-label">${rcT('Description')}</div><div class="rc-if-val">${esc(r.description)}</div></div>` : ''}
-          ${r.tags && r.tags.length ? `<div class="rc-insp-field full"><div class="rc-if-label">${rcT('Tags')}</div><div class="rc-if-val">${r.tags.map(tg=>`<span class="rc-tag">${esc(tg)}</span>`).join(' ')}</div></div>` : ''}
+          <div class="rc-insp-field full"><div class="rc-if-label">${rcT('URL / File')}</div><div class="rc-if-val">
+            <input style="font-size:13px;border:1px solid var(--line);border-radius:6px;padding:2px 6px;background:var(--bg-card);color:var(--ink);width:100%;" value="${esc(link||'')}" placeholder="—" onchange="window._rcInspSet('${r.id}','path',this.value)" />
+          </div></div>
+          <div class="rc-insp-field full"><div class="rc-if-label">${rcT('Tags')}</div><div class="rc-if-val">
+            <input style="font-size:13px;border:1px solid var(--line);border-radius:6px;padding:2px 6px;background:var(--bg-card);color:var(--ink);width:100%;" value="${esc((r.tags||[]).join('; '))}" placeholder="tag1; tag2" onchange="window._rcInspSet('${r.id}','tags',this.value.split(/[;,]/).map(t=>t.trim()).filter(Boolean))" />
+          </div></div>
+          <div class="rc-insp-field full"><div class="rc-if-label">${rcT('Notes')}</div><div class="rc-if-val">
+            <textarea style="font-size:13px;border:1px solid var(--line);border-radius:6px;padding:4px 8px;background:var(--bg-card);color:var(--ink);width:100%;min-height:56px;resize:vertical;box-sizing:border-box;" onchange="window._rcInspSet('${r.id}','notes',this.value)">${esc(r.notes||'')}</textarea>
+          </div></div>
         </div>
       </div>
     </div>
@@ -17892,6 +17919,14 @@ function rcSubItemHtml(rid, s) {
     </div>
   </div>`;
 }
+window._rcInspSet = function (rid, field, val) {
+  const r = rcAll().find(x => x.id === rid); if (!r) return;
+  r[field] = val;
+  r.modifiedAt = todayISO();
+  rcSave();
+  saveResState();
+};
+
 window._rcSubAdd = function (rid) {
   const r = rcAll().find(x => x.id === rid); if (!r) return;
   let text = '';
