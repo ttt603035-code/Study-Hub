@@ -4519,6 +4519,9 @@ async function syncPush() {
     });
     if (!res.ok) throw new Error('HTTP ' + res.status);
     __syncPushFailed = false;
+    // 清掉失败banner
+    const b = document.getElementById('__syncFailBanner');
+    if (b) b.remove();
   } catch(e) {
     __syncPushFailed = true;
     console.warn('Sync push failed:', e);
@@ -4581,7 +4584,6 @@ window.__supabaseSyncReady = (async () => {
 // 而是弹出提示让用户自己决定是否刷新，避免打断正在进行的操作
 setInterval(async () => {
   if (document.hidden) return;
-  if (__syncPushFailed) return; // 推送失败时跳过拉取，避免用旧数据覆盖本地
   try {
     const res = await fetch(getSupabaseCfg().url + '/rest/v1/user_data?sync_id=eq.' + getSupabaseCfg().uid + '&select=data', {
       headers: { 'apikey': getSupabaseCfg().key, 'Authorization': 'Bearer ' + getSupabaseCfg().key }
