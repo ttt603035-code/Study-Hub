@@ -4583,7 +4583,7 @@ setInterval(async () => {
   if (document.hidden) return;
   if (__syncPushFailed) return; // 推送失败时跳过拉取，避免用旧数据覆盖本地
   try {
-    const res = await fetch(SUPABASE_URL + '/rest/v1/user_data?sync_id=eq.' + SYNC_USER_ID + '&select=data', {
+    const res = await fetch(getSupabaseCfg().url + '/rest/v1/user_data?sync_id=eq.' + getSupabaseCfg().uid + '&select=data', {
       headers: { 'apikey': getSupabaseCfg().key, 'Authorization': 'Bearer ' + getSupabaseCfg().key }
     });
     const rows = await res.json();
